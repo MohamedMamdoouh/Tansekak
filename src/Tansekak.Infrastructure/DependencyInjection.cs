@@ -21,7 +21,12 @@ public static class DependencyInjection
         IHostEnvironment environment)
     {
         services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+        {
+            if (environment.IsEnvironment("Testing"))
+                options.UseInMemoryDatabase("TansekakIntegrationTests");
+            else
+                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+        });
 
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
@@ -62,7 +67,10 @@ public static class DependencyInjection
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await db.Database.MigrateAsync();
+        if (db.Database.IsRelational())
+            await db.Database.MigrateAsync();
+        else
+            await db.Database.EnsureCreatedAsync();
 
         var seeder = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
         await seeder.SeedAsync();

@@ -56,7 +56,7 @@ Override these in production via `AdminSeed:Email` and `AdminSeed:Password` (or 
 
 | Layer | Technology |
 |-------|------------|
-| Backend | ASP.NET Core 10, EF Core, SQL Server, ASP.NET Core Identity |
+| Backend | ASP.NET Core 10, EF Core, PostgreSQL, ASP.NET Core Identity |
 | Frontend | Angular 19 (standalone components, RTL UI) |
 | Validation | FluentValidation |
 | Excel import | ClosedXML |
@@ -102,7 +102,7 @@ Tansekak/
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [Node.js 20+](https://nodejs.org/)
-- SQL Server LocalDB (included with Visual Studio or SQL Server Express)
+- PostgreSQL 16+ (local install, or use Docker Compose below)
 
 **Docker**
 
@@ -146,7 +146,7 @@ Required variables:
 
 | Variable | Description |
 |----------|-------------|
-| `MSSQL_SA_PASSWORD` | SQL Server SA password (must meet SQL Server complexity rules) |
+| `POSTGRES_PASSWORD` | PostgreSQL password |
 | `ADMIN_PASSWORD` | Admin user password seeded on first run |
 | `ADMIN_EMAIL` | Optional; defaults to `admin@tansekak.local` |
 
@@ -157,8 +157,26 @@ docker compose up --build
 ```
 
 - App: `http://localhost:8080` (API + static frontend)
-- SQL Server runs as a separate service with a persistent volume (`tansekak-db`)
+- PostgreSQL runs as a separate service with a persistent volume (`tansekak-db`)
 - Seed data is copied into the container at `./Data/` during the image build
+
+## Free production deploy (Neon + Railway)
+
+1. Create a free database at [neon.tech](https://neon.tech) and copy the **connection string**.
+2. In Railway, deploy only the **app** service from GitHub (delete any SQL Server `db` service).
+3. Set Railway variables on the app service:
+
+| Variable | Value |
+|----------|-------|
+| `ASPNETCORE_ENVIRONMENT` | `Production` |
+| `ConnectionStrings__DefaultConnection` | Your Neon connection string |
+| `AdminSeed__Email` | `admin@tansekak.local` |
+| `AdminSeed__Password` | A strong admin password |
+
+4. Generate a public domain in Railway → Settings → Networking.
+5. Deploy latest commit (`Ctrl+K` → **Deploy Latest Commit**).
+
+Neon free tier includes 512 MB storage — enough for Tansekak.
 
 ## Configuration
 
@@ -167,10 +185,10 @@ docker compose up --build
 `src/Tansekak.Api/appsettings.json`:
 
 ```
-Server=(localdb)\mssqllocaldb;Database=TansekakDev2;Trusted_Connection=True;TrustServerCertificate=True
+Host=localhost;Port=5432;Database=Tansekak;Username=postgres;Password=postgres
 ```
 
-Docker overrides via `ConnectionStrings__DefaultConnection`.
+Docker and production override via `ConnectionStrings__DefaultConnection`.
 
 ### App settings
 

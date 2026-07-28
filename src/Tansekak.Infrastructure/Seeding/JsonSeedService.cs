@@ -60,7 +60,9 @@ public class JsonSeedService(AppDbContext db, IHostEnvironment env, ILogger<Json
         var validUfIds = validUniversityFaculties.Select(x => x.Id).ToHashSet();
         var validCutoffs = cutoffs.Where(x => validUfIds.Contains(x.UniversityFacultyId)).ToList();
 
-        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = db.Database.IsRelational()
+            ? await db.Database.BeginTransactionAsync(cancellationToken)
+            : null;
 
         db.Governorates.AddRange(governorates.Select(x => new Governorate { Id = x.Id, NameAr = x.NameAr }));
         db.Faculties.AddRange(faculties.Select(x => new Faculty { Id = x.Id, NameAr = x.NameAr }));
@@ -99,7 +101,8 @@ public class JsonSeedService(AppDbContext db, IHostEnvironment env, ILogger<Json
             CutoffScore = x.CutoffScore
         }));
         await db.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        if (transaction is not null)
+            await transaction.CommitAsync(cancellationToken);
 
         logger.LogInformation(
             "Database seeded successfully with {Universities} universities, {UniversityFaculties} university-faculties, and {Cutoffs} cutoffs.",

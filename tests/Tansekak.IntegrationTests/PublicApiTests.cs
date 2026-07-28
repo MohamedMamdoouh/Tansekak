@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Tansekak.IntegrationTests;
 
-public class PublicApiTests : IClassFixture<WebApplicationFactory<Program>>
+public class PublicApiTests : IClassFixture<TansekakWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public PublicApiTests(WebApplicationFactory<Program> factory)
+    public PublicApiTests(TansekakWebApplicationFactory factory)
     {
         _client = factory.CreateClient(new WebApplicationFactoryClientOptions
         {
