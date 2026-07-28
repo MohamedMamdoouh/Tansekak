@@ -1,0 +1,6 @@
+@Tansekak.Api_HostAddress = http://localhost:5171
+
+GET {{Tansekak.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,2348 @@
+[
+  {
+    "id": 1,
+    "nameAr": "جامعة عين شمس",
+    "governorateId": 6,
+    "type": "Public"
+  },
+  {
+    "id": 2,
+    "nameAr": "جامعة الإسكندرية",
+    "governorateId": 1,
+    "type": "Public"
+  },
+  {
+    "id": 3,
+    "nameAr": "جامعة العريش",
+    "governorateId": 18,
+    "type": "Public"
+  },
+  {
+    "id": 4,
+    "nameAr": "جامعة أسوان",
+    "governorateId": 2,
+    "type": "Public"
+  },
+  {
+    "id": 5,
+    "nameAr": "جامعة أسيوط",
+    "governorateId": 3,
+    "type": "Public"
+  },
+  {
+    "id": 6,
+    "nameAr": "جامعة بنها",
+    "governorateId": 20,
+    "type": "Public"
+  },
+  {
+    "id": 7,
+    "nameAr": "جامعة بني سويف",
+    "governorateId": 5,
+    "type": "Public"
+  },
+  {
+    "id": 8,
+    "nameAr": "جامعة القاهرة",
+    "governorateId": 6,
+    "type": "Public"
+  },
+  {
+    "id": 9,
+    "nameAr": "جامعة دمنهور",
+    "governorateId": 4,
+    "type": "Public"
+  },
+  {
+    "id": 10,
+    "nameAr": "جامعة دمياط",
+    "governorateId": 8,
+    "type": "Public"
+  },
+  {
+    "id": 11,
+    "nameAr": "جامعة الفيوم",
+    "governorateId": 9,
+    "type": "Public"
+  },
+  {
+    "id": 12,
+    "nameAr": "جامعة حلوان",
+    "governorateId": 6,
+    "type": "Public"
+  },
+  {
+    "id": 13,
+    "nameAr": "جامعة الغردقة",
+    "governorateId": 22,
+    "type": "Public"
+  },
+  {
+    "id": 14,
+    "nameAr": "جامعة كفر الشيخ",
+    "governorateId": 12,
+    "type": "Public"
+  },
+  {
+    "id": 15,
+    "nameAr": "جامعة الأقصر",
+    "governorateId": 13,
+    "type": "Public"
+  },
+  {
+    "id": 16,
+    "nameAr": "جامعة المنصورة",
+    "governorateId": 7,
+    "type": "Public"
+  },
+  {
+    "id": 17,
+    "nameAr": "جامعة مطروح",
+    "governorateId": 14,
+    "type": "Public"
+  },
+  {
+    "id": 18,
+    "nameAr": "جامعة المنوفية",
+    "governorateId": 16,
+    "type": "Public"
+  },
+  {
+    "id": 19,
+    "nameAr": "جامعة المنيا",
+    "governorateId": 15,
+    "type": "Public"
+  },
+  {
+    "id": 20,
+    "nameAr": "جامعة الوادي الجديد",
+    "governorateId": 17,
+    "type": "Public"
+  },
+  {
+    "id": 21,
+    "nameAr": "جامعة بورسعيد",
+    "governorateId": 19,
+    "type": "Public"
+  },
+  {
+    "id": 22,
+    "nameAr": "جامعة مدينة السادات",
+    "governorateId": 16,
+    "type": "Public"
+  },
+  {
+    "id": 23,
+    "nameAr": "جامعة سوهاج",
+    "governorateId": 24,
+    "type": "Public"
+  },
+  {
+    "id": 24,
+    "nameAr": "جامعة جنوب الوادي",
+    "governorateId": 21,
+    "type": "Public"
+  },
+  {
+    "id": 25,
+    "nameAr": "جامعة قناة السويس",
+    "governorateId": 11,
+    "type": "Public"
+  },
+  {
+    "id": 26,
+    "nameAr": "جامعة السويس",
+    "governorateId": 25,
+    "type": "Public"
+  },
+  {
+    "id": 27,
+    "nameAr": "جامعة طنطا",
+    "governorateId": 10,
+    "type": "Public"
+  },
+  {
+    "id": 28,
+    "nameAr": "جامعة الزقازيق",
+    "governorateId": 23,
+    "type": "Public"
+  },
+  {
+    "id": 29,
+    "nameAr": "كلية تكنولوجيا العلوم الصحية برج العرب التكنولوجية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 30,
+    "nameAr": "معهد القاهرة الجديدة للعلوم الادارية والحاسب الالى بالتجمع الأول شعبة نظم)",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 31,
+    "nameAr": "العالي للغات 6 اكتوبر",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 32,
+    "nameAr": "العالي للحاسبات والمعلومات شعبة نظم طنطا",
+    "governorateId": 10,
+    "type": "Institute"
+  },
+  {
+    "id": 33,
+    "nameAr": "معهد القاهرة الجديدة للعلوم الادارية والحاسب الالى بالتجمع الأول شعبة ادارة)",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 34,
+    "nameAr": "العالي للدراسات الادبية كنج مربوط",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 35,
+    "nameAr": "أكاديمية باخبار اليوم تكنولوجيا صحافة 6 اکتوبر",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 36,
+    "nameAr": "معهد العباسية للعلوم التجارية والحاسبات الآلية ش نظم معلومات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 37,
+    "nameAr": "العالي الدولى للغات والترجمة تجمع خامس",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 38,
+    "nameAr": "معهد عالي حاسبات شعبة نظم معلومات ادارية بشبرا الخيمة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 39,
+    "nameAr": "معهد الاسكندرية العالي للإعلام بسموحة",
+    "governorateId": 1,
+    "type": "Institute"
+  },
+  {
+    "id": 40,
+    "nameAr": "العالي خدمه اجتماعيه بنها",
+    "governorateId": 20,
+    "type": "Institute"
+  },
+  {
+    "id": 41,
+    "nameAr": "معهد الألسن العالي بمدينة نصر لنظم المعلومات الادارية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 42,
+    "nameAr": "أكاديمية اخبار اليوم 6 أكتوبر علوم إدارية - إنجليزي",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 43,
+    "nameAr": "معهد الوادى العالي للعلوم الإدارية قسم",
+    "governorateId": 3,
+    "type": "Institute"
+  },
+  {
+    "id": 44,
+    "nameAr": "العالي للحاسب ونظم المعلومات ش نظم تجمع خامس",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 45,
+    "nameAr": "معهد القاهرة الجديدة للعلوم الادارية والحاسب الالى بالتجمع الأول شعبة التسويق)",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 46,
+    "nameAr": "معهد عالي خدمه اجتماعية أسكندريه بمصروفات",
+    "governorateId": 1,
+    "type": "Institute"
+  },
+  {
+    "id": 47,
+    "nameAr": "معهد عالي حاسبات شعبة علوم الإدارة بشبرا الخيمة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 48,
+    "nameAr": "العالي للغات بمصر جديده",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 49,
+    "nameAr": "العالي للحاسبات والمعلومات شعبة أعمال دولية طنطا",
+    "governorateId": 10,
+    "type": "Institute"
+  },
+  {
+    "id": 50,
+    "nameAr": "معهد العباسية للعلوم التجارية والحاسبات الالية ش (مالية)",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 51,
+    "nameAr": "طيبة العالي بالمعادى لنظم المعلومات الإدارية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 52,
+    "nameAr": "العالي للحاسب الآلى كنج مربوط لنظم المعلومات الإدارية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 53,
+    "nameAr": "ع کندی تکنو اعلام ت. خامس",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 54,
+    "nameAr": "معهد عالي خدمه اجتماعیه دمنهور بمصروفات",
+    "governorateId": 4,
+    "type": "Institute"
+  },
+  {
+    "id": 55,
+    "nameAr": "معهد الوادى العالي للعلوم الأدارية قسم محاسبة",
+    "governorateId": 3,
+    "type": "Institute"
+  },
+  {
+    "id": 56,
+    "nameAr": "معهد عالي دراسات تعاونية و إدارية بالمنيرة بمصروفات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 57,
+    "nameAr": "كلية تكنولوجيا الخدمات الفندقية والسياحية طيبة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 58,
+    "nameAr": "معهد سيناء العالي للدراسات النوعية بمدينة العريش ش. علوم ادارية بالمقر البديل بالاسماعيلية",
+    "governorateId": 11,
+    "type": "Institute"
+  },
+  {
+    "id": 59,
+    "nameAr": "القاهرة العالي لغات وترجمة فورية بالمقطم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 60,
+    "nameAr": "العالي للاعلام وفنون الاتصال 6 اكتوبر",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 61,
+    "nameAr": "الإدارة والسكرتارية والحاسب بكلية البنات القبطية بالعباسية إدارة وسكرتارية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 62,
+    "nameAr": "العالي ترميم الآثار بأبي قير",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 63,
+    "nameAr": "معهد الألسن العالي بمدينة نصر شعبة ادارة - محاسبة - تجارة خارجية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 64,
+    "nameAr": "الإدارة والسكرتارية والحاسب بكلية البنات نظم المعلومات الإدارية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 65,
+    "nameAr": "معهد العجمي العالي للعلوم الادارية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 66,
+    "nameAr": "العالي للعلوم الإدارية 6 اكتوبر",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 67,
+    "nameAr": "العالي خدمه اجتماعيه 6 اکتوبر",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 68,
+    "nameAr": "عالي إدارية ش إدارة أعمال تجمع خامس",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 69,
+    "nameAr": "العالي إدارة شعبة نظم كفر الشيخ",
+    "governorateId": 12,
+    "type": "Institute"
+  },
+  {
+    "id": 70,
+    "nameAr": "الإدارة والسكرتارية بمصر القديمة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 71,
+    "nameAr": "الفراعنة العالي لنظم المعلومات الإدارية مريوطية بالهرم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 72,
+    "nameAr": "الفراعنة العالي إدارة أعمال",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 73,
+    "nameAr": "المعهد العالي لتكنولوجيا الادارة والمعلومات بالمنيا شعبة نظم المعلومات الادارية",
+    "governorateId": 15,
+    "type": "Institute"
+  },
+  {
+    "id": 74,
+    "nameAr": "العالي للعلوم الادارية والتجارة الخارجية نظم تجمع خامس",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 75,
+    "nameAr": "العالي إدارة شعبة إدارة ومحاسبة كفر الشيخ",
+    "governorateId": 12,
+    "type": "Institute"
+  },
+  {
+    "id": 76,
+    "nameAr": "القاهرة العالي لغات وترجمه مقطم لنظم المعلومات الإدارية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 77,
+    "nameAr": "معهد عالي خدمه إجتماعية القاهرة بمصروفات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 78,
+    "nameAr": "المعهد العالى الدولى للغات والترجمة الفورية بالتجمع الخامس ) تجارة انجليزي",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 79,
+    "nameAr": "مصر العالي شعبة نظم معلومات إدارية المنصورة",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 80,
+    "nameAr": "نظم معلومات ادارية قطاميه",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 81,
+    "nameAr": "الفني التجاري بالروضه",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 82,
+    "nameAr": "العالي حاسبات و نظم تجمع أول",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 83,
+    "nameAr": "معهد العباسية للحاسبات الآلية التجارية - ش ادارة اعمال والعلوم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 84,
+    "nameAr": "الجزيرة العالي حاسب ونظم معلومات ادارية شعبة نظم بالمقطم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 85,
+    "nameAr": "العالي للعلوم الإدارية بالقطامية إدراة أعمال",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 86,
+    "nameAr": "العالي للسياحة والفنادق بالسيوف بالأسكندرية لنظم المعلومات الإدارية",
+    "governorateId": 1,
+    "type": "Institute"
+  },
+  {
+    "id": 87,
+    "nameAr": "العالي للحاسب ونظم المعلومات ش إدارة تجمع خامس",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 88,
+    "nameAr": "ع دولی اعلام مدينة الشروق",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 89,
+    "nameAr": "معهد الجيزة العالي للعلوم الادارية بطموه جيزة شعبة نظم معلومات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 90,
+    "nameAr": "الأكاديمية الدولية لعلوم الإعلام 6 اكتوبر",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 91,
+    "nameAr": "معهد عالي خدمه اجتماعيه بكفر صقر شرقية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 92,
+    "nameAr": "طيبة العالي نظم معلومات طريق سقاره بالهرم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 93,
+    "nameAr": "المعهد المصري لأكاديمية الإسكندرية نظم معلومات إدارية",
+    "governorateId": 1,
+    "type": "Institute"
+  },
+  {
+    "id": 94,
+    "nameAr": "معهد الوادى العالي للعلوم الأدارية قسم علوم مصرفية واستثمار",
+    "governorateId": 3,
+    "type": "Institute"
+  },
+  {
+    "id": 95,
+    "nameAr": "معهد عالي قاهرة ترجمة ش علوم إدارية مقطم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 96,
+    "nameAr": "التكنولوجي العالي للسياحة بالمنيا شعبة ترميم آثار والفنادق",
+    "governorateId": 15,
+    "type": "Institute"
+  },
+  {
+    "id": 97,
+    "nameAr": "المعهد الكندى العالي للادارة 6 اكتوبر",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 98,
+    "nameAr": "معهد عالي خدمه اجتماعية كفر الشيخ بمصروفات",
+    "governorateId": 12,
+    "type": "Institute"
+  },
+  {
+    "id": 99,
+    "nameAr": "المعهد العالي للعلوم الادارية باوسيم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 100,
+    "nameAr": "المعهد العالي للعلوم الادارية ببني سويف",
+    "governorateId": 5,
+    "type": "Institute"
+  },
+  {
+    "id": 101,
+    "nameAr": "المعهد العالي للعلوم التجارية بالمحلة الكبرى شعبة نظم معلومات",
+    "governorateId": 10,
+    "type": "Institute"
+  },
+  {
+    "id": 102,
+    "nameAr": "المعهد العالى لتكنولوجيا المعلومات بمدينة بدر",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 103,
+    "nameAr": "معهد عالي طيبة إدارة البنوك وأسواق المال سقارة الهرم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 104,
+    "nameAr": "المعهد العالي لتكنولوجيا الادارة والمعلومات بالمنيا شعبة العلوم التجارية تخصص ادارة اعمال - محاسبة)",
+    "governorateId": 15,
+    "type": "Institute"
+  },
+  {
+    "id": 105,
+    "nameAr": "المعهد العالي للعلوم الادارية بأوسيم جيزة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 106,
+    "nameAr": "معهد الوادى العالي للعلوم الإدارية قسم تسويق وادارة اعمال",
+    "governorateId": 3,
+    "type": "Institute"
+  },
+  {
+    "id": 107,
+    "nameAr": "التكنولوجي العالي إدارة 10 رمضان بمرسى مطروح",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 108,
+    "nameAr": "المعهد المصري لأكاديمية الإسكندرية للإدارة",
+    "governorateId": 1,
+    "type": "Institute"
+  },
+  {
+    "id": 109,
+    "nameAr": "العالي تسويق شعبة نظم تجمع أول",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 110,
+    "nameAr": "الدلتا العالي خدمه اجتماعية المنصورة",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 111,
+    "nameAr": "المدينة العالي للإدارة والتكنولوجيا شعبة إدارة بشبرامنت",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 112,
+    "nameAr": "المدينة العالي للإدارة والتكنولوجيا شبرامنت ش نظم معلومات إدارية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 113,
+    "nameAr": "العالي للدراسات المتطورة بالهرم لنظم المعلومات الإدارية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 114,
+    "nameAr": "التكنولوجي العالي 10 رمضان إدارة أعمال",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 115,
+    "nameAr": "الجزيره العالي للاتصال والاعلام بالمقطم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 116,
+    "nameAr": "العالي دراسات نوعية جيزه لنظم المعلومات الإدارية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 117,
+    "nameAr": "معلومات إدارية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 118,
+    "nameAr": "طيبة العالي شعبة ادارة اعمال ومحاسبة المعادى",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 119,
+    "nameAr": "المعهد التتكنولوجي العالي للاعلام بالمنيا",
+    "governorateId": 15,
+    "type": "Institute"
+  },
+  {
+    "id": 120,
+    "nameAr": "العالي للحاسبات بمدينة الشروق شعبة نظم معلومات إدارية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 121,
+    "nameAr": "معهد الجيزة العالي للعلوم الادارية بطموه جيزة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 122,
+    "nameAr": "العالي للدراسات المتطورة بالقطامية شعبة نظم معلومات إدارية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 123,
+    "nameAr": "معهد اكتوبر العالي للهندسة والتكنولوجيا ادرة اعمال)",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 124,
+    "nameAr": "العالي للعلوم الادارية بلقاس دقهلية ش نظم معلومات ادارية",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 125,
+    "nameAr": "العالي سياحة وفنادق بالسيوف بالأسكندرية",
+    "governorateId": 1,
+    "type": "Institute"
+  },
+  {
+    "id": 126,
+    "nameAr": "عالي خدمة اجتماعيه أسوان فرع قنا",
+    "governorateId": 22,
+    "type": "Institute"
+  },
+  {
+    "id": 127,
+    "nameAr": "القاهرة العالي إدارة الأعمال ونظم المعلومات بالتجمع الأول",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 128,
+    "nameAr": "العالي خدمة اجتماعية بور سعيد",
+    "governorateId": 20,
+    "type": "Institute"
+  },
+  {
+    "id": 129,
+    "nameAr": "المعهد العالي للادارة بالمحلة الكبرى شعبة محاسبة - إدارة اعمال - نظم معلومات)",
+    "governorateId": 10,
+    "type": "Institute"
+  },
+  {
+    "id": 130,
+    "nameAr": "التكنولوجي العالي للسياحة والفنادق بالمنيا شعبة سياحه",
+    "governorateId": 15,
+    "type": "Institute"
+  },
+  {
+    "id": 131,
+    "nameAr": "الاكاديمية الدولية للهندسة وعلوم الاعلام شعبة ادارة الاعمال)",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 132,
+    "nameAr": "الجزيرة العالي شعبة تجارة المقطم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 133,
+    "nameAr": "العالي للدراسات النوعية واللغات جيزه",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 134,
+    "nameAr": "معهد العباسية للحاسبات الآلية والعلوم التجارية - ش محاسبة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 135,
+    "nameAr": "الفني التجاري بالمطريه",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 136,
+    "nameAr": "معهد اكتوبر العالي للاقتصاد",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 137,
+    "nameAr": "عالي طيبة تسويق وتجارة إلكترونية بالمعادي",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 138,
+    "nameAr": "العالي دراسات متطوره بالهرم ش تجارة ومحاسبة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 139,
+    "nameAr": "واداره ومحاسبة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 140,
+    "nameAr": "العالي خدمه اجتماعيه سوهاج",
+    "governorateId": 25,
+    "type": "Institute"
+  },
+  {
+    "id": 141,
+    "nameAr": "معهد السويس لنظم المعلومات الإدارية",
+    "governorateId": 25,
+    "type": "Institute"
+  },
+  {
+    "id": 142,
+    "nameAr": "عالي دراسات نوعية بمصر الجديدة نظم المعلومات الإدارية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 143,
+    "nameAr": "طيبة العالي شعبة إدارة ومحاسبة طريق سفارة الهرم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 144,
+    "nameAr": "العالي قاهرة سياحة وفنادق مقطم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 145,
+    "nameAr": "العالي تسويق شعبة محاسبة تجمع أول",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 146,
+    "nameAr": "العالي تسويق شعبة تسويق تجمع",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 147,
+    "nameAr": "المعهد العالي للعلوم الادارية بالمنزلة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 148,
+    "nameAr": "رأس البر العالي للدراسات النوعية نظم المعلومات الإدارية",
+    "governorateId": 8,
+    "type": "Institute"
+  },
+  {
+    "id": 149,
+    "nameAr": "المعهد العالي للتجارة والعلوم الإدارية بالمنصورة",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 150,
+    "nameAr": "العبور العالي ك 21 بطريق بلبيس لنظم المعلومات الإدارية",
+    "governorateId": 20,
+    "type": "Institute"
+  },
+  {
+    "id": 151,
+    "nameAr": "العالي للسياحة والفنادق بالاسكندريه ايجوث",
+    "governorateId": 1,
+    "type": "Institute"
+  },
+  {
+    "id": 152,
+    "nameAr": "معهد رايه العالي للادارة والتجاره الخارجية شعبة نظم معلومات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 153,
+    "nameAr": "المعهد العالي للعلوم الادارية بجناكليس - البحيرة",
+    "governorateId": 4,
+    "type": "Institute"
+  },
+  {
+    "id": 155,
+    "nameAr": "الفني التجاري بشبرا",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 156,
+    "nameAr": "العالي خدمة اجتماعيه اسوان",
+    "governorateId": 2,
+    "type": "Institute"
+  },
+  {
+    "id": 157,
+    "nameAr": "العالي سياحة وفنادق 6 اكتوبر",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 158,
+    "nameAr": "المعهد العالي للعلوم التجارية بأبي قير",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 159,
+    "nameAr": "المعهد العالي للعلوم الادارية بالعباسة الشرقية",
+    "governorateId": 23,
+    "type": "Institute"
+  },
+  {
+    "id": 160,
+    "nameAr": "النيل العالي للعلوم التجارية شعبة نظم منصورة",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 161,
+    "nameAr": "العالي الكندي تكنولوجيا إدارة تجمع خامس",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 162,
+    "nameAr": "معهد المستقبل العالي للدراسات التكنولوجية المتخصصة شعبة ادارة الأعمال",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 163,
+    "nameAr": "الفني التجاری بیور سعید",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 164,
+    "nameAr": "معهد المستقبل العالي للدراسات التكنولوجية المتخصصة شعبة نظم المعلومات الإدارية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 165,
+    "nameAr": "العالي دراسات نوعية سياحه و فنادق جیزه",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 166,
+    "nameAr": "ش. مطاعم فني سياحة مطريه",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 167,
+    "nameAr": "العالي سياحة وفنادق الغردقة",
+    "governorateId": 23,
+    "type": "Institute"
+  },
+  {
+    "id": 168,
+    "nameAr": "الدلتا العالي للحاسبات بالمنصورة لنظم المعلومات الإدارية",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 169,
+    "nameAr": "الفراعنة العالي سياحة وفنادق بالمريوطية الهرم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 170,
+    "nameAr": "الفني التجاري بقويسنا",
+    "governorateId": 20,
+    "type": "Institute"
+  },
+  {
+    "id": 171,
+    "nameAr": "شعبة النيل العالي للعلوم التجارية محاسبة منصورة",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 172,
+    "nameAr": "وحاسبات مصر العالي بالمنصورة تجارة ش إدارة ومحاسبة",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 173,
+    "nameAr": "الفني للخدمة الاجتماعية بقنا",
+    "governorateId": 22,
+    "type": "Institute"
+  },
+  {
+    "id": 174,
+    "nameAr": "معهد سيناء العالي للدراسات النوعية بمدينة العريش ش. لغات",
+    "governorateId": 19,
+    "type": "Institute"
+  },
+  {
+    "id": 175,
+    "nameAr": "العالي للسياحة والفنادق و إرشاد السياحي بأبي قير",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 176,
+    "nameAr": "العالي للحاسبات بمدينة الشروق شعبة إدارة ومحاسبة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 177,
+    "nameAr": "المتوسط للخدمة الاجتماعية بسوهاج",
+    "governorateId": 25,
+    "type": "Institute"
+  },
+  {
+    "id": 178,
+    "nameAr": "المتوسط للخدمة الاجتماعية بالاسكندرية طالبات",
+    "governorateId": 1,
+    "type": "Institute"
+  },
+  {
+    "id": 179,
+    "nameAr": "المتوسط للخدمة الاجتماعية باسوان",
+    "governorateId": 2,
+    "type": "Institute"
+  },
+  {
+    "id": 180,
+    "nameAr": "العالي النوعية سياحة وفنادق وإرشاد",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 181,
+    "nameAr": "السياحي مصر جديده المعهد العالي للغات بالمنصورة",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 182,
+    "nameAr": "المتوسط للخدمة الاجتماعية بكفر الشيخ",
+    "governorateId": 12,
+    "type": "Institute"
+  },
+  {
+    "id": 183,
+    "nameAr": "المعهد العالي للإدارة والمحاسبة بسوهاج أخميم",
+    "governorateId": 25,
+    "type": "Institute"
+  },
+  {
+    "id": 184,
+    "nameAr": "المعهد العالي للعلوم التجارية بالمحله الكبرى",
+    "governorateId": 10,
+    "type": "Institute"
+  },
+  {
+    "id": 185,
+    "nameAr": "ش. مطاعم فني سياحة فنا",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 186,
+    "nameAr": "معهد رايه العالي للادارة والتجاره الخارجية شعبة المحاسبة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 187,
+    "nameAr": "معهد رايه العالي للادارة والتجارة الخارجية شعبة اقتصاديات التجارة الخارجية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 188,
+    "nameAr": "معهد تكنولوجي العالي للعلوم المالية والادارية بسوهاج شعبة نظم ومحاسبة وتمويل دولي ومنشات مالية عربي و",
+    "governorateId": 25,
+    "type": "Institute"
+  },
+  {
+    "id": 189,
+    "nameAr": "المعهد العالي للعلوم الادارية بسوهاج",
+    "governorateId": 25,
+    "type": "Institute"
+  },
+  {
+    "id": 190,
+    "nameAr": "المصري العالي سياحة وفنادق بمصر الجديدة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 191,
+    "nameAr": "سيناء عالي سياحة وفنادق رأس سدر",
+    "governorateId": 23,
+    "type": "Institute"
+  },
+  {
+    "id": 192,
+    "nameAr": "المعهد العالي للدراسات الفندقية والسياحية بدمياط الجديدة",
+    "governorateId": 8,
+    "type": "Institute"
+  },
+  {
+    "id": 193,
+    "nameAr": "العالي للعلوم الادارية بلقاس دقهلية",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 194,
+    "nameAr": "المعهد العالي للغات بأسوان",
+    "governorateId": 2,
+    "type": "Institute"
+  },
+  {
+    "id": 195,
+    "nameAr": "الفني للفنادق المطريه",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 196,
+    "nameAr": "الفني للفنادق فنا",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 197,
+    "nameAr": "الفني التجاري بقنا",
+    "governorateId": 22,
+    "type": "Institute"
+  },
+  {
+    "id": 198,
+    "nameAr": "الفني التجارى بالمحلة الكبرى",
+    "governorateId": 10,
+    "type": "Institute"
+  },
+  {
+    "id": 199,
+    "nameAr": "المعلومات العالي حاسب وادارة ش نظم الإدارية الزرقا دمياط",
+    "governorateId": 8,
+    "type": "Institute"
+  },
+  {
+    "id": 200,
+    "nameAr": "العالي للسياحة والفنادق بالاقصر إيجوث",
+    "governorateId": 22,
+    "type": "Institute"
+  },
+  {
+    "id": 201,
+    "nameAr": "العالي للعلوم التجارية والحاسب شعبة نظم بالعريش",
+    "governorateId": 19,
+    "type": "Institute"
+  },
+  {
+    "id": 202,
+    "nameAr": "العالي للعلوم التجارية والحاسب شعبة محاسبة بالعريش",
+    "governorateId": 19,
+    "type": "Institute"
+  },
+  {
+    "id": 203,
+    "nameAr": "العالي للإدارة والحاسب شعبة نظم برأس البر",
+    "governorateId": 8,
+    "type": "Institute"
+  },
+  {
+    "id": 204,
+    "nameAr": "العالي للإدارة والحاسب شعبة علوم تجارية برأس البر",
+    "governorateId": 8,
+    "type": "Institute"
+  },
+  {
+    "id": 205,
+    "nameAr": "العالي سياحة وفنادق بالإسماعيلية",
+    "governorateId": 11,
+    "type": "Institute"
+  },
+  {
+    "id": 206,
+    "nameAr": "المعهد العالي لنظم التجارة الالكترونيه",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 207,
+    "nameAr": "مربوط",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 208,
+    "nameAr": "معهد المنيا العالي للغات",
+    "governorateId": 15,
+    "type": "Institute"
+  },
+  {
+    "id": 209,
+    "nameAr": "مدينة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 210,
+    "nameAr": "طب فاقوس",
+    "governorateId": 23,
+    "type": "Institute"
+  },
+  {
+    "id": 211,
+    "nameAr": "حاسبات ومعلومات قنا علوم",
+    "governorateId": 22,
+    "type": "Institute"
+  },
+  {
+    "id": 212,
+    "nameAr": "معهد فني صحى سوهاج",
+    "governorateId": 25,
+    "type": "Institute"
+  },
+  {
+    "id": 213,
+    "nameAr": "علوم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 214,
+    "nameAr": "معهد فني صحى اسيوط",
+    "governorateId": 3,
+    "type": "Institute"
+  },
+  {
+    "id": 215,
+    "nameAr": "رياضة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 216,
+    "nameAr": "بالإسماعيلية رياضة",
+    "governorateId": 11,
+    "type": "Institute"
+  },
+  {
+    "id": 217,
+    "nameAr": "معهد فني صحی اسماعیلیه",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 218,
+    "nameAr": "معهد فني صحى اسوان",
+    "governorateId": 2,
+    "type": "Institute"
+  },
+  {
+    "id": 219,
+    "nameAr": "معهد فني صحى الزقازيق",
+    "governorateId": 23,
+    "type": "Institute"
+  },
+  {
+    "id": 220,
+    "nameAr": "معهد فني صحي المنصوره",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 221,
+    "nameAr": "معهد فني صحی بور سعيد",
+    "governorateId": 20,
+    "type": "Institute"
+  },
+  {
+    "id": 222,
+    "nameAr": "معهد فني صحى بني سويف",
+    "governorateId": 5,
+    "type": "Institute"
+  },
+  {
+    "id": 223,
+    "nameAr": "معهد فني صحى طنطا",
+    "governorateId": 10,
+    "type": "Institute"
+  },
+  {
+    "id": 224,
+    "nameAr": "حاسبات ومعلومات قنا رياضة",
+    "governorateId": 22,
+    "type": "Institute"
+  },
+  {
+    "id": 225,
+    "nameAr": "معهد فني صحى الاسكندرية",
+    "governorateId": 1,
+    "type": "Institute"
+  },
+  {
+    "id": 226,
+    "nameAr": "معهد فني صحى بنها",
+    "governorateId": 20,
+    "type": "Institute"
+  },
+  {
+    "id": 227,
+    "nameAr": "معهد فني صحى الوادي الجديد",
+    "governorateId": 18,
+    "type": "Institute"
+  },
+  {
+    "id": 228,
+    "nameAr": "معهد فني صحى امبابة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 229,
+    "nameAr": "معهد فني صحي رياضه طنطا",
+    "governorateId": 10,
+    "type": "Institute"
+  },
+  {
+    "id": 231,
+    "nameAr": "المعهد العالى للهندسة والتكنولوجيا بالزقازيق",
+    "governorateId": 23,
+    "type": "Institute"
+  },
+  {
+    "id": 232,
+    "nameAr": "معهد فني صحى رياضة الزقازيق",
+    "governorateId": 23,
+    "type": "Institute"
+  },
+  {
+    "id": 233,
+    "nameAr": "المجمع التكنولوجي المتكامل بالسلام",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 234,
+    "nameAr": "معهد عالي هندسة وتكنولوجيا العريش",
+    "governorateId": 19,
+    "type": "Institute"
+  },
+  {
+    "id": 235,
+    "nameAr": "كلية تكنولوجيا العلوم الصحية 6 أكتوبر التكنولوجية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 236,
+    "nameAr": "معهد عالي تكنولوجيا 10 رمضان شعبة علوم الحاسب بمصروفات علوم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 238,
+    "nameAr": "معهد العبور العالي للهندسة والتكنولوجيا بمصروفات",
+    "governorateId": 20,
+    "type": "Institute"
+  },
+  {
+    "id": 239,
+    "nameAr": "معهد فني صحى رياضه بور سعيد",
+    "governorateId": 20,
+    "type": "Institute"
+  },
+  {
+    "id": 240,
+    "nameAr": "معهد فني صحى رياضة اسماعيلية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 242,
+    "nameAr": "المعهد العالى للهندسة والتكنولوجيا بطنطا",
+    "governorateId": 10,
+    "type": "Institute"
+  },
+  {
+    "id": 243,
+    "nameAr": "معهد عالي عبور إدارة وحاسبات ونظم بلبيس شعبة علوم حاسب بمصروفات علوم",
+    "governorateId": 20,
+    "type": "Institute"
+  },
+  {
+    "id": 244,
+    "nameAr": "معهد عالي هندسه مدينه الشروق بمصروفات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 245,
+    "nameAr": "معهد فني صحى رياضة امبابة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 246,
+    "nameAr": "معهد فني صحى رياضة الاسكندرية",
+    "governorateId": 1,
+    "type": "Institute"
+  },
+  {
+    "id": 247,
+    "nameAr": "معهد فني صحى رياضه بني سويف",
+    "governorateId": 5,
+    "type": "Institute"
+  },
+  {
+    "id": 248,
+    "nameAr": "المعهد الفنى للتمريض بالجونة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 249,
+    "nameAr": "كلية تكنولوجيا الصناعة والطاقة برج العرب التكنولوجية علوم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 250,
+    "nameAr": "المعهد الفنى للتمريض بمستشفى وادى النيل",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 251,
+    "nameAr": "الاكاديمية المصرية للهندسة والتكنولوجيا المتقدمة وزارة الانتاج الحربي",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 252,
+    "nameAr": "معهد فني صحى ریاضه اسوان",
+    "governorateId": 2,
+    "type": "Institute"
+  },
+  {
+    "id": 253,
+    "nameAr": "المعهد العالى للهندسة ببلبيس",
+    "governorateId": 20,
+    "type": "Institute"
+  },
+  {
+    "id": 254,
+    "nameAr": "معهد هندسة وتكنولوجيا الطيران إمبابة جيزة بمصروفات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 255,
+    "nameAr": "ع. هندسة وتكنو العبور ك 21 طريق بلبيس الصحراوي",
+    "governorateId": 20,
+    "type": "Institute"
+  },
+  {
+    "id": 256,
+    "nameAr": "معهد عالي هندسة وتكنولوجيا كفر الشيخ",
+    "governorateId": 12,
+    "type": "Institute"
+  },
+  {
+    "id": 257,
+    "nameAr": "معهد المنصورة العالي والتكنولوجيا للهندسة",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 258,
+    "nameAr": "كلية تكنولوجيا الصناعة والطاقة سمنود التكنولوجية علوم",
+    "governorateId": 10,
+    "type": "Institute"
+  },
+  {
+    "id": 259,
+    "nameAr": "عالي إدارة وتكنولوجيا ش علوم حاسب كفر الشيخ علوم",
+    "governorateId": 12,
+    "type": "Institute"
+  },
+  {
+    "id": 260,
+    "nameAr": "العالي لنظم الحاسب ونظم المعلومات 6 اکتوبر",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 261,
+    "nameAr": "معهد عالي كندي تكنولوجيا هندسة ت. خامس",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 262,
+    "nameAr": "المعهد التكنولوجي للتمريض بالمنيا",
+    "governorateId": 15,
+    "type": "Institute"
+  },
+  {
+    "id": 263,
+    "nameAr": "معهد فنى صحى رياضه اسيوط",
+    "governorateId": 3,
+    "type": "Institute"
+  },
+  {
+    "id": 264,
+    "nameAr": "معهد فني صحى رياضه سوهاج",
+    "governorateId": 25,
+    "type": "Institute"
+  },
+  {
+    "id": 265,
+    "nameAr": "العالي للهندسة والتكنولوجيا التجمع الخامس",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 266,
+    "nameAr": "المعهد الكندي العالي للحاسبات - علوم -",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 267,
+    "nameAr": "المعهد العالي للهندسة والتكنولوجيا بدمياط الجديدة",
+    "governorateId": 8,
+    "type": "Institute"
+  },
+  {
+    "id": 268,
+    "nameAr": "معهد عالي تكنولوجيا 10 رمضان شعبة علوم الحاسب بمصروفات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 269,
+    "nameAr": "معهد الإسكندرية العالي للتكنولوجيا بسموحة بمصروفات",
+    "governorateId": 1,
+    "type": "Institute"
+  },
+  {
+    "id": 270,
+    "nameAr": "معهد عالي علوم الحاسب تجمع خامس بمصروفات علوم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 271,
+    "nameAr": "حاسب علوم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 272,
+    "nameAr": "أكاديمية أخبار اليوم 6 اكتوبر شعبة علوم حاسب علوم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 273,
+    "nameAr": "معهد فنى صحى رياضه الوادي الجديد",
+    "governorateId": 18,
+    "type": "Institute"
+  },
+  {
+    "id": 274,
+    "nameAr": "المعهد العالى للهندسة الالكترونية بلبيس",
+    "governorateId": 20,
+    "type": "Institute"
+  },
+  {
+    "id": 275,
+    "nameAr": "معهد عالي هندسه 6 اکتوبر بمصروفات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 276,
+    "nameAr": "المعهد العالى للهندسة والتكنولوجيا بالمنوفية",
+    "governorateId": 16,
+    "type": "Institute"
+  },
+  {
+    "id": 277,
+    "nameAr": "معهد الدلتا العالي للهندسة والتكنولوجيا بالمنصورة",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 278,
+    "nameAr": "ك. ت. فني للبصريات ابو الريش السيدة زینب",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 279,
+    "nameAr": "المعهد العالى للهندسة والتكنولوجيا بالمحلة الكبرى",
+    "governorateId": 10,
+    "type": "Institute"
+  },
+  {
+    "id": 280,
+    "nameAr": "المعهد العالى للهندسة والتكنولوجيا",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 281,
+    "nameAr": "المعهد التكنولوجي العالي للعلوم الصحية التطبيقية بشربين دقهلية",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 282,
+    "nameAr": "المعهد التكنولوجي العالي بالسادس من أكتوبر",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 283,
+    "nameAr": "معهد طيبة العالي شعبة علوم حاسب بالمعادي بمصروفات علوم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 284,
+    "nameAr": "معهد النيل العالي للهندسة والتكنولوجيا بالمنصورة",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 285,
+    "nameAr": "المعهد الكندي العالي للحاسب الآلي بالتجمع الخامس القاهرة الجديدة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 286,
+    "nameAr": "الاهرامات العالي للهندسة والتكنولوجيا 6 اکتوبر",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 287,
+    "nameAr": "الاكاديمية الدولية لعلوم الإعلام ( شعبة هندسة ( 6 اكتوبر",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 288,
+    "nameAr": "بمصروفات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 289,
+    "nameAr": "المعهد العالى للهندسة والتكنولوجيا بكنج مربوط",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 290,
+    "nameAr": "معهد عالي هندسة وتكنولوجيا المنيا الجديدة",
+    "governorateId": 15,
+    "type": "Institute"
+  },
+  {
+    "id": 291,
+    "nameAr": "المعهد التكنولوجي العالي للعلوم الصحية التطبيقية ببني سويف",
+    "governorateId": 5,
+    "type": "Institute"
+  },
+  {
+    "id": 292,
+    "nameAr": "معهد المستقبل العالي للهندسة والتكنولوجيا بالمنصورة",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 293,
+    "nameAr": "معهد أكتوبر العالي للهندسة والتكنولوجيا م 6 اکتوبر بمصروفات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 294,
+    "nameAr": "معهد الصفوة العالي هندسة وتكنولوجيا - بالقليوبية",
+    "governorateId": 20,
+    "type": "Institute"
+  },
+  {
+    "id": 295,
+    "nameAr": "المعهد التكنولوجي العالي للعلوم الصحية التطبيقية بطريق مصر الإسماعيلية",
+    "governorateId": 11,
+    "type": "Institute"
+  },
+  {
+    "id": 296,
+    "nameAr": "فنون جميلة (فنون) المنصورة المعهد العالي للهندسة والتكنولوجيا بالبحيرة",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 297,
+    "nameAr": "معهد عالي حاسبات ومعلومات مدينه الشروق شعبة علوم الحاسب بمصروفات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 298,
+    "nameAr": "مصر العالي بالمنصورة تجارة وحاسبات شعبة علوم الحاسب",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 299,
+    "nameAr": "المعهد العالي للهندسة بمدينة 15 مايو",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 300,
+    "nameAr": "معهد طيبة العالي شعبة علوم حاسب سقاره بمصروفات علوم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 301,
+    "nameAr": "القاهرة العالي ش هندسية بالتجمع الاول القاهرة الجديدة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 302,
+    "nameAr": "المعهد العالى للهندسة والتكنولوجيا ببرج العرب بالاسكندرية",
+    "governorateId": 1,
+    "type": "Institute"
+  },
+  {
+    "id": 303,
+    "nameAr": "الفراعنة العالي شعبة علوم حاسب سقاره بمصروفات علوم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 304,
+    "nameAr": "المعهد العالي للهندسة والتكنولوجيا بالمنزله",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 305,
+    "nameAr": "المعهد التكنولوجي العالي للعلوم الصحية التطبيقية بمدينة بدر",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 306,
+    "nameAr": "معهد طيبة العالي للهندسة بالمعادي بمصروفات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 307,
+    "nameAr": "معهد الوادي العالي للهندسة و التكنولوجيا قليوبية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 308,
+    "nameAr": "القاهرة العالي علوم حاسب ) قطعة 2 م خدمات البنفسج تجمع اول علوم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 309,
+    "nameAr": "معهد القناة العالى للهندسة بالسويس",
+    "governorateId": 25,
+    "type": "Institute"
+  },
+  {
+    "id": 310,
+    "nameAr": "أكاديمية أخبار اليوم شعبة هندسية 6 أكتوبر",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 311,
+    "nameAr": "معهد الجزيرة العالي للهندسة والتكنولوجيا بالمقطم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 312,
+    "nameAr": "المعهد التكنولوجي العالي للعلوم الصحية التطبيقية بسوهاج",
+    "governorateId": 25,
+    "type": "Institute"
+  },
+  {
+    "id": 313,
+    "nameAr": "المعهد التكنولجي العالي للعلوم الصحية التطبيقية بالمنيا",
+    "governorateId": 15,
+    "type": "Institute"
+  },
+  {
+    "id": 314,
+    "nameAr": "معهد المستقبل العالي للهندسة والتكنولوجيا بالفيوم",
+    "governorateId": 9,
+    "type": "Institute"
+  },
+  {
+    "id": 315,
+    "nameAr": "معهد المدينة العالي للهندسة والتكنولوجيا طريق سقارة الهرم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 316,
+    "nameAr": "معهد عالي تكنولوجيا بصريات مصر الجديدة بمصروفات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 317,
+    "nameAr": "معهد المستقبل العالي للدراسات التكنولوجية المتخصصة شعبة علوم الحاسب علوم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 318,
+    "nameAr": "كلية تكنولوجيا الصناعة والطاقة طيبة التكنولوجية علوم",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 319,
+    "nameAr": "معهد الجيزة العالي للهندسة والتكنولوجيا بطموه",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 320,
+    "nameAr": "المعهد العالى للهندسة والتكنولوجيا بالطود الاقصر",
+    "governorateId": 22,
+    "type": "Institute"
+  },
+  {
+    "id": 321,
+    "nameAr": "المعهد العالى للهندسة والتكنولوجيا بسوهاج",
+    "governorateId": 25,
+    "type": "Institute"
+  },
+  {
+    "id": 322,
+    "nameAr": "كلية تكنولوجيا الصناعة والطاقة برج العرب التكنولوجية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 323,
+    "nameAr": "المعهد العالي لعلوم الحاسب بالمنيا علوم",
+    "governorateId": 15,
+    "type": "Institute"
+  },
+  {
+    "id": 324,
+    "nameAr": "معهد عالي فنون تطبيقيه 6 اکتوبر",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 325,
+    "nameAr": "المعهد الكندي العالي للحاسبات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 326,
+    "nameAr": "حاسب",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 327,
+    "nameAr": "معهد عالي فنون تطبيقية التجمع الخامس",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 328,
+    "nameAr": "كلية تكنولوجيا الصناعة والطاقة 6 أكتوبر التكنولوجية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 329,
+    "nameAr": "المعهد الكندى العالي للحاسب الالى بالتجمع الخامس",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 330,
+    "nameAr": "كلية تكنولوجيا الصناعة والطاقة ج الدلتا التكنولوجية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 331,
+    "nameAr": "أكاديمية أخبار اليوم 6 اكتوبر شعبة علوم حاسب",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 332,
+    "nameAr": "المعهد العالي للحاسبات وتكنولوجيا المعلومات بالمنصورة",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 333,
+    "nameAr": "معهد طيبة العالي شعبة علوم حاسب بالمعادي بمصروفات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 334,
+    "nameAr": "معهد عالي عبور إدارة وحاسبات ونظم بلبيس شعبة علوم حاسب بمصروفات",
+    "governorateId": 20,
+    "type": "Institute"
+  },
+  {
+    "id": 335,
+    "nameAr": "المعهد التكنولوجي العالي بهليوبوليس الجديدة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 336,
+    "nameAr": "معهد عالي علوم الحاسب تجمع خامس بمصروفات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 337,
+    "nameAr": "العالي لنظم الحاسب ونظم المعلومات 6 اكتوبر رياضة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 338,
+    "nameAr": "الفراعنة العالي شعبة علوم حاسب سفارة بمصروفات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 339,
+    "nameAr": "القاهرة العالي علوم حاسب ) قطعة 2 م. خدمات البنفسج تجمع اول",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 340,
+    "nameAr": "معهد طيبة العالي شعبة علوم حاسب سقارة بمصروفات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 341,
+    "nameAr": "كلية تكنولوجيا الصناعة والطاقة سمنود التكنولوجية",
+    "governorateId": 10,
+    "type": "Institute"
+  },
+  {
+    "id": 342,
+    "nameAr": "معهد المستقبل العالي للدراسات التكنولوجية المتخصصة شعبة علوم الحاسب",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 343,
+    "nameAr": "معهد الوادى العالي للعلوم الأدارية قسم نظم معلومات",
+    "governorateId": 3,
+    "type": "Institute"
+  },
+  {
+    "id": 344,
+    "nameAr": "معهد القاهرة الجديدة للعلوم الادارية والحاسب الالى بالتجمع الأول ( شعبة نظم)",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 345,
+    "nameAr": "معهد عالي تعاون زراعي شعبة تسويق دولي شبرا الخيمة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 346,
+    "nameAr": "معهد عالي تعاون زراعي شعبة نظم معلومات زراعية شبرا الخيمة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 347,
+    "nameAr": "التكنولوجي العالي للسياحة والفنادق بالمنيا شعبة ترميم آثار",
+    "governorateId": 15,
+    "type": "Institute"
+  },
+  {
+    "id": 348,
+    "nameAr": "عالي إدارة وتكنولوجيا ش علوم حاسب كفر الشيخ",
+    "governorateId": 12,
+    "type": "Institute"
+  },
+  {
+    "id": 349,
+    "nameAr": "كلية تكنولوجيا الصناعة والطاقة طيبة التكنولوجية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 350,
+    "nameAr": "معهد القاهرة الجديدة للعلوم الادارية والحاسب الالى بالتجمع الأول ( شعبة التسويق)",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 351,
+    "nameAr": "المعهد العالي للغات بالمنصورة",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 352,
+    "nameAr": "مركز التكنولوجيا المتميز بوزارة الصناعة والتجارة الخارجية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 353,
+    "nameAr": "معهد عالي تعاون زراعى شبرا الخيمه بمصروفات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 354,
+    "nameAr": "المعهد العالي لتكنولوجيا الادارة والمعلومات بالمنيا شعبة العلوم التجارية - تخصص ادارة اعمال - محاسبة)",
+    "governorateId": 15,
+    "type": "Institute"
+  },
+  {
+    "id": 355,
+    "nameAr": "المعهد العالي لعلوم الحاسب بالمنيا",
+    "governorateId": 15,
+    "type": "Institute"
+  },
+  {
+    "id": 356,
+    "nameAr": "ك. ت. فني رى وصرف ومساحه المطرية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 357,
+    "nameAr": "معهد عالي تعاون زراعى شعبة تربوية شبرا الخيمة بمصروفات المعهد التتكنولوجي العالي للاعلام بالمنيا",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 358,
+    "nameAr": "معهد العباسية للحاسبات الآلية والعلوم التجارية - ش ادارة اعمال",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 359,
+    "nameAr": "التكنولوجي العالي إدارة 10 بمرسى مطروح رمضان",
+    "governorateId": 15,
+    "type": "Institute"
+  },
+  {
+    "id": 360,
+    "nameAr": "تربية رياضية (علوم الرياضة بنات السويس المدينة العالي للإدارة والتكنولوجيا شبرامنت ش نظم معلومات إدارية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 361,
+    "nameAr": "167.5 العالي تسويق شعبة نظم تجمع أول",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 362,
+    "nameAr": "ك. ت. فني رى وصرف ومساحه قنا",
+    "governorateId": 22,
+    "type": "Institute"
+  },
+  {
+    "id": 363,
+    "nameAr": "معهد عالي تعاون زراعي وارشاد اسيوط بمصروفات",
+    "governorateId": 3,
+    "type": "Institute"
+  },
+  {
+    "id": 364,
+    "nameAr": "العالي للدراسات المتطورة بالقطامية",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 365,
+    "nameAr": "شعبة نظم معلومات إدارية معهد رايه العالي للادارة والتجاره الخارجية شعبة نظم معلومات",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 366,
+    "nameAr": "عالي دراسات متطورة بالقطامية شعبة تجارة ومحاسبة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 367,
+    "nameAr": "ك. ت. فني صناعي المطريه",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 368,
+    "nameAr": "ك.ت. فني صناعي الصحافة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 369,
+    "nameAr": "ك. ت. فني صناعي قويسنا",
+    "governorateId": 20,
+    "type": "Institute"
+  },
+  {
+    "id": 370,
+    "nameAr": "ك. ت. فني صناعي نجع حمادی بنین",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 371,
+    "nameAr": "الفني التجاري بشبرا",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 372,
+    "nameAr": "الفني التجاري بينها",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 373,
+    "nameAr": "النيل العالي للعلوم التجارية شعبة محاسبة منصورة",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 374,
+    "nameAr": "مصر العالي بالمنصورة تجارة وحاسبات ش إدارة ومحاسبة",
+    "governorateId": 7,
+    "type": "Institute"
+  },
+  {
+    "id": 375,
+    "nameAr": "العالي تسويق شعبة تسويق تجمع أول -",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 376,
+    "nameAr": "معهد اکتوبر العالي للهندسة والتكنولوجيا ادرة اعمال)",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 377,
+    "nameAr": "العالي حاسب وادارة ش نظم المعلومات - الإدارية الزرقا دمياط",
+    "governorateId": 8,
+    "type": "Institute"
+  },
+  {
+    "id": 378,
+    "nameAr": "العبور العالي ك 21 بطريق بلبيس شعبة اداره",
+    "governorateId": 20,
+    "type": "Institute"
+  },
+  {
+    "id": 379,
+    "nameAr": "عالي درسات نوعية بالجيزة قسم العلوم التجارية",
+    "governorateId": 3,
+    "type": "Institute"
+  },
+  {
+    "id": 380,
+    "nameAr": "160.0 160.0 العالي سياحة وفنادق الغردقة",
+    "governorateId": 23,
+    "type": "Institute"
+  },
+  {
+    "id": 381,
+    "nameAr": "ك. ت. فني صناعي شبرا",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 382,
+    "nameAr": "الاكاديمية الدولية للهندسة وعلوم شعبة ادارة الاعمال) الاعلام",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 383,
+    "nameAr": "التكنولوجي العالي للسياحة بالمنيا شعبة سياحه والفنادق",
+    "governorateId": 15,
+    "type": "Institute"
+  },
+  {
+    "id": 384,
+    "nameAr": "المعهد العالي لتكنولوجيا النقل وردان - الجيزة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 385,
+    "nameAr": "ش مطاعم فني سياحة قنا",
+    "governorateId": 22,
+    "type": "Institute"
+  },
+  {
+    "id": 386,
+    "nameAr": "العالي النوعية سياحة وفنادق وإرشاد السياحي مصر جديده",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 387,
+    "nameAr": "المعهد العالي للسياحة والفنادق بمدينة بدر",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 388,
+    "nameAr": "المعهد التكنولوجي العالي ببني سويف",
+    "governorateId": 5,
+    "type": "Institute"
+  },
+  {
+    "id": 389,
+    "nameAr": "التكنولوجي العالي 10 أعمال رمضان إدارة",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 390,
+    "nameAr": "معهد عالي سياحة وفنادق كنج مربوط",
+    "governorateId": 6,
+    "type": "Institute"
+  },
+  {
+    "id": 391,
+    "nameAr": "المعهد العالي لنظم التجارة الالكترونيه سوهاج ( شعبة نظم + شعبة التجارة الالكترونية ))",
+    "governorateId": 25,
+    "type": "Institute"
+  },
+  {
+    "id": 392,
+    "nameAr": "ك. ت. فني صناعي قنا",
+    "governorateId": 22,
+    "type": "Institute"
+  },
+  {
+    "id": 393,
+    "nameAr": "ك.ت. فني صناعي المحلة الكبرى",
+    "governorateId": 10,
+    "type": "Institute"
+  },
+  {
+    "id": 394,
+    "nameAr": "ك. ت. فني صناعى بئر العبد شمال سيناء",
+    "governorateId": 19,
+    "type": "Institute"
+  },
+  {
+    "id": 395,
+    "nameAr": "معهد الألسن العالي شعبة سياحه وفنادق مدينة نصر",
+    "governorateId": 6,
+    "type": "Institute"
+  }
+]

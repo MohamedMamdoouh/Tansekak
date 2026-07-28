@@ -1,0 +1,17 @@
+{
+  "dotnet.defaultSolution": "Tansekak.sln",
+  "files.associations": {
+    ".dockerignore": "ignore"
+  },
+  "dotnetAcquisitionExtension.sharedExistingDotnetPath": "C:\\Program Files\\dotnet\\dotnet.exe",
+  "dotnetAcquisitionExtension.existingDotnetPath": [
+    {
+      "extensionId": "anysphere.csharp",
+      "path": "C:\\Program Files\\dotnet\\dotnet.exe"
+    },
+    {
+      "extensionId": "ms-dotnettools.csharp",
+      "path": "C:\\Program Files\\dotnet\\dotnet.exe"
+    }
+  ]
+}
