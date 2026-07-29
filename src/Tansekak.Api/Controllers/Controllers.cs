@@ -310,10 +310,12 @@ public class ThanaweyaResultsController(IStudentResultService studentResultServi
 [ApiController]
 [Route("api/admin/admission-years/{yearId:int}/import-results")]
 [Authorize(Roles = "Administrator")]
-public class StudentResultImportController(StudentResultImportJobQueue jobQueue) : ControllerBase
+public class StudentResultImportController(
+    StudentResultImportJobQueue jobQueue,
+    ChunkedUploadSessionStore uploadSessions) : ControllerBase
 {
     [HttpPost]
-    [RequestSizeLimit(104_857_600)]
+    [RequestSizeLimit(ChunkedUploadSessionStore.MaxFileSizeBytes)]
     public async Task<ActionResult<ApiResponse<ImportJobStartedDto>>> Import(int yearId, IFormFile file, CancellationToken ct)
     {
         if (file is null || file.Length == 0)
@@ -331,6 +333,60 @@ public class StudentResultImportController(StudentResultImportJobQueue jobQueue)
         return Accepted(ApiResponse<ImportJobStartedDto>.Ok(
             new ImportJobStartedDto(job.JobId, job.Status),
             "Import started. Poll /api/admin/import-jobs/{jobId} for status."));
+    }
+
+    [HttpPost("sessions")]
+    public ActionResult<ApiResponse<ImportUploadSessionDto>> CreateUploadSession(
+        int yearId,
+        [FromBody] CreateImportUploadSessionDto dto)
+    {
+        try
+        {
+            var session = uploadSessions.CreateSession(yearId, dto.FileName, dto.TotalSize, dto.TotalChunks);
+            return Ok(ApiResponse<ImportUploadSessionDto>.Ok(session, "Upload session created."));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ApiResponse<ImportUploadSessionDto>.Fail(ex.Message));
+        }
+    }
+}
+
+[ApiController]
+[Route("api/admin/import-uploads")]
+[Authorize(Roles = "Administrator")]
+public class ImportUploadsController(ChunkedUploadSessionStore uploadSessions) : ControllerBase
+{
+    [HttpPut("{uploadId:guid}/chunks/{chunkIndex:int}")]
+    [RequestSizeLimit(ChunkedUploadSessionStore.ChunkSizeBytes + 1_048_576)]
+    public async Task<IActionResult> UploadChunk(Guid uploadId, int chunkIndex, CancellationToken ct)
+    {
+        if (!uploadSessions.TrySaveChunk(uploadId, chunkIndex, Request.Body, out var error))
+            return BadRequest(ApiResponse<object>.Fail(error ?? "Failed to save chunk."));
+
+        await Task.CompletedTask;
+        return NoContent();
+    }
+
+    [HttpPost("{uploadId:guid}/complete")]
+    public ActionResult<ApiResponse<ImportJobStartedDto>> CompleteUpload(Guid uploadId)
+    {
+        var job = uploadSessions.TryCompleteSession(uploadId, out var error);
+        if (job is null)
+            return BadRequest(ApiResponse<ImportJobStartedDto>.Fail(error ?? "Failed to complete upload."));
+
+        return Accepted(ApiResponse<ImportJobStartedDto>.Ok(
+            new ImportJobStartedDto(job.JobId, job.Status),
+            "Import started. Poll /api/admin/import-jobs/{jobId} for status."));
+    }
+
+    [HttpDelete("{uploadId:guid}")]
+    public IActionResult AbortUpload(Guid uploadId)
+    {
+        if (!uploadSessions.TryAbortSession(uploadId))
+            return NotFound(ApiResponse<object>.Fail("Upload session not found."));
+
+        return NoContent();
     }
 }
 

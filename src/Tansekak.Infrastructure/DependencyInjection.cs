@@ -60,6 +60,7 @@ public static class DependencyInjection
         services.AddScoped<IStudentResultService, StudentResultService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddSingleton<StudentResultImportJobQueue>();
+        services.AddSingleton<ChunkedUploadSessionStore>();
 
         return services;
     }

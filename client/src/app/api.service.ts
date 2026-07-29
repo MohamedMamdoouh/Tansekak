@@ -256,14 +256,7 @@ export class ApiService {
     onProgress: (progress: ImportUploadProgress) => void,
     signal?: AbortSignal,
   ): Promise<ImportResult> {
-    const form = new FormData();
-    form.append('file', file);
-    return uploadStudentResultsImport(
-      `/api/admin/admission-years/${yearId}/import-results`,
-      form,
-      onProgress,
-      signal,
-    );
+    return uploadStudentResultsImport(yearId, file, onProgress, signal);
   }
 }
 

@@ -79,6 +79,9 @@ public record ImportResultDto(bool Success, string Message, int? ImportedCount =
 public record ImportJobStartedDto(Guid JobId, string Status);
 public record ImportJobStatusDto(Guid JobId, string Status, ImportResultDto? Result, string? Message);
 
+public record CreateImportUploadSessionDto(string FileName, long TotalSize, int TotalChunks);
+public record ImportUploadSessionDto(Guid UploadId, int ChunkSizeBytes);
+
 public record StudentResultDto(
     string SeatingNo,
     string ArabicName,

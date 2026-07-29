@@ -96,6 +96,11 @@ export interface ImportJobStarted {
   status: string;
 }
 
+export interface ImportUploadSession {
+  uploadId: string;
+  chunkSizeBytes: number;
+}
+
 export interface ImportJobStatus {
   jobId: string;
   status: string;
