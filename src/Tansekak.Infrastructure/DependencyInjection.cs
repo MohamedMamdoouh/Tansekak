@@ -57,6 +57,7 @@ public static class DependencyInjection
         services.AddScoped<IAdmissionCutoffService, AdmissionCutoffService>();
         services.AddScoped<IImportService, ImportService>();
         services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IStudentResultService, StudentResultService>();
 
         return services;
     }

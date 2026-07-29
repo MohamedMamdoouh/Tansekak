@@ -73,5 +73,12 @@ public record DashboardDto(
     int StudentResultsCount,
     int? CurrentYear);
 
+public record StudentResultDto(
+    string SeatingNo,
+    string ArabicName,
+    decimal TotalDegree,
+    string StudentCaseDesc,
+    int Year);
+
 public record ImportValidationErrorDto(int RowNumber, string Column, string ErrorCode, string Message);
 public record ImportResultDto(bool Success, string Message, int? ImportedCount = null, IReadOnlyList<ImportValidationErrorDto>? Errors = null);

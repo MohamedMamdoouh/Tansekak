@@ -89,3 +89,29 @@ public class DashboardService(AppDbContext db) : IDashboardService
             currentYear);
     }
 }
+
+public class StudentResultService(AppDbContext db) : IStudentResultService
+{
+    public async Task<StudentResultDto?> GetBySeatingNoAsync(string seatingNo, CancellationToken cancellationToken = default)
+    {
+        var normalized = seatingNo.Trim();
+        if (string.IsNullOrEmpty(normalized))
+            return null;
+
+        var currentYear = await db.AdmissionYears.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.IsCurrent, cancellationToken)
+            ?? throw new InvalidOperationException("No current admission year configured.");
+
+        var result = await db.StudentResults.AsNoTracking()
+            .Where(x => x.AdmissionYearId == currentYear.Id && x.SeatingNo == normalized)
+            .Select(x => new StudentResultDto(
+                x.SeatingNo,
+                x.ArabicName,
+                x.TotalDegree,
+                x.StudentCaseDesc,
+                currentYear.Year))
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return result;
+    }
+}

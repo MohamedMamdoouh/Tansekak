@@ -73,6 +73,11 @@ public interface IDashboardService
     Task<DashboardDto> GetDashboardAsync(CancellationToken cancellationToken = default);
 }
 
+public interface IStudentResultService
+{
+    Task<StudentResultDto?> GetBySeatingNoAsync(string seatingNo, CancellationToken cancellationToken = default);
+}
+
 public interface IDataSeeder
 {
     Task SeedAsync(CancellationToken cancellationToken = default);

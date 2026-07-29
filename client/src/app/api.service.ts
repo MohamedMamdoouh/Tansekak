@@ -19,6 +19,7 @@ import {
   PagedCutoffs,
   PredictRequest,
   PredictResponse,
+  StudentResult,
   UniversityFaculty,
 } from './models';
 
@@ -36,6 +37,14 @@ export class ApiService {
     return this.http
       .post<ApiResponse<PredictResponse>>('/api/admission/predict', body)
       .pipe(map((r) => this.normalizePredictResponse(r.data)));
+  }
+
+  getThanaweyaResult(seatingNo: string): Observable<StudentResult> {
+    return this.http
+      .get<ApiResponse<StudentResult>>(
+        `/api/thanaweya-results/${encodeURIComponent(seatingNo)}`,
+      )
+      .pipe(map((r) => r.data));
   }
 
   private normalizePredictResponse(

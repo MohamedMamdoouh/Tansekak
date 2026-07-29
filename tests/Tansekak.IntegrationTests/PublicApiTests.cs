@@ -1,15 +1,20 @@
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Tansekak.Domain.Entities;
+using Tansekak.Infrastructure.Persistence;
 
 namespace Tansekak.IntegrationTests;
 
 public class PublicApiTests : IClassFixture<TansekakWebApplicationFactory>
 {
     private readonly HttpClient _client;
+    private readonly TansekakWebApplicationFactory _factory;
 
     public PublicApiTests(TansekakWebApplicationFactory factory)
     {
+        _factory = factory;
         _client = factory.CreateClient(new WebApplicationFactoryClientOptions
         {
             AllowAutoRedirect = false
@@ -81,7 +86,53 @@ public class PublicApiTests : IClassFixture<TansekakWebApplicationFactory>
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    [Fact]
+    public async Task ThanaweyaResult_ReturnsNotFound_WhenMissing()
+    {
+        var response = await _client.GetAsync("/api/thanaweya-results/0000000");
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ThanaweyaResult_ReturnsResult_WhenExists()
+    {
+        const string seatingNo = "9876543";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var currentYear = db.AdmissionYears.Single(x => x.IsCurrent);
+            db.StudentResults.Add(new StudentResult
+            {
+                AdmissionYearId = currentYear.Id,
+                SeatingNo = seatingNo,
+                ArabicName = "محمد أحمد",
+                TotalDegree = 295.5m,
+                StudentCaseDesc = "ناجح"
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var response = await _client.GetAsync($"/api/thanaweya-results/{seatingNo}");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var json = await response.Content.ReadFromJsonAsync<ApiEnvelope<StudentResultData>>();
+        Assert.NotNull(json);
+        Assert.True(json!.Success);
+        Assert.Equal(seatingNo, json.Data!.SeatingNo);
+        Assert.Equal("محمد أحمد", json.Data.ArabicName);
+        Assert.Equal(295.5m, json.Data.TotalDegree);
+        Assert.Equal("ناجح", json.Data.StudentCaseDesc);
+        Assert.Equal(2025, json.Data.Year);
+    }
+
     private record ApiEnvelope<T>(bool Success, T? Data);
     private record ConfigData(string AppName, int CurrentYear, decimal MaximumScore);
     private record PredictData(object[] Results, bool HasMore, int TotalCount);
+    private record StudentResultData(
+        string SeatingNo,
+        string ArabicName,
+        decimal TotalDegree,
+        string StudentCaseDesc,
+        int Year);
 }

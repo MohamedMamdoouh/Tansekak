@@ -35,6 +35,20 @@ public class AdmissionController(IAdmissionPredictionService predictionService) 
 }
 
 [ApiController]
+[Route("api/thanaweya-results")]
+public class ThanaweyaResultsController(IStudentResultService service) : ControllerBase
+{
+    [HttpGet("{seatingNo}")]
+    public async Task<ActionResult<ApiResponse<StudentResultDto>>> Get(string seatingNo, CancellationToken ct)
+    {
+        var result = await service.GetBySeatingNoAsync(seatingNo, ct);
+        return result is null
+            ? NotFound(ApiResponse<StudentResultDto>.Fail("لم يتم العثور على نتيجة لهذا الرقم."))
+            : Ok(ApiResponse<StudentResultDto>.Ok(result));
+    }
+}
+
+[ApiController]
 [Route("api/admin/auth")]
 public class AuthController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager) : ControllerBase
 {

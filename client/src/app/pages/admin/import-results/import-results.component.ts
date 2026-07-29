@@ -5,7 +5,7 @@ import { ApiService } from '../../../api.service';
 import { AdmissionYear } from '../../../models';
 
 const IMPORT_UNAVAILABLE_MESSAGE =
-  'خدمة الاستيراد غير متاحة حالياً. حاول مرة أخرى لاحقاً.';
+  'خدمة الاستيراد غير متاحة حاليًا. حاول مرة أخرى لاحقًا.';
 
 @Component({
   selector: 'app-admin-import-results',
@@ -88,7 +88,10 @@ export class AdminImportResultsComponent implements OnInit {
   years: AdmissionYear[] = [];
 
   form = this.fb.group({
-    yearId: [{ value: null as number | null, disabled: true }, Validators.required],
+    yearId: [
+      { value: null as number | null, disabled: true },
+      Validators.required,
+    ],
   });
 
   ngOnInit(): void {
