@@ -15,11 +15,19 @@ import { AuthService } from '../../../auth.service';
         <form [formGroup]="form" (ngSubmit)="submit()">
           <div class="form-group">
             <label>البريد الإلكتروني</label>
-            <input formControlName="email" type="email" />
+            <input
+              formControlName="email"
+              type="email"
+              autocomplete="username"
+            />
           </div>
           <div class="form-group">
             <label>كلمة المرور</label>
-            <input formControlName="password" type="password" />
+            <input
+              formControlName="password"
+              type="password"
+              autocomplete="current-password"
+            />
           </div>
           @if (error) { <div class="error">{{ error }}</div> }
           <button class="btn btn-primary" type="submit" [disabled]="form.invalid || loading">دخول</button>
@@ -37,8 +45,8 @@ export class AdminLoginComponent {
   loading = false;
   error = '';
   form = this.fb.group({
-    email: ['admin@tansekak.local', [Validators.required, Validators.email]],
-    password: ['Admin@12345', Validators.required]
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', Validators.required],
   });
 
   submit(): void {
