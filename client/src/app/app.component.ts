@@ -41,8 +41,7 @@ import { SocialLinksComponent } from './components/social-links/social-links.com
       <div class="container footer-inner">
         <p class="footer-tagline">تنسيقك — بوابتك لتوقع كليتك المثالية</p>
         <p class="footer-credit">
-          تم تصميم الموقع بواسطة
-          <a routerLink="/designer" class="footer-designer-link">{{ profile.name }}</a>
+          تم تصميم الموقع بواسطة {{ profile.name }}
         </p>
         <app-social-links [links]="profile.socialLinks" size="sm" />
       </div>
@@ -123,15 +122,6 @@ import { SocialLinksComponent } from './components/social-links/social-links.com
         margin: 0;
         font-size: 0.82rem;
         opacity: 0.65;
-      }
-      .footer-designer-link {
-        color: inherit;
-        text-decoration: underline;
-        text-underline-offset: 2px;
-        transition: opacity 0.15s ease;
-      }
-      .footer-designer-link:hover {
-        opacity: 1;
       }
     `,
   ],
