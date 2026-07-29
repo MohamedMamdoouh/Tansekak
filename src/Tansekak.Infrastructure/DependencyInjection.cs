@@ -59,6 +59,7 @@ public static class DependencyInjection
         services.AddScoped<IStudentResultImportService, StudentResultImportService>();
         services.AddScoped<IStudentResultService, StudentResultService>();
         services.AddScoped<IDashboardService, DashboardService>();
+        services.AddSingleton<StudentResultImportJobQueue>();
 
         return services;
     }

@@ -5,6 +5,7 @@ using Tansekak.Application.Common;
 using Tansekak.Application.DTOs;
 using Tansekak.Application.Interfaces;
 using Tansekak.Infrastructure.Identity;
+using Tansekak.Infrastructure.Services;
 
 namespace Tansekak.Api.Controllers;
 
@@ -309,37 +310,44 @@ public class ThanaweyaResultsController(IStudentResultService studentResultServi
 [ApiController]
 [Route("api/admin/admission-years/{yearId:int}/import-results")]
 [Authorize(Roles = "Administrator")]
-public class StudentResultImportController(IStudentResultImportService importService) : ControllerBase
+public class StudentResultImportController(StudentResultImportJobQueue jobQueue) : ControllerBase
 {
     [HttpPost]
     [RequestSizeLimit(104_857_600)]
-    public async Task<ActionResult<ApiResponse<ImportResultDto>>> Import(int yearId, IFormFile file, CancellationToken ct)
+    public async Task<ActionResult<ApiResponse<ImportJobStartedDto>>> Import(int yearId, IFormFile file, CancellationToken ct)
     {
         if (file is null || file.Length == 0)
-            return BadRequest(ApiResponse<ImportResultDto>.Fail("File is required."));
+            return BadRequest(ApiResponse<ImportJobStartedDto>.Fail("File is required."));
 
         var ext = Path.GetExtension(file.FileName);
         if (!ext.Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
-            return BadRequest(ApiResponse<ImportResultDto>.Fail("Only .xlsx files are supported."));
+            return BadRequest(ApiResponse<ImportJobStartedDto>.Fail("Only .xlsx files are supported."));
 
-        await using var stream = file.OpenReadStream();
-        var result = await importService.ImportAsync(yearId, stream, file.FileName, ct);
-        if (result.Success)
-            return Ok(ApiResponse<ImportResultDto>.Ok(result, result.Message));
+        var tempPath = Path.Combine(Path.GetTempPath(), $"tansekak-import-{Guid.NewGuid():N}.xlsx");
+        await using (var output = System.IO.File.Create(tempPath))
+            await file.CopyToAsync(output, ct);
 
-        return BadRequest(new ApiResponse<ImportResultDto>
-        {
-            Success = false,
-            Message = result.Message,
-            Data = result,
-            Errors = result.Errors?.Select(e => new ApiError
-            {
-                Field = e.Column,
-                Message = e.Message,
-                RowNumber = e.RowNumber,
-                ErrorCode = e.ErrorCode
-            }).ToList()
-        });
+        var job = jobQueue.Enqueue(yearId, tempPath, file.FileName);
+        return Accepted(ApiResponse<ImportJobStartedDto>.Ok(
+            new ImportJobStartedDto(job.JobId, job.Status),
+            "Import started. Poll /api/admin/import-jobs/{jobId} for status."));
+    }
+}
+
+[ApiController]
+[Route("api/admin/import-jobs")]
+[Authorize(Roles = "Administrator")]
+public class ImportJobsController(StudentResultImportJobQueue jobQueue) : ControllerBase
+{
+    [HttpGet("{jobId:guid}")]
+    public ActionResult<ApiResponse<ImportJobStatusDto>> Get(Guid jobId)
+    {
+        var job = jobQueue.GetJob(jobId);
+        if (job is null)
+            return NotFound(ApiResponse<ImportJobStatusDto>.Fail("Import job not found."));
+
+        return Ok(ApiResponse<ImportJobStatusDto>.Ok(
+            new ImportJobStatusDto(job.JobId, job.Status, job.Result, job.Message)));
     }
 }
 

@@ -91,6 +91,18 @@ export interface ImportResult {
   }[];
 }
 
+export interface ImportJobStarted {
+  jobId: string;
+  status: string;
+}
+
+export interface ImportJobStatus {
+  jobId: string;
+  status: string;
+  result?: ImportResult;
+  message?: string;
+}
+
 export interface StudentResult {
   seatingNo: string;
   arabicName: string;

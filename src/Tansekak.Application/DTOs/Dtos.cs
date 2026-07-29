@@ -76,6 +76,9 @@ public record DashboardDto(
 public record ImportValidationErrorDto(int RowNumber, string Column, string ErrorCode, string Message);
 public record ImportResultDto(bool Success, string Message, int? ImportedCount = null, IReadOnlyList<ImportValidationErrorDto>? Errors = null);
 
+public record ImportJobStartedDto(Guid JobId, string Status);
+public record ImportJobStatusDto(Guid JobId, string Status, ImportResultDto? Result, string? Message);
+
 public record StudentResultDto(
     string SeatingNo,
     string ArabicName,

@@ -6,6 +6,7 @@ import {
   ImportUploadError,
   ImportUploadProgress,
   uploadImportFile,
+  uploadStudentResultsImport,
 } from './import-file-upload';
 import {
   AdmissionCutoff,
@@ -257,7 +258,7 @@ export class ApiService {
   ): Promise<ImportResult> {
     const form = new FormData();
     form.append('file', file);
-    return uploadImportFile(
+    return uploadStudentResultsImport(
       `/api/admin/admission-years/${yearId}/import-results`,
       form,
       onProgress,
