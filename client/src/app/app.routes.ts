@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LandingComponent } from './pages/landing/landing.component';
 import { PredictComponent } from './pages/predict/predict.component';
 import { GuideComponent } from './pages/guide/guide.component';
+import { DesignerComponent } from './pages/designer/designer.component';
 import { ResultsComponent } from './pages/results/results.component';
 import { ThanaweyaResultComponent } from './pages/thanaweya-result/thanaweya-result.component';
 import { AdminLoginComponent } from './pages/admin/login/login.component';
@@ -18,6 +19,7 @@ export const routes: Routes = [
   { path: 'predict', component: PredictComponent },
   { path: 'thanaweya-result', component: ThanaweyaResultComponent },
   { path: 'guide', component: GuideComponent },
+  { path: 'designer', component: DesignerComponent },
   { path: 'results', component: ResultsComponent },
   { path: 'admin/login', component: AdminLoginComponent },
   {

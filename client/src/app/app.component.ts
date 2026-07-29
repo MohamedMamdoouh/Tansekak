@@ -1,11 +1,13 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from './auth.service';
+import { PROFILE } from './profile.config';
+import { SocialLinksComponent } from './components/social-links/social-links.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, SocialLinksComponent],
   template: `
     <header class="header">
       <div class="container header-inner">
@@ -22,6 +24,7 @@ import { AuthService } from './auth.service';
             >نتيجة الثانوية</a
           >
           <a routerLink="/guide" routerLinkActive="active">افهم التنسيق</a>
+          <a routerLink="/designer" routerLinkActive="active">المطور</a>
           @if (auth.isAdmin()) {
             <a routerLink="/admin" routerLinkActive="active">لوحة التحكم</a>
             <button type="button" class="nav-btn" (click)="auth.logoutAndRedirect(true)">
@@ -37,7 +40,11 @@ import { AuthService } from './auth.service';
     <footer class="footer">
       <div class="container footer-inner">
         <p class="footer-tagline">تنسيقك — بوابتك لتوقع كليتك المثالية</p>
-        <p class="footer-credit">تم تصميم الموقع بواسطة محمد ممدوح</p>
+        <p class="footer-credit">
+          تم تصميم الموقع بواسطة
+          <a routerLink="/designer" class="footer-designer-link">{{ profile.name }}</a>
+        </p>
+        <app-social-links [links]="profile.socialLinks" size="sm" />
       </div>
     </footer>
   `,
@@ -117,11 +124,21 @@ import { AuthService } from './auth.service';
         font-size: 0.82rem;
         opacity: 0.65;
       }
+      .footer-designer-link {
+        color: inherit;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        transition: opacity 0.15s ease;
+      }
+      .footer-designer-link:hover {
+        opacity: 1;
+      }
     `,
   ],
 })
 export class AppComponent implements OnInit {
   auth = inject(AuthService);
+  profile = PROFILE;
 
   ngOnInit(): void {
     this.auth.loadSession().subscribe();
