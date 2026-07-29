@@ -184,7 +184,7 @@ export class AdminImportResultsComponent implements OnInit {
         this.result = err.error?.data ?? null;
         this.message =
           err.status === 0
-            ? 'انقطع الاتصال بالخادم أثناء الاستيراد. الملف قد يكون كبيراً — انتظر دقيقة ثم حاول مرة أخرى بعد إعادة تشغيل الـ API.'
+            ? 'انقطع الاتصال بالخادم أثناء الاستيراد. الملف قد يكون كبيرا — انتظر دقيقة ثم حاول مرة أخرى بعد إعادة تشغيل الـ API.'
             : (err.error?.message ?? 'فشل الاستيراد.');
         this.uploading = false;
         this.importUpload.finish();

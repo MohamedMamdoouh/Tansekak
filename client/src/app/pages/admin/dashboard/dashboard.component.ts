@@ -388,7 +388,7 @@ export class AdminDashboardComponent implements OnInit {
         this.data = null;
         this.loadError =
           err.status === 401
-            ? 'انتهت الجلسة. سجّل الدخول مرة أخرى.'
+            ? 'انتهت الجلسة. سجل الدخول مرة أخرى.'
             : (err.error?.message ?? 'تعذر تحميل بيانات لوحة الإدارة.');
       },
     });

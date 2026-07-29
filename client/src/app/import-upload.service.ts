@@ -70,6 +70,6 @@ export class ImportUploadService {
     if (this.phase() === 'processing') {
       return 'جاري المعالجة على الخادم...';
     }
-    return `جاري رفع الملف... ${this.progress()}%`;
+    return '';
   }
 }

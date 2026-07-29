@@ -499,7 +499,7 @@ export class AdminCutoffsComponent implements OnInit {
           this.totalCount = 0;
           this.loadError =
             err.status === 401
-              ? 'انتهت الجلسة. سجّل الدخول مرة أخرى.'
+              ? 'انتهت الجلسة. سجل الدخول مرة أخرى.'
               : (err.error?.message ?? 'تعذر تحميل السجلات.');
         },
       });

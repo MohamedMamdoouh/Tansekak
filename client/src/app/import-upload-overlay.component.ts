@@ -31,9 +31,11 @@ import { ImportUploadService } from './import-upload.service';
         </div>
 
         <h2 id="upload-title" class="upload-title">جاري استيراد البيانات</h2>
-        <p id="upload-desc" class="upload-desc">
-          {{ upload.statusLabel() }}
-        </p>
+        @if (upload.statusLabel()) {
+          <p id="upload-desc" class="upload-desc">
+            {{ upload.statusLabel() }}
+          </p>
+        }
 
         <div class="upload-progress-track" aria-hidden="true">
           <div
@@ -46,7 +48,7 @@ import { ImportUploadService } from './import-upload.service';
         <div class="upload-percent">{{ upload.progress() }}%</div>
 
         <p class="upload-warning">
-          لا تغلق هذه الصفحة ولا تحدّثها حتى ينتهي الاستيراد.
+          لا تغلق هذه الصفحة ولا تحدثها حتى ينتهي الاستيراد.
         </p>
 
         <button
@@ -72,7 +74,7 @@ import { ImportUploadService } from './import-upload.service';
         <div class="leave-icon-wrap" aria-hidden="true">⚠️</div>
         <h3 id="leave-title" class="leave-title">إيقاف الاستيراد؟</h3>
         <p id="leave-desc" class="leave-desc">
-          لو غادرت الصفحة أو حدّثتها الآن، سيتوقف رفع الملف ولن تكتمل
+          لو غادرت الصفحة أو حدثتها الآن، سيتوقف رفع الملف ولن تكتمل
           العملية.
         </p>
 

@@ -79,7 +79,7 @@ import { AdmissionResult, PredictResponse, TRACK_LABELS } from '../../models';
 
       @if (search.trim() && hasMoreToLoad()) {
         <p class="search-note">
-          البحث حاليًا على {{ allResults.length }} كلية محمّلة فقط. اعرض كل
+          البحث حاليا على {{ allResults.length }} كلية محملة فقط. اعرض كل
           الكليات المتاحة للبحث في القائمة كاملة.
         </p>
       }
