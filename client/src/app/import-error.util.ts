@@ -82,7 +82,7 @@ export function importErrorMessage(
   response: ApiResponse<ImportResult> | null | undefined,
 ): string {
   if (status === 0) {
-    return 'انقطع الاتصال بالخادم اثناء الاستيراد. تحقق من اتصال الانترنت ثم حاول مرة اخرى.';
+    return 'انقطع الاتصال بالخادم اثناء الاستيراد. تحقق من اتصال الانترنت ثم حاول مرة أخرى.';
   }
 
   if (status === 403) {
@@ -94,7 +94,9 @@ export function importErrorMessage(
   }
 
   if (status === 503) {
-    return response?.message ?? 'الخدمة غير متاحة حالياً. حاول مرة أخرى لاحقاً.';
+    return (
+      response?.message ?? 'الخدمة غير متاحة حاليًا. حاول مرة أخرى لاحقًا.'
+    );
   }
 
   if (status === 502 || status === 504) {
@@ -102,7 +104,7 @@ export function importErrorMessage(
   }
 
   if (status === 401 || status === 403) {
-    return 'انتهت جلسة تسجيل الدخول. سجّل الدخول مرة اخرى ثم أعد المحاولة.';
+    return 'انتهت جلسة تسجيل الدخول. سجل الدخول مرة أخرى ثم أعد المحاولة.';
   }
 
   if (status >= 500) {
@@ -113,11 +115,11 @@ export function importErrorMessage(
   }
 
   if (response?.data?.errors?.length) {
-    return `فشل التحقق من الملف (${response.data.errors.length} خطأ). راجع الجدول بالاسفل.`;
+    return `فشل التحقق من الملف (${response.data.errors.length} خطأ). راجع الجدول بالأسفل.`;
   }
 
   if (response?.errors?.length) {
-    return `فشل التحقق من الملف (${response.errors.length} خطأ). راجع الجدول بالاسفل.`;
+    return `فشل التحقق من الملف (${response.errors.length} خطأ). راجع الجدول بالأسفل.`;
   }
 
   return response?.message ?? response?.data?.message ?? 'فشل الاستيراد.';

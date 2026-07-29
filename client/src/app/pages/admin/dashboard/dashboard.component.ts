@@ -125,7 +125,9 @@ interface StatCard {
                 <p>
                   رفع ملف Excel بنتائج الطلاب واستبدال بيانات السنة المختارة.
                 </p>
-                <p class="action-unavailable">حاول مرة أخرى لاحقًا.</p>
+                <p class="action-unavailable">
+                  خدمة استيراد نتائج الثانوية ليست متاحة حاليًا.
+                </p>
               </div>
               <span class="action-arrow" aria-hidden="true">←</span>
             </article>
@@ -139,6 +141,8 @@ interface StatCard {
       .dashboard {
         display: grid;
         gap: 1.5rem;
+        min-width: 0;
+        overflow-x: clip;
       }
 
       .hero-band {
@@ -156,6 +160,10 @@ interface StatCard {
         box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22);
       }
 
+      .hero-copy {
+        min-width: 0;
+      }
+
       @media (min-width: 768px) {
         .hero-band {
           grid-template-columns: 1fr auto;
@@ -166,8 +174,9 @@ interface StatCard {
       .hero-band h1 {
         font-family: var(--font-display);
         margin: 0;
-        font-size: clamp(1.5rem, 3vw, 2rem);
+        font-size: clamp(1.35rem, 3vw, 2rem);
         line-height: 1.35;
+        overflow-wrap: anywhere;
       }
 
       .year-anchor {
@@ -208,11 +217,12 @@ interface StatCard {
       .stats-grid {
         display: grid;
         gap: 1rem;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
       }
 
       .stat-card {
         padding: 1.25rem;
+        min-width: 0;
         border: 1px solid rgba(30, 58, 138, 0.06);
         transition:
           transform 0.2s ease,
@@ -238,6 +248,8 @@ interface StatCard {
         margin: 0;
         font-size: 0.98rem;
         color: var(--color-text);
+        line-height: 1.45;
+        overflow-wrap: anywhere;
       }
 
       .actions-title {
@@ -264,11 +276,16 @@ interface StatCard {
         gap: 1rem;
         align-items: center;
         padding: 1.25rem 1.35rem;
+        min-width: 0;
         border: 1px solid rgba(30, 58, 138, 0.08);
         transition:
           transform 0.2s ease,
           box-shadow 0.2s ease,
           border-color 0.2s ease;
+      }
+
+      .action-card > div {
+        min-width: 0;
       }
 
       .action-card:hover {
@@ -304,6 +321,7 @@ interface StatCard {
         color: var(--color-text-muted);
         font-size: 0.9rem;
         line-height: 1.6;
+        overflow-wrap: anywhere;
       }
 
       .action-unavailable {
@@ -333,7 +351,7 @@ interface StatCard {
       .loading-grid {
         display: grid;
         gap: 1rem;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
       }
 
       .skeleton-card {
@@ -384,14 +402,26 @@ interface StatCard {
         }
 
         .hero-band {
-          padding: 1.35rem 1.15rem;
+          padding: 1.25rem 1rem;
           border-radius: 16px;
+          gap: 1rem;
+          box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18);
+        }
+
+        .hero-band h1 {
+          font-size: clamp(1.2rem, 5.5vw, 1.45rem);
+          text-align: center;
         }
 
         .year-anchor {
           width: 100%;
           min-width: 0;
-          padding: 1rem 1.15rem;
+          padding: 0.9rem 1rem;
+          border-radius: 14px;
+        }
+
+        .year-anchor-value {
+          font-size: clamp(2rem, 10vw, 2.75rem);
         }
 
         .year-anchor--empty {
@@ -399,27 +429,46 @@ interface StatCard {
           justify-items: center;
         }
 
-        .stats-grid {
-          grid-template-columns: repeat(2, 1fr);
+        .stats-grid,
+        .loading-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 0.75rem;
         }
 
         .stat-card {
-          padding: 1rem;
+          padding: 0.9rem 0.85rem;
+        }
+
+        .stat-value {
+          font-size: clamp(1.45rem, 6vw, 1.75rem);
+          margin-bottom: 0.4rem;
         }
 
         .stat-label {
-          font-size: 0.88rem;
+          font-size: 0.82rem;
+        }
+
+        .skeleton-card {
+          height: 96px;
+        }
+
+        .actions-section {
+          min-width: 0;
         }
 
         .actions-title {
           font-size: 1.05rem;
+          margin-bottom: 0.85rem;
+        }
+
+        .actions-grid {
+          gap: 0.75rem;
         }
 
         .action-card {
-          grid-template-columns: auto 1fr;
-          grid-template-rows: auto auto;
-          padding: 1rem;
+          display: flex;
+          align-items: flex-start;
+          padding: 0.95rem;
           gap: 0.75rem;
         }
 
@@ -428,23 +477,70 @@ interface StatCard {
         }
 
         .action-icon {
-          width: 42px;
-          height: 42px;
-          border-radius: 12px;
+          width: 40px;
+          height: 40px;
+          border-radius: 11px;
+          flex-shrink: 0;
+        }
+
+        .action-icon svg {
+          width: 20px;
+          height: 20px;
         }
 
         .action-card h3 {
-          font-size: 0.98rem;
+          font-size: 0.95rem;
+          line-height: 1.4;
+          overflow-wrap: anywhere;
         }
 
         .action-card p {
-          font-size: 0.85rem;
+          font-size: 0.84rem;
+          line-height: 1.55;
+        }
+
+        .error-panel {
+          padding: 1.75rem 1rem;
+        }
+
+        .error-panel h1 {
+          font-size: 1.15rem;
+        }
+
+        .error-panel .btn {
+          width: 100%;
         }
       }
 
-      @media (max-width: 380px) {
-        .stats-grid {
+      @media (max-width: 400px) {
+        .stats-grid,
+        .loading-grid {
           grid-template-columns: 1fr;
+        }
+
+        .stat-card {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.75rem;
+          padding: 0.85rem 1rem;
+        }
+
+        .stat-value {
+          margin-bottom: 0;
+          flex-shrink: 0;
+        }
+
+        .stat-label {
+          text-align: left;
+          font-size: 0.86rem;
+        }
+      }
+
+      @media (hover: none) {
+        .stat-card:hover,
+        .action-card:hover {
+          transform: none;
         }
       }
     `,

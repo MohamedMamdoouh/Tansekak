@@ -122,7 +122,7 @@
     "id": 18,
     "admissionYearId": 1,
     "universityFacultyId": 10,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 295.0
   },
   {
@@ -259,13 +259,6 @@
     "cutoffScore": 160.0
   },
   {
-    "id": 38,
-    "admissionYearId": 1,
-    "universityFacultyId": 23,
-    "track": "Literature",
-    "cutoffScore": 162.0
-  },
-  {
     "id": 39,
     "admissionYearId": 1,
     "universityFacultyId": 23,
@@ -332,7 +325,7 @@
     "id": 48,
     "admissionYearId": 1,
     "universityFacultyId": 28,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 290.5
   },
   {
@@ -644,13 +637,6 @@
     "cutoffScore": 174.0
   },
   {
-    "id": 93,
-    "admissionYearId": 1,
-    "universityFacultyId": 55,
-    "track": "Literature",
-    "cutoffScore": 183.0
-  },
-  {
     "id": 94,
     "admissionYearId": 1,
     "universityFacultyId": 56,
@@ -703,7 +689,7 @@
     "id": 101,
     "admissionYearId": 1,
     "universityFacultyId": 59,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 287.5
   },
   {
@@ -913,7 +899,7 @@
     "id": 131,
     "admissionYearId": 1,
     "universityFacultyId": 77,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 289.0
   },
   {
@@ -1109,7 +1095,7 @@
     "id": 159,
     "admissionYearId": 1,
     "universityFacultyId": 95,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 291.5
   },
   {
@@ -1314,13 +1300,6 @@
     "universityFacultyId": 114,
     "track": "Mathematics",
     "cutoffScore": 260.0
-  },
-  {
-    "id": 189,
-    "admissionYearId": 1,
-    "universityFacultyId": 114,
-    "track": "Science",
-    "cutoffScore": 288.5
   },
   {
     "id": 190,
@@ -1606,7 +1585,7 @@
     "id": 230,
     "admissionYearId": 1,
     "universityFacultyId": 138,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 296.0
   },
   {
@@ -1802,7 +1781,7 @@
     "id": 258,
     "admissionYearId": 1,
     "universityFacultyId": 157,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 291.0
   },
   {
@@ -1963,7 +1942,7 @@
     "id": 281,
     "admissionYearId": 1,
     "universityFacultyId": 171,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 293.5
   },
   {
@@ -2152,7 +2131,7 @@
     "id": 308,
     "admissionYearId": 1,
     "universityFacultyId": 187,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 289.5
   },
   {
@@ -2369,7 +2348,7 @@
     "id": 339,
     "admissionYearId": 1,
     "universityFacultyId": 204,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 290.0
   },
   {
@@ -2684,7 +2663,7 @@
     "id": 384,
     "admissionYearId": 1,
     "universityFacultyId": 228,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 292.0
   },
   {
@@ -2999,7 +2978,7 @@
     "id": 429,
     "admissionYearId": 1,
     "universityFacultyId": 254,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 296.0
   },
   {
@@ -3174,7 +3153,7 @@
     "id": 454,
     "admissionYearId": 1,
     "universityFacultyId": 270,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 274.0
   },
   {
@@ -3349,7 +3328,7 @@
     "id": 479,
     "admissionYearId": 1,
     "universityFacultyId": 285,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 290.5
   },
   {
@@ -3379,13 +3358,6 @@
     "universityFacultyId": 288,
     "track": "Science",
     "cutoffScore": 300.5
-  },
-  {
-    "id": 484,
-    "admissionYearId": 1,
-    "universityFacultyId": 289,
-    "track": "Mathematics",
-    "cutoffScore": 263.0
   },
   {
     "id": 485,
@@ -3538,7 +3510,7 @@
     "id": 506,
     "admissionYearId": 1,
     "universityFacultyId": 302,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 288.0
   },
   {
@@ -3727,7 +3699,7 @@
     "id": 533,
     "admissionYearId": 1,
     "universityFacultyId": 319,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 287.5
   },
   {
@@ -3808,13 +3780,6 @@
     "cutoffScore": 183.5
   },
   {
-    "id": 545,
-    "admissionYearId": 1,
-    "universityFacultyId": 328,
-    "track": "Literature",
-    "cutoffScore": 273.0
-  },
-  {
     "id": 546,
     "admissionYearId": 1,
     "universityFacultyId": 328,
@@ -3860,7 +3825,7 @@
     "id": 552,
     "admissionYearId": 1,
     "universityFacultyId": 331,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 293.0
   },
   {
@@ -4217,7 +4182,7 @@
     "id": 603,
     "admissionYearId": 1,
     "universityFacultyId": 362,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 293.0
   },
   {
@@ -4413,7 +4378,7 @@
     "id": 631,
     "admissionYearId": 1,
     "universityFacultyId": 380,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 293.5
   },
   {
@@ -4457,13 +4422,6 @@
     "universityFacultyId": 383,
     "track": "Science",
     "cutoffScore": 299.0
-  },
-  {
-    "id": 638,
-    "admissionYearId": 1,
-    "universityFacultyId": 384,
-    "track": "Mathematics",
-    "cutoffScore": 240.5
   },
   {
     "id": 639,
@@ -4609,7 +4567,7 @@
     "id": 659,
     "admissionYearId": 1,
     "universityFacultyId": 397,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 295.5
   },
   {
@@ -4819,7 +4777,7 @@
     "id": 689,
     "admissionYearId": 1,
     "universityFacultyId": 416,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 290.5
   },
   {
@@ -4980,7 +4938,7 @@
     "id": 712,
     "admissionYearId": 1,
     "universityFacultyId": 430,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 292.5
   },
   {
@@ -5169,7 +5127,7 @@
     "id": 739,
     "admissionYearId": 1,
     "universityFacultyId": 446,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 295.0
   },
   {
@@ -5264,13 +5222,6 @@
     "cutoffScore": 287.5
   },
   {
-    "id": 753,
-    "admissionYearId": 1,
-    "universityFacultyId": 455,
-    "track": "Literature",
-    "cutoffScore": 206.5
-  },
-  {
     "id": 754,
     "admissionYearId": 1,
     "universityFacultyId": 455,
@@ -5297,13 +5248,6 @@
     "universityFacultyId": 457,
     "track": "Science",
     "cutoffScore": 191.0
-  },
-  {
-    "id": 758,
-    "admissionYearId": 1,
-    "universityFacultyId": 458,
-    "track": "Literature",
-    "cutoffScore": 188.5
   },
   {
     "id": 759,
@@ -5355,13 +5299,6 @@
     "cutoffScore": 179.0
   },
   {
-    "id": 766,
-    "admissionYearId": 1,
-    "universityFacultyId": 462,
-    "track": "Literature",
-    "cutoffScore": 185.0
-  },
-  {
     "id": 767,
     "admissionYearId": 1,
     "universityFacultyId": 462,
@@ -5381,13 +5318,6 @@
     "universityFacultyId": 463,
     "track": "Science",
     "cutoffScore": 190.0
-  },
-  {
-    "id": 770,
-    "admissionYearId": 1,
-    "universityFacultyId": 464,
-    "track": "Literature",
-    "cutoffScore": 185.0
   },
   {
     "id": 771,
@@ -5425,13 +5355,6 @@
     "cutoffScore": 178.5
   },
   {
-    "id": 776,
-    "admissionYearId": 1,
-    "universityFacultyId": 467,
-    "track": "Literature",
-    "cutoffScore": 183.5
-  },
-  {
     "id": 777,
     "admissionYearId": 1,
     "universityFacultyId": 467,
@@ -5458,13 +5381,6 @@
     "universityFacultyId": 469,
     "track": "Literature",
     "cutoffScore": 183.5
-  },
-  {
-    "id": 781,
-    "admissionYearId": 1,
-    "universityFacultyId": 470,
-    "track": "Literature",
-    "cutoffScore": 183.0
   },
   {
     "id": 782,
@@ -5495,13 +5411,6 @@
     "cutoffScore": 167.5
   },
   {
-    "id": 786,
-    "admissionYearId": 1,
-    "universityFacultyId": 473,
-    "track": "Literature",
-    "cutoffScore": 182.0
-  },
-  {
     "id": 787,
     "admissionYearId": 1,
     "universityFacultyId": 473,
@@ -5523,25 +5432,11 @@
     "cutoffScore": 188.0
   },
   {
-    "id": 790,
-    "admissionYearId": 1,
-    "universityFacultyId": 475,
-    "track": "Literature",
-    "cutoffScore": 181.0
-  },
-  {
     "id": 791,
     "admissionYearId": 1,
     "universityFacultyId": 475,
     "track": "Science",
     "cutoffScore": 182.5
-  },
-  {
-    "id": 792,
-    "admissionYearId": 1,
-    "universityFacultyId": 476,
-    "track": "Literature",
-    "cutoffScore": 180.5
   },
   {
     "id": 793,
@@ -5551,25 +5446,11 @@
     "cutoffScore": 183.0
   },
   {
-    "id": 794,
-    "admissionYearId": 1,
-    "universityFacultyId": 477,
-    "track": "Literature",
-    "cutoffScore": 180.0
-  },
-  {
     "id": 795,
     "admissionYearId": 1,
     "universityFacultyId": 477,
     "track": "Science",
     "cutoffScore": 185.5
-  },
-  {
-    "id": 796,
-    "admissionYearId": 1,
-    "universityFacultyId": 478,
-    "track": "Literature",
-    "cutoffScore": 180.0
   },
   {
     "id": 797,
@@ -5733,13 +5614,6 @@
     "cutoffScore": 175.0
   },
   {
-    "id": 820,
-    "admissionYearId": 1,
-    "universityFacultyId": 490,
-    "track": "Literature",
-    "cutoffScore": 177.5
-  },
-  {
     "id": 821,
     "admissionYearId": 1,
     "universityFacultyId": 490,
@@ -5831,13 +5705,6 @@
     "cutoffScore": 174.5
   },
   {
-    "id": 834,
-    "admissionYearId": 1,
-    "universityFacultyId": 497,
-    "track": "Literature",
-    "cutoffScore": 176.5
-  },
-  {
     "id": 835,
     "admissionYearId": 1,
     "universityFacultyId": 497,
@@ -5857,13 +5724,6 @@
     "universityFacultyId": 498,
     "track": "Science",
     "cutoffScore": 177.0
-  },
-  {
-    "id": 838,
-    "admissionYearId": 1,
-    "universityFacultyId": 499,
-    "track": "Literature",
-    "cutoffScore": 176.5
   },
   {
     "id": 839,
@@ -5901,13 +5761,6 @@
     "cutoffScore": 171.5
   },
   {
-    "id": 844,
-    "admissionYearId": 1,
-    "universityFacultyId": 502,
-    "track": "Literature",
-    "cutoffScore": 175.5
-  },
-  {
     "id": 845,
     "admissionYearId": 1,
     "universityFacultyId": 502,
@@ -5943,25 +5796,11 @@
     "cutoffScore": 182.5
   },
   {
-    "id": 850,
-    "admissionYearId": 1,
-    "universityFacultyId": 505,
-    "track": "Literature",
-    "cutoffScore": 175.0
-  },
-  {
     "id": 851,
     "admissionYearId": 1,
     "universityFacultyId": 505,
     "track": "Science",
     "cutoffScore": 182.5
-  },
-  {
-    "id": 852,
-    "admissionYearId": 1,
-    "universityFacultyId": 506,
-    "track": "Literature",
-    "cutoffScore": 175.0
   },
   {
     "id": 853,
@@ -5985,32 +5824,11 @@
     "cutoffScore": 162.0
   },
   {
-    "id": 856,
-    "admissionYearId": 1,
-    "universityFacultyId": 508,
-    "track": "Literature",
-    "cutoffScore": 174.5
-  },
-  {
     "id": 857,
     "admissionYearId": 1,
     "universityFacultyId": 508,
     "track": "Science",
     "cutoffScore": 177.0
-  },
-  {
-    "id": 858,
-    "admissionYearId": 1,
-    "universityFacultyId": 509,
-    "track": "Literature",
-    "cutoffScore": 174.5
-  },
-  {
-    "id": 859,
-    "admissionYearId": 1,
-    "universityFacultyId": 510,
-    "track": "Literature",
-    "cutoffScore": 174.5
   },
   {
     "id": 860,
@@ -6034,25 +5852,11 @@
     "cutoffScore": 160.0
   },
   {
-    "id": 863,
-    "admissionYearId": 1,
-    "universityFacultyId": 512,
-    "track": "Literature",
-    "cutoffScore": 174.5
-  },
-  {
     "id": 864,
     "admissionYearId": 1,
     "universityFacultyId": 512,
     "track": "Science",
     "cutoffScore": 169.0
-  },
-  {
-    "id": 865,
-    "admissionYearId": 1,
-    "universityFacultyId": 513,
-    "track": "Literature",
-    "cutoffScore": 174.5
   },
   {
     "id": 866,
@@ -6074,13 +5878,6 @@
     "universityFacultyId": 514,
     "track": "Science",
     "cutoffScore": 160.0
-  },
-  {
-    "id": 869,
-    "admissionYearId": 1,
-    "universityFacultyId": 515,
-    "track": "Literature",
-    "cutoffScore": 174.5
   },
   {
     "id": 870,
@@ -6118,25 +5915,11 @@
     "cutoffScore": 160.0
   },
   {
-    "id": 875,
-    "admissionYearId": 1,
-    "universityFacultyId": 518,
-    "track": "Literature",
-    "cutoffScore": 174.0
-  },
-  {
     "id": 876,
     "admissionYearId": 1,
     "universityFacultyId": 518,
     "track": "Science",
     "cutoffScore": 179.5
-  },
-  {
-    "id": 877,
-    "admissionYearId": 1,
-    "universityFacultyId": 519,
-    "track": "Literature",
-    "cutoffScore": 174.0
   },
   {
     "id": 878,
@@ -6237,25 +6020,11 @@
     "cutoffScore": 176.5
   },
   {
-    "id": 892,
-    "admissionYearId": 1,
-    "universityFacultyId": 527,
-    "track": "Literature",
-    "cutoffScore": 173.0
-  },
-  {
     "id": 893,
     "admissionYearId": 1,
     "universityFacultyId": 527,
     "track": "Science",
     "cutoffScore": 174.5
-  },
-  {
-    "id": 894,
-    "admissionYearId": 1,
-    "universityFacultyId": 528,
-    "track": "Literature",
-    "cutoffScore": 173.0
   },
   {
     "id": 895,
@@ -6277,13 +6046,6 @@
     "universityFacultyId": 529,
     "track": "Science",
     "cutoffScore": 164.5
-  },
-  {
-    "id": 898,
-    "admissionYearId": 1,
-    "universityFacultyId": 530,
-    "track": "Literature",
-    "cutoffScore": 173.0
   },
   {
     "id": 899,
@@ -6370,20 +6132,6 @@
     "cutoffScore": 160.0
   },
   {
-    "id": 911,
-    "admissionYearId": 1,
-    "universityFacultyId": 538,
-    "track": "Literature",
-    "cutoffScore": 172.0
-  },
-  {
-    "id": 912,
-    "admissionYearId": 1,
-    "universityFacultyId": 539,
-    "track": "Literature",
-    "cutoffScore": 171.5
-  },
-  {
     "id": 913,
     "admissionYearId": 1,
     "universityFacultyId": 539,
@@ -6412,25 +6160,11 @@
     "cutoffScore": 160.0
   },
   {
-    "id": 917,
-    "admissionYearId": 1,
-    "universityFacultyId": 542,
-    "track": "Literature",
-    "cutoffScore": 171.0
-  },
-  {
     "id": 918,
     "admissionYearId": 1,
     "universityFacultyId": 542,
     "track": "Science",
     "cutoffScore": 160.0
-  },
-  {
-    "id": 919,
-    "admissionYearId": 1,
-    "universityFacultyId": 543,
-    "track": "Literature",
-    "cutoffScore": 170.5
   },
   {
     "id": 920,
@@ -6461,13 +6195,6 @@
     "cutoffScore": 170.0
   },
   {
-    "id": 924,
-    "admissionYearId": 1,
-    "universityFacultyId": 546,
-    "track": "Literature",
-    "cutoffScore": 170.0
-  },
-  {
     "id": 925,
     "admissionYearId": 1,
     "universityFacultyId": 546,
@@ -6487,27 +6214,6 @@
     "universityFacultyId": 547,
     "track": "Science",
     "cutoffScore": 165.0
-  },
-  {
-    "id": 928,
-    "admissionYearId": 1,
-    "universityFacultyId": 548,
-    "track": "Literature",
-    "cutoffScore": 169.5
-  },
-  {
-    "id": 929,
-    "admissionYearId": 1,
-    "universityFacultyId": 549,
-    "track": "Literature",
-    "cutoffScore": 169.5
-  },
-  {
-    "id": 930,
-    "admissionYearId": 1,
-    "universityFacultyId": 550,
-    "track": "Literature",
-    "cutoffScore": 169.0
   },
   {
     "id": 931,
@@ -6545,13 +6251,6 @@
     "cutoffScore": 160.0
   },
   {
-    "id": 936,
-    "admissionYearId": 1,
-    "universityFacultyId": 553,
-    "track": "Literature",
-    "cutoffScore": 168.5
-  },
-  {
     "id": 937,
     "admissionYearId": 1,
     "universityFacultyId": 553,
@@ -6573,13 +6272,6 @@
     "cutoffScore": 160.0
   },
   {
-    "id": 940,
-    "admissionYearId": 1,
-    "universityFacultyId": 555,
-    "track": "Literature",
-    "cutoffScore": 168.0
-  },
-  {
     "id": 941,
     "admissionYearId": 1,
     "universityFacultyId": 555,
@@ -6590,13 +6282,6 @@
     "id": 942,
     "admissionYearId": 1,
     "universityFacultyId": 556,
-    "track": "Literature",
-    "cutoffScore": 168.0
-  },
-  {
-    "id": 943,
-    "admissionYearId": 1,
-    "universityFacultyId": 557,
     "track": "Literature",
     "cutoffScore": 168.0
   },
@@ -6627,13 +6312,6 @@
     "universityFacultyId": 559,
     "track": "Science",
     "cutoffScore": 182.0
-  },
-  {
-    "id": 948,
-    "admissionYearId": 1,
-    "universityFacultyId": 560,
-    "track": "Literature",
-    "cutoffScore": 167.5
   },
   {
     "id": 949,
@@ -6727,25 +6405,11 @@
     "cutoffScore": 160.0
   },
   {
-    "id": 962,
-    "admissionYearId": 1,
-    "universityFacultyId": 567,
-    "track": "Literature",
-    "cutoffScore": 166.5
-  },
-  {
     "id": 963,
     "admissionYearId": 1,
     "universityFacultyId": 567,
     "track": "Science",
     "cutoffScore": 160.0
-  },
-  {
-    "id": 964,
-    "admissionYearId": 1,
-    "universityFacultyId": 568,
-    "track": "Literature",
-    "cutoffScore": 166.0
   },
   {
     "id": 965,
@@ -6818,13 +6482,6 @@
     "cutoffScore": 160.0
   },
   {
-    "id": 975,
-    "admissionYearId": 1,
-    "universityFacultyId": 574,
-    "track": "Literature",
-    "cutoffScore": 165.0
-  },
-  {
     "id": 976,
     "admissionYearId": 1,
     "universityFacultyId": 574,
@@ -6846,13 +6503,6 @@
     "cutoffScore": 160.0
   },
   {
-    "id": 979,
-    "admissionYearId": 1,
-    "universityFacultyId": 576,
-    "track": "Literature",
-    "cutoffScore": 164.5
-  },
-  {
     "id": 980,
     "admissionYearId": 1,
     "universityFacultyId": 576,
@@ -6872,13 +6522,6 @@
     "universityFacultyId": 577,
     "track": "Science",
     "cutoffScore": 160.0
-  },
-  {
-    "id": 983,
-    "admissionYearId": 1,
-    "universityFacultyId": 578,
-    "track": "Literature",
-    "cutoffScore": 164.5
   },
   {
     "id": 984,
@@ -7021,13 +6664,6 @@
     "cutoffScore": 160.0
   },
   {
-    "id": 1004,
-    "admissionYearId": 1,
-    "universityFacultyId": 590,
-    "track": "Literature",
-    "cutoffScore": 161.0
-  },
-  {
     "id": 1005,
     "admissionYearId": 1,
     "universityFacultyId": 590,
@@ -7066,13 +6702,6 @@
     "id": 1010,
     "admissionYearId": 1,
     "universityFacultyId": 593,
-    "track": "Literature",
-    "cutoffScore": 160.0
-  },
-  {
-    "id": 1011,
-    "admissionYearId": 1,
-    "universityFacultyId": 594,
     "track": "Literature",
     "cutoffScore": 160.0
   },
@@ -7119,13 +6748,6 @@
     "cutoffScore": 160.0
   },
   {
-    "id": 1018,
-    "admissionYearId": 1,
-    "universityFacultyId": 598,
-    "track": "Literature",
-    "cutoffScore": 160.0
-  },
-  {
     "id": 1019,
     "admissionYearId": 1,
     "universityFacultyId": 599,
@@ -7165,13 +6787,6 @@
     "admissionYearId": 1,
     "universityFacultyId": 601,
     "track": "Science",
-    "cutoffScore": 160.0
-  },
-  {
-    "id": 1025,
-    "admissionYearId": 1,
-    "universityFacultyId": 602,
-    "track": "Literature",
     "cutoffScore": 160.0
   },
   {
@@ -7469,13 +7084,6 @@
     "cutoffScore": 160.0
   },
   {
-    "id": 1068,
-    "admissionYearId": 1,
-    "universityFacultyId": 625,
-    "track": "Literature",
-    "cutoffScore": 160.0
-  },
-  {
     "id": 1069,
     "admissionYearId": 1,
     "universityFacultyId": 626,
@@ -7745,7 +7353,7 @@
     "id": 1107,
     "admissionYearId": 1,
     "universityFacultyId": 657,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 260.0
   },
   {
@@ -7766,7 +7374,7 @@
     "id": 1110,
     "admissionYearId": 1,
     "universityFacultyId": 660,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 259.0
   },
   {
@@ -7794,7 +7402,7 @@
     "id": 1114,
     "admissionYearId": 1,
     "universityFacultyId": 664,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 247.0
   },
   {
@@ -7822,7 +7430,7 @@
     "id": 1118,
     "admissionYearId": 1,
     "universityFacultyId": 668,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 243.5
   },
   {
@@ -7836,7 +7444,7 @@
     "id": 1120,
     "admissionYearId": 1,
     "universityFacultyId": 670,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 242.0
   },
   {
@@ -7885,7 +7493,7 @@
     "id": 1127,
     "admissionYearId": 1,
     "universityFacultyId": 677,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 236.0
   },
   {
@@ -7899,35 +7507,35 @@
     "id": 1129,
     "admissionYearId": 1,
     "universityFacultyId": 679,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 233.0
   },
   {
     "id": 1130,
     "admissionYearId": 1,
     "universityFacultyId": 680,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 232.0
   },
   {
     "id": 1131,
     "admissionYearId": 1,
     "universityFacultyId": 681,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 231.5
   },
   {
     "id": 1132,
     "admissionYearId": 1,
     "universityFacultyId": 682,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 231.0
   },
   {
     "id": 1133,
     "admissionYearId": 1,
     "universityFacultyId": 683,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 231.0
   },
   {
@@ -7955,7 +7563,7 @@
     "id": 1137,
     "admissionYearId": 1,
     "universityFacultyId": 687,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 229.0
   },
   {
@@ -7983,7 +7591,7 @@
     "id": 1141,
     "admissionYearId": 1,
     "universityFacultyId": 691,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 228.0
   },
   {
@@ -7997,7 +7605,7 @@
     "id": 1143,
     "admissionYearId": 1,
     "universityFacultyId": 693,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 227.5
   },
   {
@@ -8046,28 +7654,28 @@
     "id": 1150,
     "admissionYearId": 1,
     "universityFacultyId": 700,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 226.5
   },
   {
     "id": 1151,
     "admissionYearId": 1,
     "universityFacultyId": 701,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 226.5
   },
   {
     "id": 1152,
     "admissionYearId": 1,
     "universityFacultyId": 702,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 225.5
   },
   {
     "id": 1153,
     "admissionYearId": 1,
     "universityFacultyId": 703,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 225.5
   },
   {
@@ -8081,14 +7689,14 @@
     "id": 1155,
     "admissionYearId": 1,
     "universityFacultyId": 705,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 223.0
   },
   {
     "id": 1156,
     "admissionYearId": 1,
     "universityFacultyId": 706,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 222.5
   },
   {
@@ -8116,7 +7724,7 @@
     "id": 1160,
     "admissionYearId": 1,
     "universityFacultyId": 710,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 221.0
   },
   {
@@ -8130,14 +7738,14 @@
     "id": 1162,
     "admissionYearId": 1,
     "universityFacultyId": 712,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 220.5
   },
   {
     "id": 1163,
     "admissionYearId": 1,
     "universityFacultyId": 713,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 220.0
   },
   {
@@ -8151,14 +7759,14 @@
     "id": 1165,
     "admissionYearId": 1,
     "universityFacultyId": 715,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 220.0
   },
   {
     "id": 1166,
     "admissionYearId": 1,
     "universityFacultyId": 716,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 220.0
   },
   {
@@ -8172,21 +7780,21 @@
     "id": 1168,
     "admissionYearId": 1,
     "universityFacultyId": 718,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 220.0
   },
   {
     "id": 1169,
     "admissionYearId": 1,
     "universityFacultyId": 719,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 220.0
   },
   {
     "id": 1170,
     "admissionYearId": 1,
     "universityFacultyId": 720,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 220.0
   },
   {
@@ -8200,7 +7808,7 @@
     "id": 1172,
     "admissionYearId": 1,
     "universityFacultyId": 722,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 219.5
   },
   {
@@ -8221,7 +7829,7 @@
     "id": 1175,
     "admissionYearId": 1,
     "universityFacultyId": 725,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 218.5
   },
   {
@@ -8242,7 +7850,7 @@
     "id": 1178,
     "admissionYearId": 1,
     "universityFacultyId": 728,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 217.5
   },
   {
@@ -8256,7 +7864,7 @@
     "id": 1180,
     "admissionYearId": 1,
     "universityFacultyId": 730,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 217.5
   },
   {
@@ -8270,14 +7878,14 @@
     "id": 1182,
     "admissionYearId": 1,
     "universityFacultyId": 732,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 217.0
   },
   {
     "id": 1183,
     "admissionYearId": 1,
     "universityFacultyId": 733,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 216.5
   },
   {
@@ -8291,7 +7899,7 @@
     "id": 1185,
     "admissionYearId": 1,
     "universityFacultyId": 735,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 216.5
   },
   {
@@ -8305,7 +7913,7 @@
     "id": 1187,
     "admissionYearId": 1,
     "universityFacultyId": 737,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 215.0
   },
   {
@@ -8326,14 +7934,14 @@
     "id": 1190,
     "admissionYearId": 1,
     "universityFacultyId": 740,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 214.5
   },
   {
     "id": 1191,
     "admissionYearId": 1,
     "universityFacultyId": 741,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 214.0
   },
   {
@@ -8361,21 +7969,21 @@
     "id": 1195,
     "admissionYearId": 1,
     "universityFacultyId": 745,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 212.5
   },
   {
     "id": 1196,
     "admissionYearId": 1,
     "universityFacultyId": 746,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 212.0
   },
   {
     "id": 1197,
     "admissionYearId": 1,
     "universityFacultyId": 747,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 211.0
   },
   {
@@ -8760,7 +8368,7 @@
     "id": 1252,
     "admissionYearId": 1,
     "universityFacultyId": 802,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 160.0
   },
   {
@@ -8802,7 +8410,7 @@
     "id": 1258,
     "admissionYearId": 1,
     "universityFacultyId": 808,
-    "track": "Science",
+    "track": "Mathematics",
     "cutoffScore": 160.0
   },
   {

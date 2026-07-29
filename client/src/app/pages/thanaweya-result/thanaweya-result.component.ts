@@ -13,6 +13,7 @@ import {
 const NOT_FOUND_MESSAGE = 'لم يتم العثور على نتيجة لهذا الرقم.';
 const GENERIC_ERROR_MESSAGE =
   'حدث خطأ أثناء البحث. حاول مرة أخرى لاحقًا.';
+const THANAWEYA_MAX_SCORE = 320;
 
 @Component({
   selector: 'app-thanaweya-result',
@@ -90,10 +91,26 @@ const GENERIC_ERROR_MESSAGE =
           </div>
 
           <div class="student-result-body card">
-            <div class="student-result-score-ring" aria-label="المجموع الكلي">
+            <div
+              class="student-result-score-ring"
+              [attr.aria-label]="
+                'المجموع الكلي ' +
+                result.totalDegree +
+                ' من ' +
+                thanaweyaMaxScore +
+                '، النسبة ' +
+                resultPercentage(result.totalDegree) +
+                '%'
+              "
+            >
               <div class="score-ring-inner">
                 <span class="score-value">{{ result.totalDegree }}</span>
-                <span class="score-label">المجموع الكلي</span>
+                <span class="score-percentage"
+                  >{{ resultPercentage(result.totalDegree) }}%</span
+                >
+                <span class="score-label"
+                  >المجموع الكلي من {{ thanaweyaMaxScore }}</span
+                >
               </div>
             </div>
 
@@ -334,11 +351,21 @@ const GENERIC_ERROR_MESSAGE =
         color: var(--color-primary);
       }
 
+      .score-percentage {
+        margin-top: 0.2rem;
+        font-family: var(--font-display);
+        font-size: clamp(1rem, 3.5vw, 1.15rem);
+        font-weight: 700;
+        line-height: 1;
+        color: var(--color-accent);
+      }
+
       .score-label {
         margin-top: 0.35rem;
-        font-size: 0.82rem;
+        font-size: 0.78rem;
         font-weight: 600;
         color: var(--color-text-muted);
+        line-height: 1.35;
       }
 
       .student-result-meta {
@@ -432,6 +459,8 @@ export class ThanaweyaResultComponent {
   private fb = inject(FormBuilder);
   private api = inject(ApiService);
 
+  readonly thanaweyaMaxScore = THANAWEYA_MAX_SCORE;
+
   loading = false;
   error = '';
   result: StudentResult | null = null;
@@ -439,6 +468,10 @@ export class ThanaweyaResultComponent {
   form = this.fb.group({
     seatingNo: ['', [Validators.required, digitsOnlyValidator()]],
   });
+
+  resultPercentage(totalDegree: number): string {
+    return ((totalDegree / THANAWEYA_MAX_SCORE) * 100).toFixed(2);
+  }
 
   onSeatingInput(event: Event): void {
     applyDigitsOnlyInput(event, this.form.get('seatingNo'));
