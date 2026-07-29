@@ -310,8 +310,9 @@ All responses use the envelope `{ success, message, data, errors? }`.
 
 - File extension: `.xlsx`
 - Max size: 100 MB
-- Required columns (header row): `seating_no`, `arabic_name`, `total_degree`, `student_case_desc`
+- Required columns (header row): English `seating_no`, `arabic_name`, `total_degree`, `student_case_desc` **or** Arabic equivalents such as `رقم الجلوس`, `اسم الطالب`, `المجموع`, `حالة الطالب`
 - Imported for the selected admission year
+- Student totals are not capped at the admission cutoff maximum score
 
 ## Tests
 

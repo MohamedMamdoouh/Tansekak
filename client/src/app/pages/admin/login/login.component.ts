@@ -11,7 +11,7 @@ import { AuthService } from '../../../auth.service';
   template: `
     <div class="container">
       <div class="card login">
-        <h1>Tansekak — تسجيل الدخول</h1>
+        <h1>لوحة الإدارة — تسجيل الدخول</h1>
         <form [formGroup]="form" (ngSubmit)="submit()">
           <div class="form-group">
             <label>البريد الإلكتروني</label>
@@ -29,13 +29,21 @@ import { AuthService } from '../../../auth.service';
               autocomplete="current-password"
             />
           </div>
-          @if (error) { <div class="error">{{ error }}</div> }
-          <button class="btn btn-primary" type="submit" [disabled]="form.invalid || loading">دخول</button>
+          @if (error) {
+            <div class="error">{{ error }}</div>
+          }
+          <button
+            class="btn btn-primary"
+            type="submit"
+            [disabled]="form.invalid || loading"
+          >
+            دخول
+          </button>
         </form>
       </div>
     </div>
   `,
-  styles: ['.login { max-width: 420px; margin: 0 auto; }']
+  styles: ['.login { max-width: 420px; margin: 0 auto; }'],
 })
 export class AdminLoginComponent {
   private fb = inject(FormBuilder);
@@ -52,12 +60,14 @@ export class AdminLoginComponent {
   submit(): void {
     if (this.form.invalid) return;
     this.loading = true;
-    this.auth.login(this.form.value.email!, this.form.value.password!).subscribe({
-      next: () => this.router.navigate(['/admin']),
-      error: () => {
-        this.error = 'بيانات الدخول غير صحيحة.';
-        this.loading = false;
-      }
-    });
+    this.auth
+      .login(this.form.value.email!, this.form.value.password!)
+      .subscribe({
+        next: () => this.router.navigate(['/admin']),
+        error: () => {
+          this.error = 'بيانات الدخول غير صحيحة.';
+          this.loading = false;
+        },
+      });
   }
 }

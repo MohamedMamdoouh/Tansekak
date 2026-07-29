@@ -324,15 +324,22 @@ public class StudentResultImportController(IStudentResultImportService importSer
 
         await using var stream = file.OpenReadStream();
         var result = await importService.ImportAsync(yearId, stream, file.FileName, ct);
-        return result.Success
-            ? Ok(ApiResponse<ImportResultDto>.Ok(result, result.Message))
-            : BadRequest(ApiResponse<ImportResultDto>.Fail(result.Message, result.Errors?.Select(e => new ApiError
+        if (result.Success)
+            return Ok(ApiResponse<ImportResultDto>.Ok(result, result.Message));
+
+        return BadRequest(new ApiResponse<ImportResultDto>
+        {
+            Success = false,
+            Message = result.Message,
+            Data = result,
+            Errors = result.Errors?.Select(e => new ApiError
             {
                 Field = e.Column,
                 Message = e.Message,
                 RowNumber = e.RowNumber,
                 ErrorCode = e.ErrorCode
-            }).ToList()));
+            }).ToList()
+        });
     }
 }
 

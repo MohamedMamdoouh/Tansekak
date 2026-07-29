@@ -30,7 +30,7 @@ public class StudentResultImportService(AppDbContext db, ILogger<StudentResultIm
             return new ImportResultDto(false, "Validation failed.", Errors: parseErrors);
         }
 
-        var errors = ValidateRows(parsedRows, year);
+        var errors = ValidateRows(parsedRows);
         if (errors.Count > 0)
         {
             logger.LogWarning("Import validation failed for year {YearId} with {Count} errors.", yearId, errors.Count);
@@ -84,7 +84,7 @@ public class StudentResultImportService(AppDbContext db, ILogger<StudentResultIm
         }
     }
 
-    private static List<ImportValidationErrorDto> ValidateRows(List<ParsedStudentResultRow> rows, AdmissionYear year)
+    private static List<ImportValidationErrorDto> ValidateRows(List<ParsedStudentResultRow> rows)
     {
         var errors = new List<ImportValidationErrorDto>();
         var seen = new HashSet<string>();
@@ -93,8 +93,6 @@ public class StudentResultImportService(AppDbContext db, ILogger<StudentResultIm
         {
             if (row.TotalDegree < 0)
                 errors.Add(Err(row.RowNumber, "total_degree", "INVALID", "Total degree cannot be negative."));
-            else if (row.TotalDegree > year.MaximumScore)
-                errors.Add(Err(row.RowNumber, "total_degree", "INVALID", $"Total degree must not exceed {year.MaximumScore}."));
 
             if (!seen.Add(row.SeatingNo))
                 errors.Add(Err(row.RowNumber, "seating_no", "DUPLICATE", "Duplicate seating number in file."));

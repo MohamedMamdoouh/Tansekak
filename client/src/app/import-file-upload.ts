@@ -1,4 +1,5 @@
 import { ApiResponse, ImportResult } from './models';
+import { normalizeImportResult } from './import-error.util';
 
 export type ImportUploadPhase = 'uploading' | 'processing';
 
@@ -48,13 +49,13 @@ export function uploadImportFile(
 
       if (xhr.status >= 200 && xhr.status < 300) {
         const body = xhr.response as ApiResponse<ImportResult>;
-        resolve(body.data);
+        resolve(normalizeImportResult(body.data));
         return;
       }
 
       reject({
         status: xhr.status,
-        error: xhr.response as ApiResponse<ImportResult> | null,
+        error: parseJsonResponse(xhr),
       } satisfies ImportUploadError);
     });
 
@@ -68,4 +69,18 @@ export function uploadImportFile(
 
     xhr.send(formData);
   });
+}
+
+function parseJsonResponse(xhr: XMLHttpRequest): ApiResponse<ImportResult> | null {
+  if (xhr.response && typeof xhr.response === 'object') {
+    return xhr.response as ApiResponse<ImportResult>;
+  }
+
+  if (!xhr.responseText) return null;
+
+  try {
+    return JSON.parse(xhr.responseText) as ApiResponse<ImportResult>;
+  } catch {
+    return null;
+  }
 }

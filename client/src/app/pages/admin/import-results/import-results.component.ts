@@ -4,6 +4,11 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService, ImportUploadError } from '../../../api.service';
 import { ImportUploadService } from '../../../import-upload.service';
 import { AdmissionYear, ImportResult } from '../../../models';
+import {
+  importErrorMessage,
+  normalizeImportResult,
+  parseImportErrorResponse,
+} from '../../../import-error.util';
 
 @Component({
   selector: 'app-admin-import-results',
@@ -33,7 +38,9 @@ import { AdmissionYear, ImportResult } from '../../../models';
           </p>
 
           <p class="hint">
-            صيغة الملف: Excel (.xlsx) بأعمدة —
+            صيغة الملف: Excel (.xlsx). الأعمدة المطلوبة (عربي أو انجليزي):
+            <code>رقم الجلوس | اسم الطالب | المجموع | حالة الطالب</code>
+            أو
             <code
               >seating_no | arabic_name | total_degree | student_case_desc</code
             >
@@ -169,8 +176,8 @@ export class AdminImportResultsComponent implements OnInit {
         signal,
       )
       .then((res) => {
-        this.result = res;
-        this.message = res.message;
+        this.result = normalizeImportResult(res);
+        this.message = this.result.message;
         this.uploading = false;
         this.importUpload.finish();
       })
@@ -181,11 +188,8 @@ export class AdminImportResultsComponent implements OnInit {
           return;
         }
 
-        this.result = err.error?.data ?? null;
-        this.message =
-          err.status === 0
-            ? 'انقطع الاتصال بالخادم أثناء الاستيراد. الملف قد يكون كبيرا — انتظر دقيقة ثم حاول مرة أخرى بعد إعادة تشغيل الـ API.'
-            : (err.error?.message ?? 'فشل الاستيراد.');
+        this.result = parseImportErrorResponse(err.error);
+        this.message = importErrorMessage(err.status, err.error);
         this.uploading = false;
         this.importUpload.finish();
       });
