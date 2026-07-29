@@ -33,8 +33,7 @@ const SCORE_ARC_LENGTH = 339.292;
           <h1 class="lookup-title">نتيجة الثانوية برقم الجلوس</h1>
           @if (!result) {
             <p class="lookup-lead">
-              اكتب رقم جلوسك وشوف نتيجتك — وبعدها اعرف الكليات المتاحة
-              لمجموعك.
+              اكتب رقم جلوسك وشوف نتيجتك — وبعدها اعرف الكليات المتاحة لمجموعك.
             </p>
           }
         </div>
@@ -117,15 +116,25 @@ const SCORE_ARC_LENGTH = 339.292;
                 viewBox="0 0 120 120"
                 aria-hidden="true"
               >
+                <defs>
+                  <linearGradient
+                    id="scoreArcGradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stop-color="#fbbf24" />
+                    <stop offset="100%" stop-color="#d97706" />
+                  </linearGradient>
+                </defs>
                 <circle class="score-gauge-track" cx="60" cy="60" r="54" />
                 <circle
                   class="score-gauge-fill"
                   cx="60"
                   cy="60"
                   r="54"
-                  [style.stroke-dashoffset]="
-                    scoreArcOffset(result.totalDegree)
-                  "
+                  [style.stroke-dashoffset]="scoreArcOffset(result.totalDegree)"
                 />
               </svg>
               <div class="score-gauge-content">
@@ -202,96 +211,97 @@ const SCORE_ARC_LENGTH = 339.292;
   styles: [
     `
       .thanaweya-page {
-        padding-bottom: 2.5rem;
+        max-width: 520px;
+        margin-inline: auto;
+        padding-bottom: 3rem;
       }
 
-      /* ── Lookup stage ── */
+      .thanaweya-page .breadcrumb {
+        margin-bottom: 1.25rem;
+      }
+
+      /* ── Lookup ── */
       .lookup-stage {
-        position: relative;
         display: grid;
-        gap: 1.5rem;
+        gap: 1.35rem;
         justify-items: center;
         text-align: center;
-        padding: 2.25rem 1.75rem 2rem;
-        margin-bottom: 1.75rem;
-        border-radius: 22px;
-        background:
-          radial-gradient(
-            circle at 12% 18%,
-            rgba(245, 158, 11, 0.09) 0%,
-            transparent 42%
-          ),
-          radial-gradient(
-            circle at 88% 82%,
-            rgba(37, 99, 235, 0.07) 0%,
-            transparent 38%
-          ),
-          linear-gradient(165deg, #f8faff 0%, #eef2ff 52%, #fff 100%);
-        border: 1px solid rgba(30, 58, 138, 0.08);
-        box-shadow: 0 14px 40px rgba(15, 23, 42, 0.06);
+        padding: 2rem 1.5rem;
+        margin-bottom: 1.5rem;
+        border-radius: 20px;
+        background: #fff;
+        border: 1px solid rgba(30, 58, 138, 0.07);
+        box-shadow:
+          0 1px 2px rgba(15, 23, 42, 0.04),
+          0 12px 36px rgba(15, 23, 42, 0.06);
         transition:
-          padding 0.35s ease,
-          margin 0.35s ease;
+          padding 0.3s ease,
+          margin 0.3s ease,
+          box-shadow 0.3s ease;
       }
 
       .lookup-stage--compact {
-        padding: 1.35rem 1.25rem 1.25rem;
-        margin-bottom: 1.25rem;
-        gap: 1rem;
+        padding: 1.25rem 1.15rem;
+        margin-bottom: 1rem;
+        gap: 0.85rem;
+        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+      }
+
+      .lookup-stage--compact .lookup-eyebrow {
+        margin-bottom: 0.5rem;
       }
 
       .lookup-stage--compact .lookup-title {
-        font-size: clamp(1.1rem, 3.5vw, 1.35rem);
+        font-size: clamp(1.05rem, 3.5vw, 1.25rem);
         margin-bottom: 0;
       }
 
       .lookup-stage-copy {
-        max-width: 480px;
+        max-width: 440px;
       }
 
       .lookup-eyebrow {
         display: inline-block;
-        font-size: 0.78rem;
+        font-size: 0.75rem;
         font-weight: 700;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
         color: #92400e;
-        background: rgba(245, 158, 11, 0.14);
-        border: 1px solid rgba(217, 119, 6, 0.28);
-        padding: 0.28rem 0.85rem;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        padding: 0.25rem 0.75rem;
         border-radius: 999px;
-        margin-bottom: 0.85rem;
+        margin-bottom: 0.75rem;
       }
 
       .lookup-title {
         font-family: var(--font-display);
-        font-size: clamp(1.45rem, 4.5vw, 2.05rem);
+        font-size: clamp(1.35rem, 4vw, 1.85rem);
         font-weight: 800;
         color: var(--color-primary);
-        line-height: 1.32;
-        margin: 0 0 0.7rem;
+        line-height: 1.35;
+        margin: 0 0 0.6rem;
       }
 
       .lookup-lead {
         margin: 0;
         color: var(--color-text-muted);
-        line-height: 1.75;
-        font-size: clamp(0.94rem, 2.5vw, 1.02rem);
-        max-width: 42ch;
+        line-height: 1.7;
+        font-size: 0.96rem;
+        max-width: 38ch;
         margin-inline: auto;
       }
 
       .lookup-form {
         width: 100%;
-        max-width: 380px;
+        max-width: 340px;
         display: grid;
-        gap: 0.85rem;
+        gap: 0.75rem;
+        padding-top: 0.25rem;
       }
 
       .lookup-label {
-        font-size: 0.88rem;
+        font-size: 0.84rem;
         font-weight: 700;
-        color: var(--color-primary);
+        color: var(--color-text-muted);
         margin: 0;
       }
 
@@ -306,9 +316,9 @@ const SCORE_ARC_LENGTH = 339.292;
         top: 50%;
         transform: translateY(-50%);
         font-family: var(--font-display);
-        font-size: 1.1rem;
-        font-weight: 800;
-        color: rgba(30, 58, 138, 0.28);
+        font-size: 1rem;
+        font-weight: 700;
+        color: rgba(30, 58, 138, 0.22);
         pointer-events: none;
       }
 
@@ -316,25 +326,30 @@ const SCORE_ARC_LENGTH = 339.292;
         width: 100%;
         text-align: center;
         font-family: var(--font-display);
-        font-size: 1.35rem;
-        letter-spacing: 0.14em;
+        font-size: 1.25rem;
+        letter-spacing: 0.12em;
         font-weight: 700;
-        padding: 0.95rem 2.5rem;
-        border: 2px solid rgba(30, 58, 138, 0.14);
-        border-radius: 14px;
-        background: #fff;
-        box-shadow: inset 0 2px 6px rgba(15, 23, 42, 0.04);
+        padding: 0.9rem 2.4rem;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 12px;
+        background: var(--color-surface);
         transition:
           border-color 0.2s ease,
+          background 0.2s ease,
           box-shadow 0.2s ease;
+      }
+
+      .lookup-input-wrap input::placeholder {
+        color: #cbd5e1;
+        letter-spacing: 0.08em;
+        font-weight: 600;
       }
 
       .lookup-input-wrap input:focus {
         outline: none;
         border-color: var(--color-primary-light);
-        box-shadow:
-          inset 0 2px 6px rgba(15, 23, 42, 0.04),
-          0 0 0 4px rgba(37, 99, 235, 0.12);
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
       }
 
       .lookup-submit {
@@ -342,8 +357,9 @@ const SCORE_ARC_LENGTH = 339.292;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 0.55rem;
-        margin-top: 0.15rem;
+        gap: 0.5rem;
+        margin-top: 0.25rem;
+        border-radius: 12px;
       }
 
       .lookup-spinner {
@@ -363,76 +379,53 @@ const SCORE_ARC_LENGTH = 339.292;
 
       .field-error {
         color: #dc2626;
-        font-size: 0.88rem;
+        font-size: 0.84rem;
         text-align: center;
-        margin: -0.25rem 0 0;
+        margin: -0.15rem 0 0;
       }
 
       .lookup-notice {
-        padding: 0.75rem 1rem;
-        border-radius: 12px;
+        padding: 0.7rem 0.9rem;
+        border-radius: 10px;
         background: #fffbeb;
         border: 1px solid #fde68a;
         color: #92400e;
-        font-size: 0.92rem;
-        line-height: 1.6;
+        font-size: 0.88rem;
+        line-height: 1.55;
         text-align: center;
       }
 
-      /* ── Certificate result ── */
+      /* ── Result certificate ── */
       .result-certificate {
-        max-width: 480px;
-        margin: 0 auto;
-        border-radius: 22px;
+        border-radius: 20px;
         overflow: hidden;
-        background: #fefdfb;
-        border: 1px solid rgba(30, 58, 138, 0.1);
+        background: #fff;
+        border: 1px solid rgba(30, 58, 138, 0.08);
         box-shadow:
-          0 24px 60px rgba(15, 23, 42, 0.14),
-          0 0 0 1px rgba(255, 255, 255, 0.6) inset;
-        animation: cert-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+          0 1px 2px rgba(15, 23, 42, 0.04),
+          0 20px 50px rgba(15, 23, 42, 0.1);
+        animation: cert-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1);
       }
 
       .cert-header {
         position: relative;
-        padding: 1.85rem 1.5rem 1.65rem;
-        background: linear-gradient(
-          148deg,
-          #0b1533 0%,
-          #152a5c 45%,
-          #1e3a8a 100%
-        );
+        padding: 1.65rem 1.35rem 1.5rem;
+        background: linear-gradient(160deg, #0f172a 0%, #1e3a8a 100%);
         color: #fff;
         text-align: center;
-        overflow: hidden;
-      }
-
-      .cert-header::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background-image: radial-gradient(
-          circle,
-          rgba(255, 255, 255, 0.06) 1px,
-          transparent 1px
-        );
-        background-size: 18px 18px;
-        opacity: 0.45;
-        pointer-events: none;
       }
 
       .cert-header::after {
         content: '';
         position: absolute;
-        inset: auto -20% -60% -20%;
-        height: 180px;
-        border-radius: 50%;
-        background: radial-gradient(
-          circle,
-          rgba(245, 158, 11, 0.22) 0%,
-          transparent 68%
+        inset: auto 0 0;
+        height: 3px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--color-accent-light),
+          transparent
         );
-        pointer-events: none;
       }
 
       .cert-header-inner {
@@ -442,22 +435,21 @@ const SCORE_ARC_LENGTH = 339.292;
 
       .cert-year {
         display: inline-block;
-        font-size: 0.76rem;
+        font-size: 0.72rem;
         font-weight: 700;
-        letter-spacing: 0.05em;
-        padding: 0.28rem 0.8rem;
+        padding: 0.22rem 0.7rem;
         border-radius: 999px;
-        background: rgba(245, 158, 11, 0.18);
-        border: 1px solid rgba(245, 158, 11, 0.35);
+        background: rgba(245, 158, 11, 0.15);
+        border: 1px solid rgba(245, 158, 11, 0.3);
         color: #fde68a;
-        margin-bottom: 0.85rem;
+        margin-bottom: 0.75rem;
       }
 
       .cert-name {
         font-family: var(--font-display);
-        font-size: clamp(1.25rem, 4.5vw, 1.65rem);
+        font-size: clamp(1.2rem, 4vw, 1.5rem);
         font-weight: 800;
-        line-height: 1.4;
+        line-height: 1.45;
         margin: 0 0 0.85rem;
       }
 
@@ -465,77 +457,86 @@ const SCORE_ARC_LENGTH = 339.292;
         display: inline-flex;
         flex-direction: column;
         align-items: center;
-        gap: 0.2rem;
+        gap: 0.15rem;
         margin: 0;
-        padding: 0.55rem 1.1rem;
-        border-radius: 12px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.1);
       }
 
       .cert-seating-label {
-        font-size: 0.72rem;
-        opacity: 0.72;
-        letter-spacing: 0.04em;
+        font-size: 0.68rem;
+        opacity: 0.7;
       }
 
       .cert-seating-no {
         font-family: var(--font-display);
-        font-size: 1.15rem;
+        font-size: 1.1rem;
         font-weight: 800;
-        letter-spacing: 0.12em;
+        letter-spacing: 0.1em;
         color: var(--color-accent-light);
       }
 
       .cert-perforation {
-        height: 14px;
+        height: 10px;
         background:
-          radial-gradient(circle at 7px 7px, #fefdfb 6px, transparent 6.5px),
-          linear-gradient(180deg, #152a5c 0%, #fefdfb 100%);
-        background-size:
-          14px 14px,
-          100% 100%;
-        background-repeat: repeat-x, no-repeat;
-        background-position:
-          center top,
-          center;
+          radial-gradient(circle at 5px 5px, #fff 4px, transparent 4.5px),
+          #1e3a8a;
+        background-size: 10px 10px;
+        background-repeat: repeat-x;
+        background-position: center;
+        opacity: 0.85;
       }
 
       .cert-body {
-        padding: 1.65rem 1.4rem 1.75rem;
+        padding: 1.5rem 1.25rem 1.65rem;
         text-align: center;
-        animation: cert-body-enter 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.12s
+        animation: cert-body-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.1s
           both;
       }
 
       .score-gauge {
         position: relative;
-        width: clamp(168px, 44vw, 196px);
-        height: clamp(168px, 44vw, 196px);
-        margin: 0 auto 1.5rem;
+        width: clamp(156px, 40vw, 180px);
+        height: clamp(156px, 40vw, 180px);
+        margin: 0 auto 1.35rem;
+      }
+
+      .score-gauge::before {
+        content: '';
+        position: absolute;
+        inset: 12%;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(245, 158, 11, 0.06) 0%,
+          transparent 70%
+        );
       }
 
       .score-gauge-svg {
         width: 100%;
         height: 100%;
         transform: rotate(-90deg);
+        filter: drop-shadow(0 2px 6px rgba(217, 119, 6, 0.15));
       }
 
       .score-gauge-track,
       .score-gauge-fill {
         fill: none;
-        stroke-width: 7;
+        stroke-width: 6;
         stroke-linecap: round;
       }
 
       .score-gauge-track {
-        stroke: rgba(30, 58, 138, 0.1);
+        stroke: #eef2ff;
       }
 
       .score-gauge-fill {
-        stroke: var(--color-accent);
+        stroke: url(#scoreArcGradient);
         stroke-dasharray: 339.292;
-        transition: stroke-dashoffset 1s cubic-bezier(0.22, 1, 0.36, 1);
+        transition: stroke-dashoffset 0.9s cubic-bezier(0.22, 1, 0.36, 1);
       }
 
       .score-gauge-content {
@@ -545,104 +546,104 @@ const SCORE_ARC_LENGTH = 339.292;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 0.15rem;
+        gap: 0.1rem;
       }
 
       .score-fraction {
         display: flex;
         align-items: baseline;
-        gap: 0.1rem;
+        gap: 0.08rem;
         line-height: 1;
       }
 
       .score-value {
         font-family: var(--font-display);
-        font-size: clamp(2.1rem, 7vw, 2.75rem);
+        font-size: clamp(1.95rem, 6.5vw, 2.5rem);
         font-weight: 800;
         color: var(--color-primary);
       }
 
       .score-max {
         font-family: var(--font-display);
-        font-size: clamp(0.95rem, 3vw, 1.1rem);
-        font-weight: 700;
+        font-size: clamp(0.88rem, 2.8vw, 1rem);
+        font-weight: 600;
         color: var(--color-text-muted);
       }
 
       .score-percentage {
         font-family: var(--font-display);
-        font-size: clamp(1.05rem, 3.5vw, 1.2rem);
+        font-size: clamp(0.95rem, 3vw, 1.1rem);
         font-weight: 800;
         color: var(--color-accent);
         line-height: 1;
+        margin-top: 0.1rem;
       }
 
       .score-label {
-        margin-top: 0.15rem;
-        font-size: 0.76rem;
+        margin-top: 0.2rem;
+        font-size: 0.72rem;
         font-weight: 600;
         color: var(--color-text-muted);
-        letter-spacing: 0.02em;
       }
 
       .cert-meta {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.75rem;
-        margin-bottom: 1.5rem;
+        gap: 0.65rem;
+        margin-bottom: 1.35rem;
       }
 
       .cert-meta-item {
         display: flex;
         align-items: flex-start;
-        gap: 0.65rem;
-        padding: 0.85rem 0.75rem;
+        gap: 0.6rem;
+        padding: 0.8rem 0.7rem;
         text-align: right;
         background: var(--color-surface);
-        border: 1px solid rgba(30, 58, 138, 0.08);
-        border-radius: 14px;
+        border: 1px solid rgba(30, 58, 138, 0.06);
+        border-radius: 12px;
       }
 
       .cert-meta-icon {
         flex-shrink: 0;
-        width: 34px;
-        height: 34px;
+        width: 32px;
+        height: 32px;
         display: grid;
         place-items: center;
-        border-radius: 10px;
-        background: rgba(37, 99, 235, 0.08);
+        border-radius: 8px;
+        background: #fff;
         color: var(--color-primary);
+        box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
       }
 
       .cert-meta-text {
         display: grid;
-        gap: 0.15rem;
+        gap: 0.12rem;
         min-width: 0;
       }
 
       .cert-meta-label {
-        font-size: 0.72rem;
+        font-size: 0.68rem;
         color: var(--color-text-muted);
       }
 
       .cert-meta-value {
         font-weight: 700;
-        font-size: 0.88rem;
+        font-size: 0.84rem;
         color: var(--color-primary);
         line-height: 1.4;
         overflow-wrap: anywhere;
       }
 
       .cert-next {
-        padding-top: 0.25rem;
-        border-top: 1px dashed rgba(30, 58, 138, 0.14);
+        padding-top: 1.15rem;
+        border-top: 1px solid rgba(30, 58, 138, 0.08);
       }
 
       .cert-next-hint {
-        margin: 0 0 0.75rem;
-        font-size: 0.78rem;
+        margin: 0 0 0.65rem;
+        font-size: 0.72rem;
         font-weight: 700;
-        letter-spacing: 0.04em;
         color: var(--color-text-muted);
       }
 
@@ -650,55 +651,52 @@ const SCORE_ARC_LENGTH = 339.292;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 0.65rem;
+        gap: 0.55rem;
         width: 100%;
-        padding: 0.95rem 1.25rem;
-        border-radius: 14px;
+        padding: 0.9rem 1.15rem;
+        border-radius: 12px;
         font-weight: 700;
-        font-size: 1rem;
+        font-size: 0.95rem;
         color: #fff;
-        background: linear-gradient(
-          135deg,
-          var(--color-primary-light) 0%,
-          var(--color-primary) 100%
-        );
-        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.32);
+        background: var(--color-primary-light);
+        box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25);
         transition:
-          transform 0.2s ease,
-          box-shadow 0.2s ease;
+          background 0.2s ease,
+          box-shadow 0.2s ease,
+          transform 0.2s ease;
       }
 
       .cert-cta:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 32px rgba(37, 99, 235, 0.38);
+        background: var(--color-primary);
+        transform: translateY(-1px);
+        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3);
       }
 
       .cert-cta-arrow {
-        font-size: 1.2rem;
-        font-weight: 800;
+        font-size: 1.1rem;
         color: var(--color-accent-light);
         transition: transform 0.2s ease;
       }
 
       .cert-cta:hover .cert-cta-arrow {
-        transform: translateX(-4px);
+        transform: translateX(-3px);
       }
 
       @keyframes cert-enter {
         from {
           opacity: 0;
-          transform: translateY(20px) scale(0.98);
+          transform: translateY(16px);
         }
         to {
           opacity: 1;
-          transform: translateY(0) scale(1);
+          transform: translateY(0);
         }
       }
 
       @keyframes cert-body-enter {
         from {
           opacity: 0;
-          transform: translateY(10px);
+          transform: translateY(8px);
         }
         to {
           opacity: 1;
@@ -707,34 +705,34 @@ const SCORE_ARC_LENGTH = 339.292;
       }
 
       @media (max-width: 480px) {
+        .thanaweya-page {
+          padding-bottom: 2rem;
+        }
+
         .lookup-stage {
-          padding: 1.5rem 1rem 1.35rem;
-          border-radius: 18px;
+          padding: 1.35rem 1rem;
+          border-radius: 16px;
         }
 
         .lookup-stage--compact {
-          padding: 1.1rem 0.95rem 1rem;
+          padding: 1rem 0.9rem;
         }
 
         .lookup-input-wrap input {
-          font-size: 1.2rem;
-          padding: 0.85rem 2.25rem;
+          font-size: 1.15rem;
+          padding: 0.8rem 2.2rem;
         }
 
         .cert-header {
-          padding: 1.45rem 1rem 1.35rem;
+          padding: 1.35rem 1rem 1.25rem;
         }
 
         .cert-body {
-          padding: 1.35rem 1rem 1.5rem;
+          padding: 1.25rem 1rem 1.4rem;
         }
 
         .cert-meta {
           grid-template-columns: 1fr;
-        }
-
-        .cert-meta-item {
-          padding: 0.75rem;
         }
       }
 
@@ -782,7 +780,10 @@ export class ThanaweyaResultComponent {
   }
 
   scoreArcOffset(totalDegree: number): number {
-    const progress = Math.min(Math.max(totalDegree / THANAWEYA_MAX_SCORE, 0), 1);
+    const progress = Math.min(
+      Math.max(totalDegree / THANAWEYA_MAX_SCORE, 0),
+      1,
+    );
     return SCORE_ARC_LENGTH * (1 - progress);
   }
 
