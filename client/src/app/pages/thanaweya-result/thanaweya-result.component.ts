@@ -29,7 +29,6 @@ const SCORE_ARC_LENGTH = 339.292;
 
       <section class="lookup-stage" [class.lookup-stage--compact]="result">
         <div class="lookup-stage-copy">
-          <span class="lookup-eyebrow">الثانوية العامة</span>
           <h1 class="lookup-title">نتيجة الثانوية برقم الجلوس</h1>
           @if (!result) {
             <p class="lookup-lead">
@@ -87,7 +86,6 @@ const SCORE_ARC_LENGTH = 339.292;
         <section class="result-certificate" aria-label="نتيجة الطالب">
           <header class="cert-header">
             <div class="cert-header-inner">
-              <span class="cert-year">نتيجة {{ result.year }}</span>
               <h2 class="cert-name">{{ result.arabicName }}</h2>
               <p class="cert-seating">
                 <span class="cert-seating-label">رقم الجلوس</span>
