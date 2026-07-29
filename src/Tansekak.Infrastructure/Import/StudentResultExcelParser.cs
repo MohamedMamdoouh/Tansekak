@@ -18,21 +18,12 @@ public static class StudentResultExcelParser
         ["seating number"] = nameof(ParsedStudentResultRow.SeatingNo),
         ["seat_no"] = nameof(ParsedStudentResultRow.SeatingNo),
         ["seat no"] = nameof(ParsedStudentResultRow.SeatingNo),
-        ["رقم الجلوس"] = nameof(ParsedStudentResultRow.SeatingNo),
-        ["رقم_الجلوس"] = nameof(ParsedStudentResultRow.SeatingNo),
-        ["رقم جلوس"] = nameof(ParsedStudentResultRow.SeatingNo),
-        ["الجلوس"] = nameof(ParsedStudentResultRow.SeatingNo),
 
         ["arabic_name"] = nameof(ParsedStudentResultRow.ArabicName),
         ["arabicname"] = nameof(ParsedStudentResultRow.ArabicName),
         ["name"] = nameof(ParsedStudentResultRow.ArabicName),
         ["student name"] = nameof(ParsedStudentResultRow.ArabicName),
         ["student_name"] = nameof(ParsedStudentResultRow.ArabicName),
-        ["اسم الطالب"] = nameof(ParsedStudentResultRow.ArabicName),
-        ["اسم_الطالب"] = nameof(ParsedStudentResultRow.ArabicName),
-        ["الاسم"] = nameof(ParsedStudentResultRow.ArabicName),
-        ["اسم الطالب رباعي"] = nameof(ParsedStudentResultRow.ArabicName),
-        ["اسم الطالب رباعى"] = nameof(ParsedStudentResultRow.ArabicName),
 
         ["total_degree"] = nameof(ParsedStudentResultRow.TotalDegree),
         ["totaldegree"] = nameof(ParsedStudentResultRow.TotalDegree),
@@ -42,12 +33,6 @@ public static class StudentResultExcelParser
         ["total"] = nameof(ParsedStudentResultRow.TotalDegree),
         ["total_score"] = nameof(ParsedStudentResultRow.TotalDegree),
         ["total score"] = nameof(ParsedStudentResultRow.TotalDegree),
-        ["المجموع"] = nameof(ParsedStudentResultRow.TotalDegree),
-        ["المجموع الكلي"] = nameof(ParsedStudentResultRow.TotalDegree),
-        ["مجموع"] = nameof(ParsedStudentResultRow.TotalDegree),
-        ["الدرجة"] = nameof(ParsedStudentResultRow.TotalDegree),
-        ["درجة"] = nameof(ParsedStudentResultRow.TotalDegree),
-        ["المجموع_الكلي"] = nameof(ParsedStudentResultRow.TotalDegree),
 
         ["student_case_desc"] = nameof(ParsedStudentResultRow.StudentCaseDesc),
         ["studentcasedesc"] = nameof(ParsedStudentResultRow.StudentCaseDesc),
@@ -57,10 +42,6 @@ public static class StudentResultExcelParser
         ["status"] = nameof(ParsedStudentResultRow.StudentCaseDesc),
         ["student status"] = nameof(ParsedStudentResultRow.StudentCaseDesc),
         ["student_status"] = nameof(ParsedStudentResultRow.StudentCaseDesc),
-        ["حالة الطالب"] = nameof(ParsedStudentResultRow.StudentCaseDesc),
-        ["حالة_الطالب"] = nameof(ParsedStudentResultRow.StudentCaseDesc),
-        ["الحالة"] = nameof(ParsedStudentResultRow.StudentCaseDesc),
-        ["حالة"] = nameof(ParsedStudentResultRow.StudentCaseDesc),
     };
 
     public static (List<ParsedStudentResultRow> Rows, List<Application.DTOs.ImportValidationErrorDto> Errors) Parse(Stream stream)
@@ -81,7 +62,7 @@ public static class StudentResultExcelParser
         if (columnMap.Count < 4)
         {
             errors.Add(Err(1, "Header", "INVALID",
-                "Missing required columns. Expected: seating_no, arabic_name, total_degree, student_case_desc (or Arabic equivalents like رقم الجلوس, اسم الطالب, المجموع, حالة الطالب)."));
+                "Missing required columns. Expected English headers: seating_no, arabic_name, total_degree, student_case_desc."));
             return (rows, errors);
         }
 

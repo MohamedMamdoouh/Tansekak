@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, NgZone, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService, ImportUploadError } from '../../../api.service';
@@ -134,6 +134,7 @@ export class AdminImportComponent implements OnInit {
   private api = inject(ApiService);
   private fb = inject(FormBuilder);
   private importUpload = inject(ImportUploadService);
+  private ngZone = inject(NgZone);
 
   years: AdmissionYear[] = [];
   file: File | null = null;
@@ -187,22 +188,26 @@ export class AdminImportComponent implements OnInit {
         signal,
       )
       .then((res) => {
-        this.result = res;
-        this.message = res.message;
-        this.uploading = false;
-        this.importUpload.finish();
+        this.ngZone.run(() => {
+          this.result = res;
+          this.message = res.message;
+          this.uploading = false;
+          this.importUpload.finish();
+        });
       })
       .catch((err: ImportUploadError) => {
-        if (err.aborted) {
-          this.message = 'تم إلغاء الاستيراد.';
+        this.ngZone.run(() => {
           this.uploading = false;
-          return;
-        }
+          this.importUpload.finish();
 
-        this.result = err.error?.data ?? null;
-        this.message = err.error?.message ?? 'فشل الاستيراد.';
-        this.uploading = false;
-        this.importUpload.finish();
+          if (err.aborted) {
+            this.message = 'تم إلغاء الاستيراد.';
+            return;
+          }
+
+          this.result = err.error?.data ?? null;
+          this.message = err.error?.message ?? 'فشل الاستيراد.';
+        });
       });
   }
 }

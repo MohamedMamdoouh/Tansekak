@@ -21,7 +21,7 @@ public class StudentResultExcelParserTests
     }
 
     [Fact]
-    public void Parse_ArabicHeaders_ReturnsRows()
+    public void Parse_ArabicHeaders_ReturnsHeaderError()
     {
         using var stream = CreateWorkbook(
             ["رقم الجلوس", "اسم الطالب", "المجموع", "حالة الطالب"],
@@ -29,10 +29,9 @@ public class StudentResultExcelParserTests
 
         var (rows, errors) = StudentResultExcelParser.Parse(stream);
 
-        Assert.Empty(errors);
-        Assert.Single(rows);
-        Assert.Equal("7654321", rows[0].SeatingNo);
-        Assert.Equal(390m, rows[0].TotalDegree);
+        Assert.Empty(rows);
+        Assert.Single(errors);
+        Assert.Equal("INVALID", errors[0].ErrorCode);
     }
 
     [Fact]

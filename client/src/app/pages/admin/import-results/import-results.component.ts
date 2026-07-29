@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, NgZone, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService, ImportUploadError } from '../../../api.service';
@@ -38,9 +38,7 @@ import {
           </p>
 
           <p class="hint">
-            صيغة الملف: Excel (.xlsx). الأعمدة المطلوبة (عربي أو انجليزي):
-            <code>رقم الجلوس | اسم الطالب | المجموع | حالة الطالب</code>
-            أو
+            صيغة الملف: Excel (.xlsx). الأعمدة المطلوبة (بالإنجليزية):
             <code
               >seating_no | arabic_name | total_degree | student_case_desc</code
             >
@@ -130,6 +128,7 @@ export class AdminImportResultsComponent implements OnInit {
   private api = inject(ApiService);
   private fb = inject(FormBuilder);
   private importUpload = inject(ImportUploadService);
+  private ngZone = inject(NgZone);
 
   years: AdmissionYear[] = [];
   file: File | null = null;
@@ -176,22 +175,26 @@ export class AdminImportResultsComponent implements OnInit {
         signal,
       )
       .then((res) => {
-        this.result = normalizeImportResult(res);
-        this.message = this.result.message;
-        this.uploading = false;
-        this.importUpload.finish();
+        this.ngZone.run(() => {
+          this.result = normalizeImportResult(res);
+          this.message = this.result.message;
+          this.uploading = false;
+          this.importUpload.finish();
+        });
       })
       .catch((err: ImportUploadError) => {
-        if (err.aborted) {
-          this.message = 'تم إلغاء الاستيراد.';
+        this.ngZone.run(() => {
           this.uploading = false;
-          return;
-        }
+          this.importUpload.finish();
 
-        this.result = parseImportErrorResponse(err.error);
-        this.message = importErrorMessage(err.status, err.error);
-        this.uploading = false;
-        this.importUpload.finish();
+          if (err.aborted) {
+            this.message = 'تم إلغاء الاستيراد.';
+            return;
+          }
+
+          this.result = parseImportErrorResponse(err.error);
+          this.message = importErrorMessage(err.status, err.error);
+        });
       });
   }
 }

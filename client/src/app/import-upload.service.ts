@@ -68,7 +68,7 @@ export class ImportUploadService {
 
   statusLabel(): string {
     if (this.phase() === 'processing') {
-      return 'جاري المعالجة على الخادم...';
+      return 'جاري المعالجة على الخادم... قد يستغرق ذلك دقائق للملفات الكبيرة.';
     }
     return '';
   }

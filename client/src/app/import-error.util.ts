@@ -23,7 +23,16 @@ export function parseImportErrorResponse(
   };
 }
 
-export function normalizeImportResult(data: ImportResult): ImportResult {
+export function normalizeImportResult(
+  data: ImportResult | null | undefined,
+): ImportResult {
+  if (!data) {
+    return {
+      success: false,
+      message: 'استجابة غير صالحة من الخادم.',
+    };
+  }
+
   const raw = data as ImportResult & {
     Success?: boolean;
     Message?: string;

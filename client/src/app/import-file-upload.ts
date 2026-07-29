@@ -25,8 +25,41 @@ export function uploadImportFile(
     xhr.open('POST', url);
     xhr.withCredentials = true;
     xhr.responseType = 'json';
+    xhr.timeout = 0;
+
+    let processingTimer: ReturnType<typeof setInterval> | null = null;
+    let processingPercent = 90;
+
+    const stopProcessingTimer = () => {
+      if (processingTimer !== null) {
+        clearInterval(processingTimer);
+        processingTimer = null;
+      }
+    };
+
+    const startProcessingTimer = () => {
+      stopProcessingTimer();
+      processingPercent = 90;
+      onProgress({ phase: 'processing', percent: processingPercent });
+      processingTimer = setInterval(() => {
+        if (processingPercent < 98) {
+          processingPercent += 1;
+          onProgress({ phase: 'processing', percent: processingPercent });
+        }
+      }, 2500);
+    };
+
+    const settle = (handler: () => void) => {
+      stopProcessingTimer();
+      try {
+        handler();
+      } catch {
+        reject({ status: xhr.status || 0, error: null } satisfies ImportUploadError);
+      }
+    };
 
     const abort = () => {
+      stopProcessingTimer();
       if (xhr.readyState !== XMLHttpRequest.DONE) {
         xhr.abort();
       }
@@ -40,35 +73,66 @@ export function uploadImportFile(
       onProgress({ phase: 'uploading', percent: Math.max(percent, 1) });
     });
 
-    xhr.upload.addEventListener('loadend', () => {
-      onProgress({ phase: 'processing', percent: 90 });
-    });
+    xhr.upload.addEventListener('loadend', startProcessingTimer);
 
     xhr.addEventListener('load', () => {
-      onProgress({ phase: 'processing', percent: 100 });
-
       if (xhr.status >= 200 && xhr.status < 300) {
-        const body = xhr.response as ApiResponse<ImportResult>;
-        resolve(normalizeImportResult(body.data));
+        settle(() => {
+          const body = parseJsonResponse(xhr);
+          const payload = extractImportPayload(body);
+          if (!payload) {
+            reject({
+              status: xhr.status,
+              error: body,
+            } satisfies ImportUploadError);
+            return;
+          }
+          onProgress({ phase: 'processing', percent: 100 });
+          resolve(normalizeImportResult(payload));
+        });
         return;
       }
 
-      reject({
-        status: xhr.status,
-        error: parseJsonResponse(xhr),
-      } satisfies ImportUploadError);
+      settle(() => {
+        reject({
+          status: xhr.status,
+          error: parseJsonResponse(xhr),
+        } satisfies ImportUploadError);
+      });
     });
 
     xhr.addEventListener('error', () => {
-      reject({ status: 0 } satisfies ImportUploadError);
+      settle(() => {
+        reject({ status: 0 } satisfies ImportUploadError);
+      });
+    });
+
+    xhr.addEventListener('timeout', () => {
+      settle(() => {
+        reject({ status: 0 } satisfies ImportUploadError);
+      });
     });
 
     xhr.addEventListener('abort', () => {
-      reject({ status: 0, aborted: true } satisfies ImportUploadError);
+      settle(() => {
+        reject({ status: 0, aborted: true } satisfies ImportUploadError);
+      });
     });
 
     xhr.send(formData);
   });
+}
+
+function extractImportPayload(
+  body: ApiResponse<ImportResult> | null,
+): ImportResult | null {
+  if (!body) return null;
+
+  const envelope = body as ApiResponse<ImportResult> & {
+    Data?: ImportResult;
+  };
+
+  return envelope.data ?? envelope.Data ?? null;
 }
 
 function parseJsonResponse(xhr: XMLHttpRequest): ApiResponse<ImportResult> | null {
