@@ -43,7 +43,7 @@ import { AuthService } from '../../../auth.service';
       </div>
     </div>
   `,
-  styles: ['.login { max-width: 420px; margin: 0 auto; }'],
+  styles: ['.login { max-width: 420px; margin: 0 auto; } .login .btn-primary { width: 100%; }'],
 })
 export class AdminLoginComponent {
   private fb = inject(FormBuilder);

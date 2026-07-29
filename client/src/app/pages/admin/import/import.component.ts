@@ -71,24 +71,26 @@ import { AdmissionYear, ImportResult, TRACK_OPTIONS } from '../../../models';
           <p [class]="result?.success ? 'success' : 'error'">{{ message }}</p>
         }
         @if (result?.errors?.length) {
-          <table>
-            <thead>
-              <tr>
-                <th>الصف</th>
-                <th>العمود</th>
-                <th>الرسالة</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (e of result!.errors!; track $index) {
+          <div class="table-scroll">
+            <table>
+              <thead>
                 <tr>
-                  <td>{{ e.rowNumber }}</td>
-                  <td>{{ e.column }}</td>
-                  <td>{{ e.message }}</td>
+                  <th>الصف</th>
+                  <th>العمود</th>
+                  <th>الرسالة</th>
                 </tr>
-              }
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                @for (e of result!.errors!; track $index) {
+                  <tr>
+                    <td>{{ e.rowNumber }}</td>
+                    <td>{{ e.column }}</td>
+                    <td>{{ e.message }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         }
       </div>
     </div>
@@ -126,6 +128,12 @@ import { AdmissionYear, ImportResult, TRACK_OPTIONS } from '../../../models';
         padding: 0.5rem;
         text-align: right;
         border-bottom: 1px solid #eef2f7;
+      }
+
+      @media (max-width: 640px) {
+        .btn-primary {
+          width: 100%;
+        }
       }
     `,
   ],

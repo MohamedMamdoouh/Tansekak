@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 interface GuideItem {
@@ -19,14 +19,36 @@ interface GuideItem {
           غير تعقيد.
         </p>
 
-        <div class="guide-accordion">
-          @for (item of items; track item.question) {
+        <div #accordionTop class="guide-accordion">
+          @for (item of paginatedItems; track item.question) {
             <details class="guide-item">
               <summary>{{ item.question }}</summary>
               <div class="guide-answer" [innerHTML]="item.answer"></div>
             </details>
           }
         </div>
+
+        @if (totalPages > 1) {
+          <div class="guide-pagination">
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm"
+              [disabled]="page <= 1"
+              (click)="goToPage(page - 1)"
+            >
+              السابق
+            </button>
+            <span class="page-info">صفحة {{ page }} من {{ totalPages }}</span>
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm"
+              [disabled]="page >= totalPages"
+              (click)="goToPage(page + 1)"
+            >
+              التالي
+            </button>
+          </div>
+        }
       </section>
 
       <section class="page-section">
@@ -40,6 +62,11 @@ interface GuideItem {
   `,
 })
 export class GuideComponent {
+  @ViewChild('accordionTop') accordionTop?: ElementRef<HTMLElement>;
+
+  page = 1;
+  readonly pageSize = 6;
+
   items: GuideItem[] = [
     {
       question: 'ايه هو التنسيق؟',
@@ -99,7 +126,7 @@ export class GuideComponent {
         '<ul>' +
         '<li><strong>المرحلة الأولى:</strong> أول نتيجة — بتعرف دخلت فين.</li>' +
         '<li><strong>المرحلة التانية:</strong> لو ما دخلتش، بتسجل رغبات جديدة من الكليات اللي فاضل فيها أماكن.</li>' +
-        '<li><strong>المرحلة التالتة:</strong> آخر فرصة — غالبا كلهيات في محافظات بعيدة أو مسائي.</li>' +
+        '<li><strong>المرحلة التالتة:</strong> آخر فرصة — غالبا كليات في محافظات بعيدة أو مسائي.</li>' +
         '</ul>' +
         '<p>تابع موقع التنسيق الإلكتروني الرسمي وصفحات وزارة التعليم عشان تعرف مواعيد كل مرحلة.</p>',
     },
@@ -121,5 +148,112 @@ export class GuideComponent {
         '<p>النتيجة الرسمية الوحيدة بتطلع من موقع التنسيق الإلكتروني الرسمي. ' +
         'استخدم تنسيقك عشان تخطط رغباتك بذكاء، بس القرار النهائي للنظام الرسمي.</p>',
     },
+    {
+      question: 'إزاي أرتب رغباتي صح؟',
+      answer:
+        'حط الكلية اللي انت عايزها فعلا في الأول، بعدها اللي بعدها في قلبك، وهكذا.' +
+        '<p>متبدأش بكليات «آمنة» في الأول — النظام بيدخلك أول رغبة مجموعك يسمح بيها. ' +
+        'لو حطيت كلية مش عايزها في الأول، ممكن تندم.</p>' +
+        '<p><strong>نصيحة:</strong> استخدم تنسيقك وشوف الكليات المتاحة لمجموعك، وبعدين رتب رغباتك على أساسها.</p>',
+    },
+    {
+      question: 'أقدر أغير رغباتي بعد ما أأكد؟',
+      answer:
+        '<p><strong>لأ.</strong> بعد ما تأكد رغباتك في المرحلة الأولى مش هتقدر تعدلها.</p>' +
+        '<p>عشان كده راجع رغباتك كويس قبل ما تضغط تأكيد. ' +
+        'في المرحلة التانية بتسجل رغبات جديدة من الصفر من الكليات اللي فاضل فيها أماكن.</p>',
+    },
+    {
+      question: 'ايه الفرق بين كلية ومعهد؟',
+      answer:
+        '<ul>' +
+        '<li><strong>كلية:</strong> درجة جامعية (بكالوريوس) — مدة 4 أو 5 سنين غالبا.</li>' +
+        '<li><strong>معهد:</strong> دبلوم أو بكالوريوس بمدة أقصر — 2 لـ 3 سنين غالبا.</li>' +
+        '</ul>' +
+        '<p>الاتنين تعليم حكومي. المعهد مش «أقل» — بس مسار مختلف. ' +
+        'لو مجموعك ما وصلش لكلية، المعهد ممكن يكون فرصة كويسة.</p>',
+    },
+    {
+      question: 'لو دخلت كلية ومش عاجباني أعمل إيه؟',
+      answer:
+        'عندك اختيارات، بس مش سهلة:' +
+        '<ul>' +
+        '<li><strong>سحب الملف:</strong> تسحب ملفك وتنسق تاني السنة الجاية.</li>' +
+        '<li><strong>التحويل:</strong> بعد سنة أو اتنين ممكن تحاول تحول — بس ده مش مضمون ومش سهل.</li>' +
+        '</ul>' +
+        '<p>الأحسن تفكر كويس قبل ما تسجل رغباتك — استخدم تنسيقك عشان تختار صح من الأول.</p>',
+    },
+    {
+      question: 'ايه هو الحد الأدنى للقبول؟',
+      answer:
+        'ده أقل مجموع دخل بيه آخر طالب في الكلية السنة اللي فاتت.' +
+        '<p>مش رقم ثابت — بيتغير كل سنة حسب عدد الطلاب والأماكن المتاحة. ' +
+        'تنسيقك بيستخدم حدود القبول الرسمية عشان يقولك انت فين بالظبط.</p>',
+    },
+    {
+      question: 'لازم أملا كل الرغبات؟',
+      answer:
+        'مش إجباري، بس الأحسن تملا لحد ما تقدر.' +
+        '<p>كل ما كتبت رغبات أكتر، فرصتك تزيد إنك تدخل حاجة تعجبك. ' +
+        'سيب آخر الرغبات لكليات أو معاهد مجموعك يسمح بيها فعلا — متسيبهم فاضيين.</p>',
+    },
+    {
+      question: 'إزاي أعرف مجموعي كفاية لكلية معينة؟',
+      answer:
+        'استخدم «اعرف كليتك» في تنسيقك — اكتب مجموعك وشوف الكليات المتاحة.' +
+        '<ul>' +
+        '<li>لو الكلية ظهرتلك، يبقى مجموعك كفاية أو قريب من الحد.</li>' +
+        '<li>لو مش ظاهرة، يبقى مجموعك أقل من الحد الأدنى للقبول.</li>' +
+        '</ul>' +
+        '<p>ده توقع مش نتيجة رسمية — بس بيساعدك تخطط رغباتك بذكاء.</p>',
+    },
+    {
+      question: 'ايه الفرق بين علمي علوم وعلمي رياضة؟',
+      answer:
+        'كل شعبة ليها كلياتها:' +
+        '<ul>' +
+        '<li><strong>علمي علوم:</strong> طب، صيدلة، علوم، تمريض، أسنان…</li>' +
+        '<li><strong>علمي رياضة:</strong> هندسة، حاسبات، تجارة، رياضيات…</li>' +
+        '</ul>' +
+        '<p>متقدرش تدخل كلية هندسة وانت علمي علوم، والعكس. ' +
+        'اختار شعبتك صح في الثانوية عشان تفتحلك الكليات اللي انت عايزها.</p>',
+    },
+    {
+      question: 'لو نسيت بيانات دخول موقع التنسيق؟',
+      answer:
+        'جرب الخيارات دي:' +
+        '<ul>' +
+        '<li>روح مدرستك أو المديرية التعليمية — هما اللي عندهم كود الطالب وكلمة السر.</li>' +
+        '<li>جرّب «نسيت كلمة السر» على الموقع الرسمي برقم الجلوس.</li>' +
+        '</ul>' +
+        '<p>متستناش آخر يوم — روح المدرسة بدري عشان تلحق تسجل رغباتك.</p>',
+    },
+    {
+      question: 'التنسيق بيحسب إيه — مجموع الثانوية بس؟',
+      answer:
+        '<p><strong>آه.</strong> التنسيق بيحسب مجموعك الكلي في الثانوية العامة — مواد الشعبة زائد اللغات.</p>' +
+        '<p>مفيش امتحانات تانية في التنسيق. المجموع هو اللي بيحدد الكليات المتاحة ليك.</p>',
+    },
   ];
+
+  get totalPages(): number {
+    return Math.ceil(this.items.length / this.pageSize);
+  }
+
+  get paginatedItems(): GuideItem[] {
+    const start = (this.page - 1) * this.pageSize;
+    return this.items.slice(start, start + this.pageSize);
+  }
+
+  goToPage(nextPage: number): void {
+    if (nextPage < 1 || nextPage > this.totalPages) {
+      return;
+    }
+
+    this.page = nextPage;
+    this.accordionTop?.nativeElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }
 }

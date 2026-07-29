@@ -36,8 +36,8 @@ import { ImportUploadService } from '../../import-upload.service';
           <a routerLink="/admin/import" routerLinkActive="active"
             >استيراد حدود القبول</a
           >
-          <a routerLink="/admin/import-results" routerLinkActive="active"
-            >استيراد نتائج الثانوية</a
+          <span class="nav-disabled" aria-disabled="true"
+            >استيراد نتائج الثانوية</span
           >
         </nav>
 
@@ -141,6 +141,17 @@ import { ImportUploadService } from '../../import-upload.service';
         box-shadow: inset 0 0 0 1px rgba(147, 197, 253, 0.25);
       }
 
+      .nav-disabled {
+        color: rgba(255, 255, 255, 0.38);
+        padding: 0.5rem 0.95rem;
+        border-radius: 999px;
+        font-size: 0.92rem;
+        font-weight: 500;
+        white-space: nowrap;
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+
       .logout-btn {
         margin-right: auto;
         border: 1px solid rgba(255, 255, 255, 0.16);
@@ -186,23 +197,38 @@ import { ImportUploadService } from '../../import-upload.service';
         }
 
         .admin-nav {
-          justify-content: stretch;
+          justify-content: flex-start;
           overflow-x: auto;
           scrollbar-width: none;
+          flex-wrap: nowrap;
         }
 
         .admin-nav::-webkit-scrollbar {
           display: none;
         }
 
-        .admin-nav a {
-          flex: 1;
-          text-align: center;
+        .admin-nav a,
+        .nav-disabled {
+          flex-shrink: 0;
+          font-size: 0.82rem;
+          padding: 0.45rem 0.75rem;
         }
 
         .logout-btn {
           margin-right: 0;
           width: 100%;
+        }
+
+        .admin-main {
+          padding: 1.25rem 0 2rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .admin-nav a,
+        .nav-disabled {
+          font-size: 0.78rem;
+          padding: 0.4rem 0.6rem;
         }
       }
 

@@ -45,6 +45,12 @@ summary:focus-visible {
   margin: 0 auto;
 }
 
+@media (max-width: 480px) {
+  .container {
+    width: min(1100px, 94%);
+  }
+}
+
 .card {
   background: #fff;
   border-radius: 16px;
@@ -95,6 +101,19 @@ summary:focus-visible {
 .btn-danger {
   background: #dc2626;
   color: #fff;
+}
+
+.btn:disabled,
+.btn[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+  box-shadow: none;
+}
+
+.btn-primary:disabled,
+.btn-primary[disabled] {
+  background: #93c5fd;
 }
 
 input,
@@ -461,6 +480,20 @@ td {
   margin-bottom: 0.35rem;
 }
 
+.guide-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.guide-pagination .page-info {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+}
+
 .page-section {
   margin-bottom: 3rem;
 }
@@ -774,9 +807,102 @@ td {
   height: 1.05rem;
 }
 
+.grid-3 {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (min-width: 768px) {
   .grid-3 {
     grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -0.25rem;
+  padding: 0 0.25rem;
+}
+
+.table-scroll table {
+  min-width: 560px;
+}
+
+@media (max-width: 640px) {
+  main {
+    padding: 1.25rem 0 2rem;
+  }
+
+  .card {
+    padding: 1.15rem;
+    border-radius: 14px;
+  }
+
+  .hero-gradient {
+    padding: 1.5rem 1.15rem;
+    border-radius: 16px;
+  }
+
+  .hero-lead {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
+  }
+
+  .section-subtitle {
+    margin-bottom: 1.5rem;
+    font-size: 0.98rem;
+  }
+
+  .page-section {
+    margin-bottom: 2rem;
+  }
+
+  .cta-banner {
+    padding: 1.75rem 1.15rem;
+    border-radius: 16px;
+  }
+
+  .cta-banner p {
+    font-size: 0.98rem;
+  }
+
+  .results-summary {
+    padding: 1.25rem;
+    border-radius: 16px;
+  }
+
+  .results-count-badge {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .results-actions .btn {
+    width: 100%;
+  }
+
+  .btn-lg {
+    padding: 0.9rem 1.25rem;
+    font-size: 1rem;
+  }
+
+  .breadcrumb {
+    flex-wrap: wrap;
+    font-size: 0.85rem;
   }
 }
 

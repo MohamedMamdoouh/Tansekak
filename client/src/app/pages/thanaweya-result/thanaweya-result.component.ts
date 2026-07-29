@@ -19,7 +19,7 @@ const GENERIC_ERROR_MESSAGE =
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
-    <div class="container">
+    <div class="container thanaweya-page">
       <nav class="breadcrumb" aria-label="مسار التنقل">
         <a routerLink="/">الرئيسية</a>
         <span class="breadcrumb-sep">/</span>
@@ -28,7 +28,8 @@ const GENERIC_ERROR_MESSAGE =
 
       <section class="lookup-hero hero-gradient">
         <div class="lookup-hero-text">
-          <h1 class="lookup-title">نتيجة الثانوية العامة برقم الجلوس</h1>
+          <span class="lookup-eyebrow">الثانوية العامة</span>
+          <h1 class="lookup-title">نتيجة الثانوية برقم الجلوس</h1>
           <p class="lookup-lead">
             اكتب رقم جلوسك وشوف نتيجتك — وبعدها اعرف الكليات المتاحة لمجموعك.
           </p>
@@ -77,46 +78,60 @@ const GENERIC_ERROR_MESSAGE =
       </section>
 
       @if (result) {
-        <section class="result-card card" aria-label="نتيجة الطالب">
-          <div class="result-header">
-            <h2 class="result-name">{{ result.arabicName }}</h2>
-            <span class="result-year">{{ result.year }}</span>
+        <section class="student-result" aria-label="نتيجة الطالب">
+          <div class="student-result-banner">
+            <div class="student-result-banner-inner">
+              <span class="student-result-badge">نتيجة {{ result.year }}</span>
+              <h2 class="student-result-name">{{ result.arabicName }}</h2>
+              <p class="student-result-seating">
+                رقم الجلوس: <strong>{{ result.seatingNo }}</strong>
+              </p>
+            </div>
           </div>
 
-          <dl class="result-details">
-            <div class="result-row">
-              <dt>رقم الجلوس</dt>
-              <dd>{{ result.seatingNo }}</dd>
+          <div class="student-result-body card">
+            <div class="student-result-score-ring" aria-label="المجموع الكلي">
+              <div class="score-ring-inner">
+                <span class="score-value">{{ result.totalDegree }}</span>
+                <span class="score-label">المجموع الكلي</span>
+              </div>
             </div>
-            <div class="result-row result-row-highlight">
-              <dt>المجموع الكلي</dt>
-              <dd class="result-score">{{ result.totalDegree }}</dd>
-            </div>
-            <div class="result-row">
-              <dt>حالة الطالب</dt>
-              <dd>{{ result.studentCaseDesc }}</dd>
-            </div>
-          </dl>
 
-          <a
-            class="btn btn-secondary btn-lg result-cta"
-            [routerLink]="['/predict']"
-            [queryParams]="{ score: result.totalDegree }"
-          >
-            اعرف الكليات المتاحة لمجموعك
-          </a>
+            <div class="student-result-meta">
+              <div class="meta-chip">
+                <span class="meta-chip-label">حالة الطالب</span>
+                <span class="meta-chip-value">{{ result.studentCaseDesc }}</span>
+              </div>
+              <div class="meta-chip">
+                <span class="meta-chip-label">سنة النتيجة</span>
+                <span class="meta-chip-value">{{ result.year }}</span>
+              </div>
+            </div>
+
+            <a
+              class="btn btn-primary btn-lg student-result-cta"
+              [routerLink]="['/predict']"
+              [queryParams]="{ score: result.totalDegree }"
+            >
+              اعرف الكليات المتاحة لمجموعك
+            </a>
+          </div>
         </section>
       }
     </div>
   `,
   styles: [
     `
+      .thanaweya-page {
+        padding-bottom: 1rem;
+      }
+
       .lookup-hero {
         display: flex;
         flex-direction: column;
         align-items: center;
         text-align: center;
-        padding: 2.5rem 1.75rem 2rem;
+        padding: 2rem 1.5rem 1.75rem;
         margin-bottom: 1.5rem;
       }
 
@@ -125,9 +140,22 @@ const GENERIC_ERROR_MESSAGE =
         margin-bottom: 0.25rem;
       }
 
+      .lookup-eyebrow {
+        display: inline-block;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: var(--color-accent);
+        background: rgba(217, 119, 6, 0.1);
+        border: 1px solid rgba(217, 119, 6, 0.22);
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        margin-bottom: 0.75rem;
+      }
+
       .lookup-title {
         font-family: var(--font-display);
-        font-size: clamp(1.4rem, 3.5vw, 2rem);
+        font-size: clamp(1.35rem, 4vw, 2rem);
         font-weight: 800;
         color: var(--color-primary);
         line-height: 1.35;
@@ -135,17 +163,17 @@ const GENERIC_ERROR_MESSAGE =
       }
 
       .lookup-lead {
-        margin: 0 auto 1.5rem;
+        margin: 0 auto 1.25rem;
         color: var(--color-text-muted);
         line-height: 1.75;
-        font-size: 1.02rem;
+        font-size: clamp(0.95rem, 2.5vw, 1.02rem);
         max-width: 46ch;
       }
 
       .lookup-form {
         width: 100%;
         max-width: 420px;
-        padding: 1.5rem;
+        padding: 1.35rem;
         margin: 0 auto;
       }
 
@@ -188,76 +216,214 @@ const GENERIC_ERROR_MESSAGE =
         font-size: 0.95rem;
       }
 
-      .result-card {
-        max-width: 480px;
+      /* ── Student result card ── */
+      .student-result {
+        max-width: 520px;
         margin: 0 auto 2rem;
-        padding: 1.75rem;
+        animation: result-enter 0.45s ease;
+      }
+
+      .student-result-banner {
+        background: linear-gradient(
+          145deg,
+          #0f172a 0%,
+          #1e3a8a 55%,
+          #1d4ed8 100%
+        );
+        border-radius: 20px 20px 0 0;
+        padding: 1.75rem 1.5rem 2.5rem;
+        position: relative;
+        overflow: hidden;
+        color: #fff;
         text-align: center;
       }
 
-      .result-header {
-        margin-bottom: 1.25rem;
+      .student-result-banner::before {
+        content: '';
+        position: absolute;
+        inset: -30% auto auto 50%;
+        width: 280px;
+        height: 280px;
+        transform: translateX(-50%);
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(245, 158, 11, 0.18) 0%,
+          transparent 70%
+        );
+        pointer-events: none;
       }
 
-      .result-name {
-        font-family: var(--font-display);
-        font-size: 1.35rem;
-        font-weight: 700;
-        color: var(--color-primary);
-        margin: 0 0 0.35rem;
-        line-height: 1.4;
+      .student-result-banner-inner {
+        position: relative;
+        z-index: 1;
       }
 
-      .result-year {
+      .student-result-badge {
         display: inline-block;
-        font-size: 0.85rem;
-        color: var(--color-text-muted);
-        background: var(--color-surface-alt, #f3f4f6);
-        padding: 0.2rem 0.65rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        padding: 0.25rem 0.75rem;
         border-radius: 999px;
+        margin-bottom: 0.75rem;
       }
 
-      .result-details {
-        margin: 0 0 1.5rem;
-        padding: 0;
+      .student-result-name {
+        font-family: var(--font-display);
+        font-size: clamp(1.2rem, 4vw, 1.55rem);
+        font-weight: 800;
+        margin: 0 0 0.5rem;
+        line-height: 1.45;
       }
 
-      .result-row {
+      .student-result-seating {
+        margin: 0;
+        font-size: 0.92rem;
+        opacity: 0.85;
+      }
+
+      .student-result-seating strong {
+        font-weight: 700;
+        color: var(--color-accent-light);
+        letter-spacing: 0.04em;
+      }
+
+      .student-result-body {
+        margin-top: -1.75rem;
+        position: relative;
+        z-index: 2;
+        padding: 1.5rem 1.35rem 1.75rem;
+        border-radius: 20px;
+        text-align: center;
+        box-shadow: 0 16px 48px rgba(15, 23, 42, 0.14);
+      }
+
+      .student-result-score-ring {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1.35rem;
+      }
+
+      .score-ring-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: clamp(140px, 38vw, 168px);
+        height: clamp(140px, 38vw, 168px);
+        border-radius: 50%;
+        background: linear-gradient(
+          145deg,
+          #fff 0%,
+          var(--color-surface-alt) 100%
+        );
+        border: 4px solid var(--color-accent-light);
+        box-shadow:
+          0 0 0 6px rgba(245, 158, 11, 0.12),
+          0 12px 32px rgba(30, 58, 138, 0.12);
+      }
+
+      .score-value {
+        font-family: var(--font-display);
+        font-size: clamp(2rem, 7vw, 2.65rem);
+        font-weight: 800;
+        line-height: 1;
+        color: var(--color-primary);
+      }
+
+      .score-label {
+        margin-top: 0.35rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--color-text-muted);
+      }
+
+      .student-result-meta {
+        display: grid;
+        gap: 0.65rem;
+        margin-bottom: 1.35rem;
+      }
+
+      .meta-chip {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0.65rem 0;
-        border-bottom: 1px solid var(--color-border, #e5e7eb);
-        gap: 1rem;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        background: var(--color-surface);
+        border: 1px solid rgba(30, 58, 138, 0.08);
+        border-radius: 12px;
       }
 
-      .result-row:last-child {
-        border-bottom: none;
-      }
-
-      .result-row dt {
-        font-size: 0.9rem;
+      .meta-chip-label {
+        font-size: 0.88rem;
         color: var(--color-text-muted);
-        margin: 0;
+        flex-shrink: 0;
       }
 
-      .result-row dd {
-        margin: 0;
-        font-weight: 600;
+      .meta-chip-value {
+        font-weight: 700;
+        font-size: 0.92rem;
+        color: var(--color-primary);
         text-align: left;
       }
 
-      .result-row-highlight dd.result-score {
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: var(--color-primary);
-      }
-
-      .result-cta {
+      .student-result-cta {
         width: 100%;
         display: inline-flex;
         align-items: center;
         justify-content: center;
+      }
+
+      @keyframes result-enter {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 480px) {
+        .lookup-hero {
+          padding: 1.35rem 1rem 1.25rem;
+        }
+
+        .lookup-form {
+          padding: 1.15rem;
+        }
+
+        .student-result-banner {
+          padding: 1.35rem 1rem 2.25rem;
+          border-radius: 16px 16px 0 0;
+        }
+
+        .student-result-body {
+          padding: 1.25rem 1rem 1.5rem;
+          border-radius: 16px;
+        }
+
+        .meta-chip {
+          flex-direction: column;
+          align-items: stretch;
+          text-align: center;
+          gap: 0.25rem;
+        }
+
+        .meta-chip-value {
+          text-align: center;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .student-result {
+          animation: none;
+        }
       }
     `,
   ],

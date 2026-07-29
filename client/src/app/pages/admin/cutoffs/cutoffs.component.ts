@@ -143,43 +143,45 @@ interface DeleteTarget {
           (ngModelChange)="onSearchChange()"
           placeholder="ابحث باسم الجامعة أو الكلية"
         />
-        <table>
-          <thead>
-            <tr>
-              <th>الجامعة / المعهد</th>
-              <th>الكلية</th>
-              <th>الشعبة</th>
-              <th>الحد الأدنى للقبول</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of items; track item.id) {
+        <div class="table-scroll">
+          <table>
+            <thead>
               <tr>
-                <td>{{ item.universityName }}</td>
-                <td>{{ item.facultyName }}</td>
-                <td>{{ trackLabel(item.track) }}</td>
-                <td>{{ item.cutoffScore }}</td>
-                <td class="row-actions">
-                  <button
-                    type="button"
-                    class="btn btn-secondary btn-sm"
-                    (click)="edit(item)"
-                  >
-                    تعديل
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-danger btn-sm"
-                    (click)="openDeleteDialog(item)"
-                  >
-                    حذف
-                  </button>
-                </td>
+                <th>الجامعة / المعهد</th>
+                <th>الكلية</th>
+                <th>الشعبة</th>
+                <th>الحد الأدنى للقبول</th>
+                <th></th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (item of items; track item.id) {
+                <tr>
+                  <td>{{ item.universityName }}</td>
+                  <td>{{ item.facultyName }}</td>
+                  <td>{{ trackLabel(item.track) }}</td>
+                  <td>{{ item.cutoffScore }}</td>
+                  <td class="row-actions">
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm"
+                      (click)="edit(item)"
+                    >
+                      تعديل
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-danger btn-sm"
+                      (click)="openDeleteDialog(item)"
+                    >
+                      حذف
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
 
         @if (loadError) {
           <p class="form-error">{{ loadError }}</p>
@@ -407,6 +409,43 @@ interface DeleteTarget {
       }
       .dialog-actions .btn {
         min-width: 120px;
+      }
+
+      @media (max-width: 640px) {
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .actions {
+          flex-direction: column;
+        }
+
+        .actions .btn {
+          width: 100%;
+        }
+
+        .row-actions {
+          flex-direction: column;
+        }
+
+        .pagination {
+          flex-direction: column;
+          align-items: stretch;
+          text-align: center;
+        }
+
+        .pagination .btn {
+          width: 100%;
+        }
+
+        .dialog-actions {
+          flex-direction: column;
+        }
+
+        .dialog-actions .btn {
+          width: 100%;
+          min-width: 0;
+        }
       }
 
       @keyframes fadeIn {

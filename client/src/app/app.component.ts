@@ -123,6 +123,51 @@ import { SocialLinksComponent } from './components/social-links/social-links.com
         font-size: 0.82rem;
         opacity: 0.65;
       }
+
+      @media (max-width: 640px) {
+        .header {
+          padding: 0.75rem 0;
+        }
+        .header-inner {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 0.65rem;
+        }
+        .brand {
+          font-size: 1.25rem;
+          text-align: center;
+        }
+        nav {
+          display: flex;
+          gap: 0.2rem;
+          flex-wrap: nowrap;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          padding-bottom: 0.15rem;
+        }
+        nav::-webkit-scrollbar {
+          display: none;
+        }
+        nav a,
+        .nav-btn {
+          flex-shrink: 0;
+          font-size: 0.85rem;
+          padding: 0.45rem 0.65rem;
+          white-space: nowrap;
+        }
+        main {
+          padding: 1.25rem 0 2rem;
+          min-height: calc(100vh - 160px);
+        }
+        .footer {
+          padding: 1.15rem 0;
+        }
+        .footer-tagline {
+          font-size: 0.88rem;
+          padding: 0 0.5rem;
+        }
+      }
     `,
   ],
 })

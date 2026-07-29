@@ -4,8 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../../api.service';
 import { AdmissionYear } from '../../../models';
 
-const IMPORT_UNAVAILABLE_MESSAGE =
-  'خدمة الاستيراد غير متاحة حاليًا. حاول مرة أخرى لاحقًا.';
+const IMPORT_UNAVAILABLE_MESSAGE = 'خدمة الاستيراد غير متاحة حاليًا.';
 
 @Component({
   selector: 'app-admin-import-results',
@@ -76,6 +75,20 @@ const IMPORT_UNAVAILABLE_MESSAGE =
       .hint {
         color: #6b7280;
         font-size: 0.9rem;
+        word-break: break-word;
+      }
+
+      .hint code {
+        display: block;
+        margin-top: 0.35rem;
+        font-size: 0.82rem;
+        line-height: 1.6;
+      }
+
+      @media (max-width: 640px) {
+        .btn-primary {
+          width: 100%;
+        }
       }
     `,
   ],

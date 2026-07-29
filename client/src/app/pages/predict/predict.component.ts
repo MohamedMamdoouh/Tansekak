@@ -92,6 +92,12 @@ import { Config, TRACK_LABELS } from '../../models';
         display: block;
         margin-top: 0.25rem;
       }
+
+      @media (max-width: 640px) {
+        .predict-card .btn-primary {
+          width: 100%;
+        }
+      }
     `,
   ],
 })

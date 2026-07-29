@@ -78,6 +78,17 @@ import { SocialLinksComponent } from '../../components/social-links/social-links
         font-size: 1.05rem;
         white-space: pre-line;
       }
+
+      @media (max-width: 480px) {
+        .designer-photo {
+          width: 160px;
+          height: 160px;
+        }
+
+        .designer-bio {
+          font-size: 0.98rem;
+        }
+      }
     `,
   ],
 })

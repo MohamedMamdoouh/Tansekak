@@ -125,9 +125,7 @@ interface StatCard {
                 <p>
                   رفع ملف Excel بنتائج الطلاب واستبدال بيانات السنة المختارة.
                 </p>
-                <p class="action-unavailable">
-                  خدمة الاستيراد غير متاحة حاليًا. حاول مرة أخرى لاحقًا.
-                </p>
+                <p class="action-unavailable">حاول مرة أخرى لاحقًا.</p>
               </div>
               <span class="action-arrow" aria-hidden="true">←</span>
             </article>
@@ -377,6 +375,76 @@ interface StatCard {
         .skeleton-card {
           animation: none;
           background: #eef2f7;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .dashboard {
+          gap: 1.15rem;
+        }
+
+        .hero-band {
+          padding: 1.35rem 1.15rem;
+          border-radius: 16px;
+        }
+
+        .year-anchor {
+          width: 100%;
+          min-width: 0;
+          padding: 1rem 1.15rem;
+        }
+
+        .year-anchor--empty {
+          text-align: center;
+          justify-items: center;
+        }
+
+        .stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 0.75rem;
+        }
+
+        .stat-card {
+          padding: 1rem;
+        }
+
+        .stat-label {
+          font-size: 0.88rem;
+        }
+
+        .actions-title {
+          font-size: 1.05rem;
+        }
+
+        .action-card {
+          grid-template-columns: auto 1fr;
+          grid-template-rows: auto auto;
+          padding: 1rem;
+          gap: 0.75rem;
+        }
+
+        .action-arrow {
+          display: none;
+        }
+
+        .action-icon {
+          width: 42px;
+          height: 42px;
+          border-radius: 12px;
+        }
+
+        .action-card h3 {
+          font-size: 0.98rem;
+        }
+
+        .action-card p {
+          font-size: 0.85rem;
+        }
+      }
+
+      @media (max-width: 380px) {
+        .stats-grid {
+          grid-template-columns: 1fr;
         }
       }
     `,
