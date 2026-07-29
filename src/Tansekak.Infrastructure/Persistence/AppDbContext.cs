@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using System.Text.Json;
 using Tansekak.Domain.Entities;
 using Tansekak.Domain.Enums;
 using Tansekak.Infrastructure.Identity;
@@ -52,8 +51,8 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             e.HasIndex(x => x.NameAr).IsUnique();
             e.Property(x => x.AllowedTracks)
                 .HasConversion(
-                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                    v => JsonSerializer.Deserialize<List<AcademicTrack>>(v, (JsonSerializerOptions?)null) ?? new List<AcademicTrack>(),
+                    v => FacultyAllowedTracksJson.Serialize(v),
+                    v => FacultyAllowedTracksJson.Deserialize(v),
                     new ValueComparer<List<AcademicTrack>>(
                         (a, b) => a!.SequenceEqual(b!),
                         v => v.Aggregate(0, (hash, track) => HashCode.Combine(hash, track)),

@@ -46,6 +46,7 @@ public static class DependencyInjection
             });
         }
 
+        services.AddScoped<FacultyAllowedTracksSynchronizer>();
         services.AddScoped<IDataSeeder, JsonSeedService>();
         services.AddScoped<IConfigService, ConfigService>();
         services.AddScoped<IAdmissionPredictionService, AdmissionPredictionService>();

@@ -1,6 +1,7 @@
 using Tansekak.Application.Common;
 using Tansekak.Domain.Entities;
 using Tansekak.Domain.Enums;
+using Tansekak.Infrastructure.Persistence;
 
 namespace Tansekak.UnitTests;
 
@@ -17,6 +18,18 @@ public class FacultyTrackValidatorTests
 
         Assert.True(FacultyTrackValidator.IsTrackAllowed(faculty, AcademicTrack.Mathematics));
         Assert.False(FacultyTrackValidator.IsTrackAllowed(faculty, AcademicTrack.Science));
+    }
+
+    [Fact]
+    public void IsTrackAllowed_ReturnsFalse_WhenAllowedTracksEmpty()
+    {
+        var faculty = new Faculty
+        {
+            NameAr = "هندسة",
+            AllowedTracks = []
+        };
+
+        Assert.False(FacultyTrackValidator.IsTrackAllowed(faculty, AcademicTrack.Mathematics));
     }
 
     [Fact]
@@ -50,6 +63,41 @@ public class StudentTrackInferrerTests
     public void TryInferFromCaseDesc_ReturnsNull_WhenUnknown()
     {
         Assert.Null(StudentTrackInferrer.TryInferFromCaseDesc("ناجح"));
+    }
+}
+
+public class TrackHelperTests
+{
+    [Theory]
+    [InlineData("Mathematics", AcademicTrack.Mathematics)]
+    [InlineData("علمي رياضة", AcademicTrack.Mathematics)]
+    [InlineData("Science", AcademicTrack.Science)]
+    [InlineData("علمي علوم", AcademicTrack.Science)]
+    public void TryParse_AcceptsEnglishAndArabicNames(string value, AcademicTrack expected)
+    {
+        Assert.True(TrackHelper.TryParse(value, out var track));
+        Assert.Equal(expected, track);
+    }
+}
+
+public class FacultyAllowedTracksJsonTests
+{
+    [Theory]
+    [InlineData("[2]", AcademicTrack.Mathematics)]
+    [InlineData("[\"Mathematics\"]", AcademicTrack.Mathematics)]
+    public void Deserialize_SupportsNumericAndStringEnumValues(string json, AcademicTrack expected)
+    {
+        var tracks = FacultyAllowedTracksJson.Deserialize(json);
+        Assert.Single(tracks);
+        Assert.Equal(expected, tracks[0]);
+    }
+
+    [Fact]
+    public void RoundTrip_PreservesMathematicsTrack()
+    {
+        var json = FacultyAllowedTracksJson.Serialize([AcademicTrack.Mathematics]);
+        var tracks = FacultyAllowedTracksJson.Deserialize(json);
+        Assert.Equal([AcademicTrack.Mathematics], tracks);
     }
 }
 

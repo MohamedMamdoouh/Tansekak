@@ -10,7 +10,11 @@ using Tansekak.Infrastructure.Seeding;
 
 namespace Tansekak.Infrastructure.Seeding;
 
-public class JsonSeedService(AppDbContext db, IHostEnvironment env, ILogger<JsonSeedService> logger) : IDataSeeder
+public class JsonSeedService(
+    AppDbContext db,
+    IHostEnvironment env,
+    FacultyAllowedTracksSynchronizer allowedTracksSynchronizer,
+    ILogger<JsonSeedService> logger) : IDataSeeder
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -19,6 +23,8 @@ public class JsonSeedService(AppDbContext db, IHostEnvironment env, ILogger<Json
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
+        await allowedTracksSynchronizer.SyncAsync(cancellationToken);
+
         if (await db.AdmissionCutoffs.AnyAsync(cancellationToken))
         {
             logger.LogInformation("Database already seeded.");

@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Tansekak.Domain.Entities;
 using Tansekak.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 using Tansekak.Infrastructure.Persistence;
+using Tansekak.Infrastructure.Seeding;
 
 namespace Tansekak.IntegrationTests;
 
@@ -117,6 +119,69 @@ public class PublicApiTests : IClassFixture<TansekakWebApplicationFactory>
         Assert.NotNull(json?.Data);
         Assert.Contains(
             json!.Data!.Results,
+            r => r.Faculty.NameAr == "هندسة");
+    }
+
+    [Fact]
+    public async Task Predict_Mathematics_ReturnsEngineering_AtExactCutoff()
+    {
+        var response = await _client.PostAsJsonAsync("/api/admission/predict", new
+        {
+            track = "Mathematics",
+            score = 295.0,
+            page = 1,
+            pageSize = 100
+        });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var json = await response.Content.ReadFromJsonAsync<ApiEnvelope<PredictData>>();
+        Assert.NotNull(json?.Data);
+        Assert.Contains(
+            json!.Data!.Results,
+            r => r.Faculty.NameAr == "هندسة" && r.University.NameAr == "جامعة عين شمس");
+    }
+
+    [Fact]
+    public async Task Predict_Mathematics_ReturnsEngineering_AfterAllowedTracksSync()
+    {
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var engineering = await db.Faculties.SingleAsync(f => f.Id == 16);
+            engineering.AllowedTracks = [];
+            await db.SaveChangesAsync();
+        }
+
+        var blocked = await _client.PostAsJsonAsync("/api/admission/predict", new
+        {
+            track = "Mathematics",
+            score = 300,
+            page = 1,
+            pageSize = 100
+        });
+        var blockedJson = await blocked.Content.ReadFromJsonAsync<ApiEnvelope<PredictData>>();
+        Assert.NotNull(blockedJson?.Data);
+        Assert.DoesNotContain(
+            blockedJson!.Data!.Results,
+            r => r.Faculty.NameAr == "هندسة");
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var sync = scope.ServiceProvider.GetRequiredService<FacultyAllowedTracksSynchronizer>();
+            await sync.SyncAsync();
+        }
+
+        var restored = await _client.PostAsJsonAsync("/api/admission/predict", new
+        {
+            track = "Mathematics",
+            score = 300,
+            page = 1,
+            pageSize = 100
+        });
+        var restoredJson = await restored.Content.ReadFromJsonAsync<ApiEnvelope<PredictData>>();
+        Assert.NotNull(restoredJson?.Data);
+        Assert.Contains(
+            restoredJson!.Data!.Results,
             r => r.Faculty.NameAr == "هندسة");
     }
 

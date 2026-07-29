@@ -12,6 +12,7 @@ namespace Tansekak.Infrastructure.Services;
 public class CutoffResyncService(
     AppDbContext db,
     IHostEnvironment env,
+    FacultyAllowedTracksSynchronizer allowedTracksSynchronizer,
     ILogger<CutoffResyncService> logger) : ICutoffResyncService
 {
     public async Task<CutoffResyncResultDto> ResyncYearFromSeedAsync(int yearId, CancellationToken cancellationToken = default)
@@ -22,7 +23,7 @@ public class CutoffResyncService(
         var dataPath = SeedDataPathResolver.Resolve(env)
             ?? throw new DirectoryNotFoundException("Seed data folder not found.");
 
-        await SyncFacultyAllowedTracksAsync(dataPath, cancellationToken);
+        await allowedTracksSynchronizer.SyncAsync(cancellationToken);
 
         var validUfIds = await db.UniversityFaculties.AsNoTracking()
             .Select(x => x.Id)
@@ -63,37 +64,4 @@ public class CutoffResyncService(
             seedCutoffs.Count);
     }
 
-    private async Task SyncFacultyAllowedTracksAsync(string dataPath, CancellationToken cancellationToken)
-    {
-        var seedFaculties = await ReadFacultiesAsync(dataPath, cancellationToken);
-        if (seedFaculties.Count == 0)
-            return;
-
-        var faculties = await db.Faculties.ToListAsync(cancellationToken);
-        foreach (var faculty in faculties)
-        {
-            var seed = seedFaculties.FirstOrDefault(x => x.Id == faculty.Id);
-            if (seed?.AllowedTracks is null || seed.AllowedTracks.Count == 0)
-                continue;
-
-            faculty.AllowedTracks = seed.AllowedTracks
-                .Select(CutoffSeedLoader.TrackParse)
-                .Distinct()
-                .ToList();
-        }
-
-        await db.SaveChangesAsync(cancellationToken);
-    }
-
-    private static async Task<List<SeedFaculty>> ReadFacultiesAsync(string dataPath, CancellationToken cancellationToken)
-    {
-        await using var stream = File.OpenRead(Path.Combine(dataPath, "Faculties.json"));
-        var result = await System.Text.Json.JsonSerializer.DeserializeAsync<List<SeedFaculty>>(
-            stream,
-            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true },
-            cancellationToken);
-        return result ?? [];
-    }
-
-    private record SeedFaculty(int Id, string NameAr, List<string>? AllowedTracks);
 }

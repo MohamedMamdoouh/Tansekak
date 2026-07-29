@@ -8,7 +8,10 @@ public static class TrackHelper
     {
         ["Science"] = AcademicTrack.Science,
         ["Mathematics"] = AcademicTrack.Mathematics,
-        ["Literature"] = AcademicTrack.Literature
+        ["Literature"] = AcademicTrack.Literature,
+        ["علمي علوم"] = AcademicTrack.Science,
+        ["علمي رياضة"] = AcademicTrack.Mathematics,
+        ["أدبي"] = AcademicTrack.Literature
     };
 
     public static bool TryParse(string? value, out AcademicTrack track) =>
