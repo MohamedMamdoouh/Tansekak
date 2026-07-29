@@ -5,16 +5,24 @@ export function parseImportErrorResponse(
 ): ImportResult | null {
   if (!response) return null;
 
-  if (response.data) {
-    return normalizeImportResult(response.data);
+  const envelope = response as ApiResponse<ImportResult> & {
+    Data?: ImportResult;
+    Message?: string;
+    Errors?: ApiResponse<ImportResult>['errors'];
+  };
+
+  const payload = envelope.data ?? envelope.Data;
+  if (payload) {
+    return normalizeImportResult(payload);
   }
 
-  if (!response.errors?.length) return null;
+  const errors = envelope.errors ?? envelope.Errors;
+  if (!errors?.length) return null;
 
   return {
     success: false,
-    message: response.message,
-    errors: response.errors.map((error) => ({
+    message: envelope.message ?? envelope.Message ?? '',
+    errors: errors.map((error) => ({
       rowNumber: error.rowNumber ?? 0,
       column: error.field,
       errorCode: '',
@@ -44,8 +52,29 @@ export function normalizeImportResult(
     success: raw.success ?? raw.Success ?? false,
     message: raw.message ?? raw.Message ?? '',
     importedCount: raw.importedCount ?? raw.ImportedCount,
-    errors: raw.errors ?? raw.Errors,
+    errors: normalizeImportErrors(raw.errors ?? raw.Errors),
   };
+}
+
+function normalizeImportErrors(
+  errors: ImportResult['errors'] | undefined,
+): ImportResult['errors'] {
+  if (!errors?.length) return errors;
+
+  return errors.map((error) => {
+    const item = error as typeof error & {
+      RowNumber?: number;
+      Column?: string;
+      ErrorCode?: string;
+      Message?: string;
+    };
+    return {
+      rowNumber: item.rowNumber ?? item.RowNumber ?? 0,
+      column: item.column ?? item.Column ?? '',
+      errorCode: item.errorCode ?? item.ErrorCode ?? '',
+      message: item.message ?? item.Message ?? '',
+    };
+  });
 }
 
 export function importErrorMessage(
@@ -54,6 +83,21 @@ export function importErrorMessage(
 ): string {
   if (status === 0) {
     return 'انقطع الاتصال بالخادم اثناء الاستيراد. الملف قد يكون كبيرا — انتظر دقيقة ثم حاول مرة اخرى.';
+  }
+
+  if (status === 502 || status === 504) {
+    return 'انتهت مهلة الخادم (5 دقائق). قد يكون الاستيراد لا يزال جاريا — انتظر دقيقة ثم تحقق من عدد النتائج في لوحة التحكم.';
+  }
+
+  if (status === 401 || status === 403) {
+    return 'انتهت جلسة تسجيل الدخول. سجّل الدخول مرة اخرى ثم أعد المحاولة.';
+  }
+
+  if (status >= 500) {
+    return (
+      response?.message ??
+      'حدث خطأ في الخادم اثناء الاستيراد. راجع سجل Railway ثم حاول مرة اخرى.'
+    );
   }
 
   if (response?.data?.errors?.length) {

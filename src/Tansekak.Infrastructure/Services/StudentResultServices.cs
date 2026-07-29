@@ -1,8 +1,10 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Npgsql;
+using NpgsqlTypes;
 using Tansekak.Application.DTOs;
 using Tansekak.Application.Interfaces;
-using Tansekak.Domain.Entities;
 using Tansekak.Infrastructure.Import;
 using Tansekak.Infrastructure.Persistence;
 
@@ -10,6 +12,8 @@ namespace Tansekak.Infrastructure.Services;
 
 public class StudentResultImportService(AppDbContext db, ILogger<StudentResultImportService> logger) : IStudentResultImportService
 {
+    private const int MaxReportedErrors = 50;
+
     public async Task<ImportResultDto> ImportAsync(
         int yearId,
         Stream fileStream,
@@ -27,7 +31,7 @@ public class StudentResultImportService(AppDbContext db, ILogger<StudentResultIm
         if (parseErrors.Count > 0)
         {
             logger.LogWarning("Excel parse failed for year {YearId} with {Count} errors.", yearId, parseErrors.Count);
-            return new ImportResultDto(false, "Validation failed.", Errors: parseErrors);
+            return new ImportResultDto(false, "Validation failed.", Errors: LimitErrors(parseErrors));
         }
 
         var errors = ValidateRows(parsedRows);
@@ -45,31 +49,29 @@ public class StudentResultImportService(AppDbContext db, ILogger<StudentResultIm
             ]);
         }
 
-        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        // Railway's HTTP proxy times out at ~5 minutes; don't cancel the DB write when the client disconnects.
+        var persistCancellation = CancellationToken.None;
+
+        await using var transaction = await db.Database.BeginTransactionAsync(persistCancellation);
         try
         {
-            await db.StudentResults
+            var deleted = await db.StudentResults
                 .Where(r => r.AdmissionYearId == yearId)
-                .ExecuteDeleteAsync(cancellationToken);
+                .ExecuteDeleteAsync(persistCancellation);
 
-            const int batchSize = 2000;
-            for (var i = 0; i < parsedRows.Count; i += batchSize)
-            {
-                var entities = parsedRows.Skip(i).Take(batchSize).Select(row => new StudentResult
-                {
-                    AdmissionYearId = yearId,
-                    SeatingNo = row.SeatingNo,
-                    ArabicName = row.ArabicName,
-                    TotalDegree = row.TotalDegree,
-                    StudentCaseDesc = row.StudentCaseDesc
-                }).ToList();
+            logger.LogInformation(
+                "Deleted {Deleted} existing student results for year {YearId}; inserting {Count} rows.",
+                deleted,
+                yearId,
+                parsedRows.Count);
 
-                db.StudentResults.AddRange(entities);
-                await db.SaveChangesAsync(cancellationToken);
-                db.ChangeTracker.Clear();
-            }
+            var connection = (NpgsqlConnection)db.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open)
+                await connection.OpenAsync(persistCancellation);
 
-            await transaction.CommitAsync(cancellationToken);
+            await BulkInsertAsync(connection, yearId, parsedRows, persistCancellation);
+
+            await transaction.CommitAsync(persistCancellation);
 
             logger.LogInformation("Imported {Count} student results for year {YearId}.", parsedRows.Count, yearId);
             return new ImportResultDto(
@@ -79,9 +81,35 @@ public class StudentResultImportService(AppDbContext db, ILogger<StudentResultIm
         }
         catch
         {
-            await transaction.RollbackAsync(cancellationToken);
+            await transaction.RollbackAsync(persistCancellation);
             throw;
         }
+    }
+
+    private static async Task BulkInsertAsync(
+        NpgsqlConnection connection,
+        int yearId,
+        IReadOnlyList<ParsedStudentResultRow> rows,
+        CancellationToken cancellationToken)
+    {
+        const string copySql =
+            """
+            COPY "StudentResults" ("AdmissionYearId", "SeatingNo", "ArabicName", "TotalDegree", "StudentCaseDesc")
+            FROM STDIN (FORMAT BINARY)
+            """;
+
+        await using var writer = await connection.BeginBinaryImportAsync(copySql, cancellationToken);
+        foreach (var row in rows)
+        {
+            await writer.StartRowAsync(cancellationToken);
+            await writer.WriteAsync(yearId, NpgsqlDbType.Integer, cancellationToken);
+            await writer.WriteAsync(row.SeatingNo, NpgsqlDbType.Varchar, cancellationToken);
+            await writer.WriteAsync(row.ArabicName, NpgsqlDbType.Varchar, cancellationToken);
+            await writer.WriteAsync(row.TotalDegree, NpgsqlDbType.Numeric, cancellationToken);
+            await writer.WriteAsync(row.StudentCaseDesc, NpgsqlDbType.Varchar, cancellationToken);
+        }
+
+        await writer.CompleteAsync(cancellationToken);
     }
 
     private static List<ImportValidationErrorDto> ValidateRows(List<ParsedStudentResultRow> rows)
@@ -91,6 +119,8 @@ public class StudentResultImportService(AppDbContext db, ILogger<StudentResultIm
 
         foreach (var row in rows)
         {
+            if (errors.Count >= MaxReportedErrors) break;
+
             if (row.TotalDegree < 0)
                 errors.Add(Err(row.RowNumber, "total_degree", "INVALID", "Total degree cannot be negative."));
 
@@ -100,6 +130,9 @@ public class StudentResultImportService(AppDbContext db, ILogger<StudentResultIm
 
         return errors;
     }
+
+    private static List<ImportValidationErrorDto> LimitErrors(List<ImportValidationErrorDto> errors) =>
+        errors.Count <= MaxReportedErrors ? errors : errors.Take(MaxReportedErrors).ToList();
 
     private static ImportValidationErrorDto Err(int row, string col, string code, string msg) =>
         new(row, col, code, msg);
