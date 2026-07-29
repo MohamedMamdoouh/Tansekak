@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using System.Text.Json;
 using Tansekak.Domain.Entities;
+using Tansekak.Domain.Enums;
 using Tansekak.Infrastructure.Identity;
 
 namespace Tansekak.Infrastructure.Persistence;
@@ -47,6 +50,15 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             e.Property(x => x.Id).ValueGeneratedNever();
             e.Property(x => x.NameAr).HasMaxLength(200).IsRequired();
             e.HasIndex(x => x.NameAr).IsUnique();
+            e.Property(x => x.AllowedTracks)
+                .HasConversion(
+                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                    v => JsonSerializer.Deserialize<List<AcademicTrack>>(v, (JsonSerializerOptions?)null) ?? new List<AcademicTrack>(),
+                    new ValueComparer<List<AcademicTrack>>(
+                        (a, b) => a!.SequenceEqual(b!),
+                        v => v.Aggregate(0, (hash, track) => HashCode.Combine(hash, track)),
+                        v => v.ToList()))
+                .HasColumnType("jsonb");
         });
 
         builder.Entity<UniversityFaculty>(e =>
@@ -92,6 +104,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             e.Property(x => x.ArabicName).HasMaxLength(300).IsRequired();
             e.Property(x => x.TotalDegree).HasPrecision(6, 2);
             e.Property(x => x.StudentCaseDesc).HasMaxLength(100).IsRequired();
+            e.Property(x => x.Track);
             e.HasIndex(x => x.SeatingNo);
             e.HasIndex(x => new { x.AdmissionYearId, x.SeatingNo }).IsUnique();
             e.HasOne(x => x.AdmissionYear).WithMany(x => x.StudentResults)

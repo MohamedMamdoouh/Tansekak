@@ -82,3 +82,10 @@ public interface IDataSeeder
 {
     Task SeedAsync(CancellationToken cancellationToken = default);
 }
+
+public interface ICutoffResyncService
+{
+    Task<CutoffResyncResultDto> ResyncYearFromSeedAsync(int yearId, CancellationToken cancellationToken = default);
+}
+
+public record CutoffResyncResultDto(bool Success, string Message, int DeletedCount, int InsertedCount);

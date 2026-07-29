@@ -93,6 +93,26 @@ import { AdmissionYear, ImportResult, TRACK_OPTIONS } from '../../../models';
           </div>
         }
       </div>
+
+      <div class="card resync-card">
+        <h2>إصلاح بيانات حدود القبول</h2>
+        <p class="note">
+          يعيد تحميل كل حدود القبول للسنة المختارة من ملفات البيانات الرسمية
+          (SeededData). استخدمه إذا ظهرت كليات بشعبة غير صحيحة — مثل هندسة
+          لعلمي علوم.
+        </p>
+        <button
+          class="btn btn-secondary"
+          type="button"
+          (click)="resyncCutoffs()"
+          [disabled]="resyncing || !form.value.yearId"
+        >
+          {{ resyncing ? 'جاري المزامنة...' : 'إعادة مزامنة من البيانات الرسمية' }}
+        </button>
+        @if (resyncMessage) {
+          <p [class]="resyncSuccess ? 'success' : 'error'">{{ resyncMessage }}</p>
+        }
+      </div>
     </div>
   `,
   styles: [
@@ -117,6 +137,13 @@ import { AdmissionYear, ImportResult, TRACK_OPTIONS } from '../../../models';
       }
       .success {
         color: #059669;
+      }
+      .resync-card {
+        margin-top: 1.5rem;
+      }
+      .resync-card h2 {
+        margin-top: 0;
+        font-size: 1.15rem;
       }
       table {
         width: 100%;
@@ -148,7 +175,10 @@ export class AdminImportComponent implements OnInit {
   file: File | null = null;
   fileTouched = false;
   uploading = false;
+  resyncing = false;
   message = '';
+  resyncMessage = '';
+  resyncSuccess = false;
   result: ImportResult | null = null;
   trackOptions = TRACK_OPTIONS;
 
@@ -217,5 +247,27 @@ export class AdminImportComponent implements OnInit {
           this.message = err.error?.message ?? 'فشل الاستيراد.';
         });
       });
+  }
+
+  resyncCutoffs(): void {
+    const yearId = this.form.value.yearId;
+    if (!yearId) return;
+
+    this.resyncing = true;
+    this.resyncMessage = '';
+    this.resyncSuccess = false;
+
+    this.api.resyncCutoffs(yearId).subscribe({
+      next: (res) => {
+        this.resyncing = false;
+        this.resyncSuccess = res.success;
+        this.resyncMessage = res.message;
+      },
+      error: (err: { error?: { message?: string } }) => {
+        this.resyncing = false;
+        this.resyncSuccess = false;
+        this.resyncMessage = err.error?.message ?? 'فشلت إعادة المزامنة.';
+      },
+    });
   }
 }

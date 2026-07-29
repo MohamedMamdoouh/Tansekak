@@ -97,6 +97,14 @@ export interface StudentResult {
   totalDegree: number;
   studentCaseDesc: string;
   year: number;
+  track?: string | null;
+}
+
+export interface CutoffResyncResult {
+  success: boolean;
+  message: string;
+  deletedCount: number;
+  insertedCount: number;
 }
 
 export const TRACK_LABELS: Record<string, string> = {

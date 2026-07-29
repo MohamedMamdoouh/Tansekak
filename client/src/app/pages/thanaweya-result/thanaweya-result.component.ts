@@ -195,7 +195,7 @@ const SCORE_ARC_LENGTH = 339.292;
               <a
                 class="cert-cta"
                 [routerLink]="['/predict']"
-                [queryParams]="{ score: result.totalDegree }"
+                [queryParams]="predictQueryParams()"
               >
                 <span>اعرف الكليات المتاحة لمجموعك</span>
                 <span class="cert-cta-arrow" aria-hidden="true">←</span>
@@ -814,5 +814,16 @@ export class ThanaweyaResultComponent {
         }
       },
     });
+  }
+
+  predictQueryParams(): { score: number; track?: string } {
+    if (!this.result) return { score: 0 };
+    const params: { score: number; track?: string } = {
+      score: this.result.totalDegree,
+    };
+    if (this.result.track) {
+      params.track = this.result.track;
+    }
+    return params;
   }
 }

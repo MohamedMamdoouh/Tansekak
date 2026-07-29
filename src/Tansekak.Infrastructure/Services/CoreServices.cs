@@ -41,16 +41,24 @@ public class AdmissionPredictionService(AppDbContext db) : IAdmissionPredictionS
         var pageSize = Math.Clamp(request.PageSize, 1, 100);
 
         var cutoffs = await db.AdmissionCutoffs.AsNoTracking()
+            .Include(c => c.UniversityFaculty)
+            .ThenInclude(uf => uf.University)
+            .Include(c => c.UniversityFaculty)
+            .ThenInclude(uf => uf.Faculty)
             .Where(c => c.AdmissionYearId == currentYear.Id && c.Track == track && request.Score >= c.CutoffScore)
+            .ToListAsync(cancellationToken);
+
+        var eligibleCutoffs = cutoffs
+            .Where(c => FacultyTrackValidator.IsTrackAllowed(c.UniversityFaculty.Faculty, track))
             .Select(c => new
             {
                 c.CutoffScore,
                 UniversityName = c.UniversityFaculty.University.NameAr,
                 FacultyName = c.UniversityFaculty.Faculty.NameAr
             })
-            .ToListAsync(cancellationToken);
+            .ToList();
 
-        var allResults = cutoffs
+        var allResults = eligibleCutoffs
             .Select(c => new
             {
                 c.UniversityName,
@@ -102,16 +110,23 @@ public class StudentResultService(AppDbContext db) : IStudentResultService
             .FirstOrDefaultAsync(x => x.IsCurrent, cancellationToken)
             ?? throw new InvalidOperationException("No current admission year configured.");
 
-        var result = await db.StudentResults.AsNoTracking()
+        var entity = await db.StudentResults.AsNoTracking()
             .Where(x => x.AdmissionYearId == currentYear.Id && x.SeatingNo == normalized)
-            .Select(x => new StudentResultDto(
-                x.SeatingNo,
-                x.ArabicName,
-                x.TotalDegree,
-                x.StudentCaseDesc,
-                currentYear.Year))
             .FirstOrDefaultAsync(cancellationToken);
 
-        return result;
+        if (entity is null)
+            return null;
+
+        var track = entity.Track.HasValue
+            ? TrackHelper.ToDisplayName(entity.Track.Value)
+            : StudentTrackInferrer.ToDisplayName(StudentTrackInferrer.TryInferFromCaseDesc(entity.StudentCaseDesc));
+
+        return new StudentResultDto(
+            entity.SeatingNo,
+            entity.ArabicName,
+            entity.TotalDegree,
+            entity.StudentCaseDesc,
+            currentYear.Year,
+            track);
     }
 }

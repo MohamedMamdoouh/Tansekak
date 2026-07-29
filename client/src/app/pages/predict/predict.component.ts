@@ -127,6 +127,9 @@ export class PredictComponent implements OnInit {
           this.form.patchValue({ score });
         }
       }
+      if (params['track']) {
+        this.form.patchValue({ track: params['track'] });
+      }
     });
 
     this.api.getConfig().subscribe({

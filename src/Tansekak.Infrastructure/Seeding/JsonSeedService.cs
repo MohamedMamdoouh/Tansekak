@@ -6,6 +6,7 @@ using Tansekak.Application.Interfaces;
 using Tansekak.Domain.Entities;
 using Tansekak.Domain.Enums;
 using Tansekak.Infrastructure.Persistence;
+using Tansekak.Infrastructure.Seeding;
 
 namespace Tansekak.Infrastructure.Seeding;
 
@@ -30,7 +31,7 @@ public class JsonSeedService(AppDbContext db, IHostEnvironment env, ILogger<Json
             await ClearBusinessDataAsync(cancellationToken);
         }
 
-        var dataPath = ResolveDataPath();
+        var dataPath = SeedDataPathResolver.Resolve(env);
         if (dataPath is null)
         {
             throw new DirectoryNotFoundException(
@@ -43,7 +44,7 @@ public class JsonSeedService(AppDbContext db, IHostEnvironment env, ILogger<Json
         var universities = await ReadJsonAsync<SeedUniversity>(Path.Combine(dataPath, "Universities.json"), cancellationToken);
         var universityFaculties = await ReadJsonAsync<SeedUniversityFaculty>(Path.Combine(dataPath, "UniversityFaculties.json"), cancellationToken);
         var years = await ReadJsonAsync<SeedAdmissionYear>(Path.Combine(dataPath, "AdmissionYears.json"), cancellationToken);
-        var cutoffs = await ReadJsonAsync<SeedCutoff>(Path.Combine(dataPath, "AdmissionCutoffs2025.json"), cancellationToken);
+        var cutoffs = await ReadJsonAsync<SeedCutoff>(CutoffSeedLoader.ResolveCutoffsFile(dataPath), cancellationToken);
 
         var governorateIds = governorates.Select(x => x.Id).ToHashSet();
         var facultyIds = faculties.Select(x => x.Id).ToHashSet();
@@ -65,7 +66,7 @@ public class JsonSeedService(AppDbContext db, IHostEnvironment env, ILogger<Json
             : null;
 
         db.Governorates.AddRange(governorates.Select(x => new Governorate { Id = x.Id, NameAr = x.NameAr }));
-        db.Faculties.AddRange(faculties.Select(x => new Faculty { Id = x.Id, NameAr = x.NameAr }));
+        db.Faculties.AddRange(faculties.Select(MapFaculty));
         db.Universities.AddRange(universities
             .Where(x => governorateIds.Contains(x.GovernorateId))
             .Select(x => new University
@@ -97,7 +98,7 @@ public class JsonSeedService(AppDbContext db, IHostEnvironment env, ILogger<Json
             Id = x.Id,
             AdmissionYearId = x.AdmissionYearId,
             UniversityFacultyId = x.UniversityFacultyId,
-            Track = TrackParse(x.Track),
+            Track = CutoffSeedLoader.TrackParse(x.Track),
             CutoffScore = x.CutoffScore
         }));
         await db.SaveChangesAsync(cancellationToken);
@@ -111,23 +112,15 @@ public class JsonSeedService(AppDbContext db, IHostEnvironment env, ILogger<Json
             validCutoffs.Count);
     }
 
-    private string? ResolveDataPath()
+    private static Faculty MapFaculty(SeedFaculty seed) => new()
     {
-        var candidates = new[]
-        {
-            Path.GetFullPath(Path.Combine(env.ContentRootPath, "..", "..", "SeededData")),
-            Path.GetFullPath(Path.Combine(env.ContentRootPath, "..", "..", "Data")),
-            Path.Combine(env.ContentRootPath, "Data"),
-        };
-
-        foreach (var candidate in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
-        {
-            if (Directory.Exists(candidate) && File.Exists(Path.Combine(candidate, "Universities.json")))
-                return candidate;
-        }
-
-        return null;
-    }
+        Id = seed.Id,
+        NameAr = seed.NameAr,
+        AllowedTracks = (seed.AllowedTracks ?? [])
+            .Select(CutoffSeedLoader.TrackParse)
+            .Distinct()
+            .ToList()
+    };
 
     private async Task ClearBusinessDataAsync(CancellationToken ct)
     {
@@ -139,9 +132,6 @@ public class JsonSeedService(AppDbContext db, IHostEnvironment env, ILogger<Json
         await db.Governorates.ExecuteDeleteAsync(ct);
     }
 
-    private static AcademicTrack TrackParse(string track) =>
-        Enum.TryParse<AcademicTrack>(track, true, out var t) ? t : AcademicTrack.Science;
-
     private static async Task<List<T>> ReadJsonAsync<T>(string path, CancellationToken ct)
     {
         await using var stream = File.OpenRead(path);
@@ -150,7 +140,7 @@ public class JsonSeedService(AppDbContext db, IHostEnvironment env, ILogger<Json
     }
 
     private record SeedGovernorate(int Id, string NameAr);
-    private record SeedFaculty(int Id, string NameAr);
+    private record SeedFaculty(int Id, string NameAr, List<string>? AllowedTracks);
     private record SeedUniversity(int Id, string NameAr, int GovernorateId, string Type);
     private record SeedUniversityFaculty(int Id, int UniversityId, int FacultyId);
     private record SeedAdmissionYear(int Id, int Year, decimal MaximumScore, bool IsCurrent);

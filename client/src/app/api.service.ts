@@ -15,6 +15,7 @@ import {
   AuthUser,
   Config,
   Dashboard,
+  CutoffResyncResult,
   ImportResult,
   PagedCutoffs,
   PredictRequest,
@@ -215,6 +216,37 @@ export class ApiService {
       onProgress,
       signal,
     );
+  }
+
+  resyncCutoffs(yearId: number): Observable<CutoffResyncResult> {
+    return this.http
+      .post<ApiResponse<CutoffResyncResult>>(
+        `/api/admin/admission-years/${yearId}/resync-cutoffs`,
+        {},
+      )
+      .pipe(map((r) => this.normalizeResyncResult(r.data)));
+  }
+
+  private normalizeResyncResult(
+    data: CutoffResyncResult | null | undefined,
+  ): CutoffResyncResult {
+    if (!data) {
+      return { success: false, message: '', deletedCount: 0, insertedCount: 0 };
+    }
+
+    const raw = data as CutoffResyncResult & {
+      Success?: boolean;
+      Message?: string;
+      DeletedCount?: number;
+      InsertedCount?: number;
+    };
+
+    return {
+      success: raw.success ?? raw.Success ?? false,
+      message: raw.message ?? raw.Message ?? '',
+      deletedCount: raw.deletedCount ?? raw.DeletedCount ?? 0,
+      insertedCount: raw.insertedCount ?? raw.InsertedCount ?? 0,
+    };
   }
 }
 

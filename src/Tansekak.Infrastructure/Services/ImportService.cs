@@ -38,7 +38,7 @@ public class ImportService(AppDbContext db, ILogger<ImportService> logger) : IIm
         var (resolvedRows, unresolvedErrors) = resolver.Resolve(parsedRows);
 
         var errors = new List<ImportValidationErrorDto>(unresolvedErrors);
-        errors.AddRange(ValidateResolvedRows(resolvedRows, year));
+        errors.AddRange(await ValidateResolvedRowsAsync(resolvedRows, year, selectedTrack, cancellationToken));
 
         if (errors.Count > 0)
         {
@@ -102,12 +102,20 @@ public class ImportService(AppDbContext db, ILogger<ImportService> logger) : IIm
             .ToListAsync(cancellationToken);
     }
 
-    private static List<ImportValidationErrorDto> ValidateResolvedRows(
+    private async Task<List<ImportValidationErrorDto>> ValidateResolvedRowsAsync(
         List<ResolvedCutoffRow> rows,
-        AdmissionYear year)
+        AdmissionYear year,
+        AcademicTrack selectedTrack,
+        CancellationToken cancellationToken)
     {
         var errors = new List<ImportValidationErrorDto>();
         var seen = new HashSet<int>();
+
+        var ufIds = rows.Select(x => x.UniversityFacultyId).Distinct().ToList();
+        var facultiesByUfId = await db.UniversityFaculties.AsNoTracking()
+            .Include(x => x.Faculty)
+            .Where(x => ufIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.Faculty, cancellationToken);
 
         foreach (var row in rows)
         {
@@ -118,6 +126,16 @@ public class ImportService(AppDbContext db, ILogger<ImportService> logger) : IIm
 
             if (!seen.Add(row.UniversityFacultyId))
                 errors.Add(Err(row.LineNumber, "الكلية", "DUPLICATE", "Duplicate row in file."));
+
+            if (facultiesByUfId.TryGetValue(row.UniversityFacultyId, out var faculty)
+                && !FacultyTrackValidator.IsTrackAllowed(faculty, selectedTrack))
+            {
+                errors.Add(Err(
+                    row.LineNumber,
+                    "الكلية",
+                    "TRACK_NOT_ALLOWED",
+                    FacultyTrackValidator.BuildRejectionMessage(faculty, selectedTrack)));
+            }
         }
 
         return errors;

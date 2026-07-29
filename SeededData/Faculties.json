@@ -1,118 +1,147 @@
 [
   {
     "id": 1,
-    "nameAr": "الزراعة"
+    "nameAr": "الزراعة",
+    "allowedTracks": ["Mathematics", "Science"]
   },
   {
     "id": 2,
-    "nameAr": "فنون تطبيقية"
+    "nameAr": "فنون تطبيقية",
+    "allowedTracks": ["Science"]
   },
   {
     "id": 3,
-    "nameAr": "الآثار"
+    "nameAr": "الآثار",
+    "allowedTracks": ["Literature", "Science"]
   },
   {
     "id": 5,
-    "nameAr": "الذكاء الاصطناعي"
+    "nameAr": "الذكاء الاصطناعي",
+    "allowedTracks": ["Mathematics", "Science"]
   },
   {
     "id": 6,
-    "nameAr": "الآداب"
+    "nameAr": "الآداب",
+    "allowedTracks": ["Literature", "Science"]
   },
   {
     "id": 8,
-    "nameAr": "التجارة"
+    "nameAr": "التجارة",
+    "allowedTracks": ["Literature", "Mathematics", "Science"]
   },
   {
     "id": 9,
-    "nameAr": "حاسبات ومعلومات"
+    "nameAr": "حاسبات ومعلومات",
+    "allowedTracks": ["Mathematics", "Science"]
   },
   {
     "id": 10,
-    "nameAr": "دار العلوم"
+    "nameAr": "دار العلوم",
+    "allowedTracks": ["Literature", "Science"]
   },
   {
     "id": 12,
-    "nameAr": "أسنان"
+    "nameAr": "أسنان",
+    "allowedTracks": ["Science"]
   },
   {
     "id": 13,
-    "nameAr": "رياض الأطفال"
+    "nameAr": "رياض الأطفال",
+    "allowedTracks": ["Literature", "Science"]
   },
   {
     "id": 14,
-    "nameAr": "الاقتصاد والعلوم السياسية"
+    "nameAr": "الاقتصاد والعلوم السياسية",
+    "allowedTracks": ["Literature", "Mathematics", "Science"]
   },
   {
     "id": 15,
-    "nameAr": "التربية"
+    "nameAr": "التربية",
+    "allowedTracks": ["Literature", "Mathematics", "Science"]
   },
   {
     "id": 16,
-    "nameAr": "هندسة"
+    "nameAr": "هندسة",
+    "allowedTracks": ["Mathematics"]
   },
   {
     "id": 18,
-    "nameAr": "الفنون الجميلة"
+    "nameAr": "الفنون الجميلة",
+    "allowedTracks": ["Literature", "Science"]
   },
   {
     "id": 20,
-    "nameAr": "التعليم الصناعي"
+    "nameAr": "التعليم الصناعي",
+    "allowedTracks": ["Literature", "Science"]
   },
   {
     "id": 21,
-    "nameAr": "الألسن"
+    "nameAr": "الألسن",
+    "allowedTracks": ["Literature", "Mathematics", "Science"]
   },
   {
     "id": 22,
-    "nameAr": "حقوق"
+    "nameAr": "حقوق",
+    "allowedTracks": ["Literature", "Science"]
   },
   {
     "id": 23,
-    "nameAr": "الإعلام"
+    "nameAr": "الإعلام",
+    "allowedTracks": ["Literature", "Mathematics", "Science"]
   },
   {
     "id": 24,
-    "nameAr": "طب"
+    "nameAr": "طب",
+    "allowedTracks": ["Science"]
   },
   {
     "id": 25,
-    "nameAr": "التمريض"
+    "nameAr": "التمريض",
+    "allowedTracks": ["Science"]
   },
   {
     "id": 26,
-    "nameAr": "صيدلة"
+    "nameAr": "صيدلة",
+    "allowedTracks": ["Science"]
   },
   {
     "id": 27,
-    "nameAr": "التربية الرياضية"
+    "nameAr": "التربية الرياضية",
+    "allowedTracks": ["Literature", "Science"]
   },
   {
     "id": 28,
-    "nameAr": "العلاج الطبيعي"
+    "nameAr": "العلاج الطبيعي",
+    "allowedTracks": ["Science"]
   },
   {
     "id": 29,
-    "nameAr": "العلوم"
+    "nameAr": "العلوم",
+    "allowedTracks": ["Literature", "Mathematics", "Science"]
   },
   {
     "id": 31,
-    "nameAr": "الخدمة الاجتماعية"
+    "nameAr": "الخدمة الاجتماعية",
+    "allowedTracks": ["Literature", "Science"]
   },
   {
     "id": 32,
-    "nameAr": "التربية النوعية"
+    "nameAr": "التربية النوعية",
+    "allowedTracks": ["Literature", "Science"]
   },
   {
     "id": 33,
-    "nameAr": "السياحة والفنادق"
+    "nameAr": "السياحة والفنادق",
+    "allowedTracks": ["Literature", "Science"]
   },
   {
     "id": 34,
-    "nameAr": "التخطيط العمراني والإقليمي"
+    "nameAr": "التخطيط العمراني والإقليمي",
+    "allowedTracks": ["Science"]
   },
   {
     "id": 36,
-    "nameAr": "الطب البيطري"
+    "nameAr": "الطب البيطري",
+    "allowedTracks": ["Science"]
   }
 ]

@@ -267,6 +267,13 @@ public class AdmissionYearsController(IAdmissionYearService service) : Controlle
         var ok = await service.PublishAsync(id, ct);
         return ok ? Ok(ApiResponse<object>.Ok(new { }, "Year published successfully.")) : NotFound(ApiResponse<object>.Fail("Not found."));
     }
+
+    [HttpPost("{id:int}/resync-cutoffs")]
+    public async Task<ActionResult<ApiResponse<CutoffResyncResultDto>>> ResyncCutoffs(int id, [FromServices] ICutoffResyncService resyncService, CancellationToken ct)
+    {
+        var result = await resyncService.ResyncYearFromSeedAsync(id, ct);
+        return Ok(ApiResponse<CutoffResyncResultDto>.Ok(result, result.Message));
+    }
 }
 
 [ApiController]

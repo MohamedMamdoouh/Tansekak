@@ -304,6 +304,15 @@ public class AdmissionCutoffService(AppDbContext db) : IAdmissionCutoffService
         if (score <= 0 || score > year.MaximumScore)
             throw new ArgumentException($"Score must be between 0 and {year.MaximumScore}.");
 
+        var faculty = await db.UniversityFaculties.AsNoTracking()
+            .Include(x => x.Faculty)
+            .Where(x => x.Id == ufId)
+            .Select(x => x.Faculty)
+            .FirstOrDefaultAsync(ct)
+            ?? throw new ArgumentException("University faculty not found.");
+
+        FacultyTrackValidator.EnsureTrackAllowed(faculty, track);
+
         var exists = await db.AdmissionCutoffs.AnyAsync(
             x => x.AdmissionYearId == yearId && x.UniversityFacultyId == ufId && x.Track == track && x.Id != excludeId, ct);
         if (exists) throw new ArgumentException("Duplicate cutoff record.");

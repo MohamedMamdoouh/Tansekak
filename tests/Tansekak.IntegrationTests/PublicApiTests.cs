@@ -1,8 +1,11 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Tansekak.Domain.Entities;
+using Tansekak.Domain.Enums;
 using Tansekak.Infrastructure.Persistence;
 
 namespace Tansekak.IntegrationTests;
@@ -80,6 +83,69 @@ public class PublicApiTests : IClassFixture<TansekakWebApplicationFactory>
     }
 
     [Fact]
+    public async Task Predict_Science_DoesNotReturnEngineering()
+    {
+        var response = await _client.PostAsJsonAsync("/api/admission/predict", new
+        {
+            track = "Science",
+            score = 300,
+            page = 1,
+            pageSize = 100
+        });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var json = await response.Content.ReadFromJsonAsync<ApiEnvelope<PredictData>>();
+        Assert.NotNull(json?.Data);
+        Assert.DoesNotContain(
+            json!.Data!.Results,
+            r => r.Faculty.NameAr == "هندسة");
+    }
+
+    [Fact]
+    public async Task Predict_Mathematics_ReturnsEngineering_WhenScoreQualifies()
+    {
+        var response = await _client.PostAsJsonAsync("/api/admission/predict", new
+        {
+            track = "Mathematics",
+            score = 300,
+            page = 1,
+            pageSize = 100
+        });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var json = await response.Content.ReadFromJsonAsync<ApiEnvelope<PredictData>>();
+        Assert.NotNull(json?.Data);
+        Assert.Contains(
+            json!.Data!.Results,
+            r => r.Faculty.NameAr == "هندسة");
+    }
+
+    [Fact]
+    public async Task Import_RejectsEngineeringForScienceTrack()
+    {
+        using var authClient = await CreateAuthenticatedClientAsync();
+
+        const string markdown = """
+            | الكلية | الحد الأدنى |
+            | --- | --- |
+            | هندسة عين شمس | 295.0 |
+            """;
+
+        using var content = new MultipartFormDataContent();
+        content.Add(new StringContent("Science"), "track");
+        content.Add(new ByteArrayContent(Encoding.UTF8.GetBytes(markdown)), "file", "science.md");
+
+        var yearId = await GetCurrentYearIdAsync();
+        var response = await authClient.PostAsync($"/api/admin/admission-years/{yearId}/import", content);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var json = await response.Content.ReadFromJsonAsync<ApiEnvelope<ImportData>>();
+        Assert.NotNull(json);
+        Assert.False(json!.Success);
+        Assert.Contains(json.Errors ?? [], e => e.ErrorCode == "TRACK_NOT_ALLOWED");
+    }
+
+    [Fact]
     public async Task AdminDashboard_RequiresAuth()
     {
         var response = await _client.GetAsync("/api/admin/dashboard");
@@ -108,7 +174,8 @@ public class PublicApiTests : IClassFixture<TansekakWebApplicationFactory>
                 SeatingNo = seatingNo,
                 ArabicName = "محمد أحمد",
                 TotalDegree = 295.5m,
-                StudentCaseDesc = "ناجح"
+                StudentCaseDesc = "ناجح - علمي رياضة",
+                Track = AcademicTrack.Mathematics
             });
             await db.SaveChangesAsync();
         }
@@ -122,17 +189,74 @@ public class PublicApiTests : IClassFixture<TansekakWebApplicationFactory>
         Assert.Equal(seatingNo, json.Data!.SeatingNo);
         Assert.Equal("محمد أحمد", json.Data.ArabicName);
         Assert.Equal(295.5m, json.Data.TotalDegree);
-        Assert.Equal("ناجح", json.Data.StudentCaseDesc);
+        Assert.Equal("ناجح - علمي رياضة", json.Data.StudentCaseDesc);
         Assert.Equal(2025, json.Data.Year);
+        Assert.Equal("Mathematics", json.Data.Track);
     }
 
-    private record ApiEnvelope<T>(bool Success, T? Data);
+    [Fact]
+    public async Task ThanaweyaResult_InfersTrackFromCaseDesc_WhenTrackMissing()
+    {
+        const string seatingNo = "1122334";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var currentYear = db.AdmissionYears.Single(x => x.IsCurrent);
+            db.StudentResults.Add(new StudentResult
+            {
+                AdmissionYearId = currentYear.Id,
+                SeatingNo = seatingNo,
+                ArabicName = "سارة علي",
+                TotalDegree = 280m,
+                StudentCaseDesc = "ناجح - علمي علوم"
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var response = await _client.GetAsync($"/api/thanaweya-results/{seatingNo}");
+        var json = await response.Content.ReadFromJsonAsync<ApiEnvelope<StudentResultData>>();
+
+        Assert.NotNull(json?.Data);
+        Assert.Equal("Science", json!.Data!.Track);
+    }
+
+    private async Task<HttpClient> CreateAuthenticatedClientAsync()
+    {
+        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false,
+            HandleCookies = true
+        });
+
+        var loginResponse = await client.PostAsJsonAsync("/api/admin/auth/login", new
+        {
+            email = "admin@tansekak.local",
+            password = "Admin@12345"
+        });
+        Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
+        return client;
+    }
+
+    private async Task<int> GetCurrentYearIdAsync()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        return db.AdmissionYears.Single(x => x.IsCurrent).Id;
+    }
+
+    private record ApiEnvelope<T>(bool Success, T? Data, ApiError[]? Errors = null);
+    private record ApiError(string Field, string Message, int? RowNumber, string ErrorCode);
     private record ConfigData(string AppName, int CurrentYear, decimal MaximumScore);
-    private record PredictData(object[] Results, bool HasMore, int TotalCount);
+    private record PredictData(PredictResultItem[] Results, bool HasMore, int TotalCount);
+    private record PredictResultItem(NamedEntityData University, NamedEntityData Faculty);
+    private record NamedEntityData(string NameAr);
+    private record ImportData(bool Success, string Message);
     private record StudentResultData(
         string SeatingNo,
         string ArabicName,
         decimal TotalDegree,
         string StudentCaseDesc,
-        int Year);
+        int Year,
+        string? Track);
 }

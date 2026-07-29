@@ -37,7 +37,7 @@ public static class DependencyInjection
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
 
-        if (!environment.IsDevelopment())
+        if (!environment.IsDevelopment() && !environment.IsEnvironment("Testing"))
         {
             services.ConfigureApplicationCookie(options =>
             {
@@ -56,6 +56,7 @@ public static class DependencyInjection
         services.AddScoped<IAdmissionYearService, AdmissionYearService>();
         services.AddScoped<IAdmissionCutoffService, AdmissionCutoffService>();
         services.AddScoped<IImportService, ImportService>();
+        services.AddScoped<ICutoffResyncService, CutoffResyncService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IStudentResultService, StudentResultService>();
 
