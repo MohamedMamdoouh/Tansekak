@@ -89,6 +89,13 @@ export function importErrorMessage(
     return response.message;
   }
 
+  if (status === 503) {
+    return (
+      response?.message ??
+      'رفع الملفات الكبيرة غير مهيأ على الخادم. أضف إعدادات R2 على Railway ثم حاول مرة اخرى.'
+    );
+  }
+
   if (status === 502 || status === 504) {
     return 'انتهت مهلة الخادم (5 دقائق). قد يكون الاستيراد لا يزال جاريا — انتظر دقيقة ثم تحقق من عدد النتائج في لوحة التحكم.';
   }

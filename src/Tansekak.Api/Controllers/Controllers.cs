@@ -312,10 +312,10 @@ public class ThanaweyaResultsController(IStudentResultService studentResultServi
 [Authorize(Roles = "Administrator")]
 public class StudentResultImportController(
     StudentResultImportJobQueue jobQueue,
-    ChunkedUploadSessionStore uploadSessions) : ControllerBase
+    R2ImportStorageService r2Storage) : ControllerBase
 {
     [HttpPost]
-    [RequestSizeLimit(ChunkedUploadSessionStore.MaxFileSizeBytes)]
+    [RequestSizeLimit(R2ImportStorageService.MaxFileSizeBytes)]
     public async Task<ActionResult<ApiResponse<ImportJobStartedDto>>> Import(int yearId, IFormFile file, CancellationToken ct)
     {
         if (file is null || file.Length == 0)
@@ -335,58 +335,52 @@ public class StudentResultImportController(
             "Import started. Poll /api/admin/import-jobs/{jobId} for status."));
     }
 
-    [HttpPost("sessions")]
-    public ActionResult<ApiResponse<ImportUploadSessionDto>> CreateUploadSession(
+    [HttpPost("upload-url")]
+    public ActionResult<ApiResponse<ImportUploadUrlDto>> CreateUploadUrl(
         int yearId,
-        [FromBody] CreateImportUploadSessionDto dto)
+        [FromBody] CreateImportUploadUrlDto dto)
     {
+        if (!r2Storage.IsConfigured)
+            return StatusCode(503, ApiResponse<ImportUploadUrlDto>.Fail(
+                "Direct upload is not configured. Set R2 environment variables on the server."));
+
         try
         {
-            var session = uploadSessions.CreateSession(yearId, dto.FileName, dto.TotalSize, dto.TotalChunks);
-            return Ok(ApiResponse<ImportUploadSessionDto>.Ok(session, "Upload session created."));
+            var upload = r2Storage.CreatePresignedUploadUrl(yearId, dto.FileName, dto.TotalSize);
+            return Ok(ApiResponse<ImportUploadUrlDto>.Ok(upload, "Upload URL created."));
         }
         catch (ArgumentException ex)
         {
-            return BadRequest(ApiResponse<ImportUploadSessionDto>.Fail(ex.Message));
+            return BadRequest(ApiResponse<ImportUploadUrlDto>.Fail(ex.Message));
         }
     }
-}
 
-[ApiController]
-[Route("api/admin/import-uploads")]
-[Authorize(Roles = "Administrator")]
-public class ImportUploadsController(ChunkedUploadSessionStore uploadSessions) : ControllerBase
-{
-    [HttpPut("{uploadId:guid}/chunks/{chunkIndex:int}")]
-    [RequestSizeLimit(ChunkedUploadSessionStore.ChunkSizeBytes + 1_048_576)]
-    public async Task<IActionResult> UploadChunk(Guid uploadId, int chunkIndex, CancellationToken ct)
+    [HttpPost("from-storage")]
+    public async Task<ActionResult<ApiResponse<ImportJobStartedDto>>> ImportFromStorage(
+        int yearId,
+        [FromBody] ImportFromStorageDto dto,
+        CancellationToken ct)
     {
-        var (success, error) = await uploadSessions.TrySaveChunkAsync(uploadId, chunkIndex, Request.Body, ct);
-        if (!success)
-            return BadRequest(ApiResponse<object>.Fail(error ?? "Failed to save chunk."));
+        if (!r2Storage.IsConfigured)
+            return StatusCode(503, ApiResponse<ImportJobStartedDto>.Fail(
+                "Direct upload is not configured. Set R2 environment variables on the server."));
 
-        return NoContent();
-    }
-
-    [HttpPost("{uploadId:guid}/complete")]
-    public async Task<ActionResult<ApiResponse<ImportJobStartedDto>>> CompleteUpload(Guid uploadId, CancellationToken ct)
-    {
-        var (job, error) = await uploadSessions.TryCompleteSessionAsync(uploadId, ct);
-        if (job is null)
-            return BadRequest(ApiResponse<ImportJobStartedDto>.Fail(error ?? "Failed to complete upload."));
-
-        return Accepted(ApiResponse<ImportJobStartedDto>.Ok(
-            new ImportJobStartedDto(job.JobId, job.Status),
-            "Import started. Poll /api/admin/import-jobs/{jobId} for status."));
-    }
-
-    [HttpDelete("{uploadId:guid}")]
-    public IActionResult AbortUpload(Guid uploadId)
-    {
-        if (!uploadSessions.TryAbortSession(uploadId))
-            return NotFound(ApiResponse<object>.Fail("Upload session not found."));
-
-        return NoContent();
+        try
+        {
+            await r2Storage.ValidateObjectAsync(dto.ObjectKey, yearId, ct);
+            var job = jobQueue.EnqueueFromStorage(yearId, dto.ObjectKey, dto.FileName);
+            return Accepted(ApiResponse<ImportJobStartedDto>.Ok(
+                new ImportJobStartedDto(job.JobId, job.Status),
+                "Import started. Poll /api/admin/import-jobs/{jobId} for status."));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ApiResponse<ImportJobStartedDto>.Fail(ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<ImportJobStartedDto>.Fail(ex.Message));
+        }
     }
 }
 

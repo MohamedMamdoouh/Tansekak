@@ -67,6 +67,64 @@ public class StudentResultImportJobQueue(
         return state;
     }
 
+    public ImportJobState EnqueueFromStorage(int yearId, string objectKey, string fileName)
+    {
+        CleanupExpiredJobs();
+
+        var jobId = Guid.NewGuid();
+        var state = new ImportJobState
+        {
+            JobId = jobId,
+            YearId = yearId,
+            Status = "processing",
+            Message = "Import queued."
+        };
+        _jobs[jobId] = state;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await using var scope = scopeFactory.CreateAsyncScope();
+                var importService = scope.ServiceProvider.GetRequiredService<IStudentResultImportService>();
+                var storage = scope.ServiceProvider.GetRequiredService<R2ImportStorageService>();
+
+                await storage.ExecuteWithObjectStreamAsync(
+                    objectKey,
+                    async (stream, ct) =>
+                    {
+                        var result = await importService.ImportAsync(yearId, stream, fileName, ct);
+                        state.Status = result.Success ? "completed" : "failed";
+                        state.Result = result;
+                        state.Message = result.Message;
+                    },
+                    CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Student result import job {JobId} failed.", jobId);
+                state.Status = "failed";
+                state.Message = "An unexpected error occurred during import.";
+                state.Result = new ImportResultDto(false, state.Message);
+            }
+            finally
+            {
+                try
+                {
+                    await using var scope = scopeFactory.CreateAsyncScope();
+                    var storage = scope.ServiceProvider.GetRequiredService<R2ImportStorageService>();
+                    await storage.DeleteObjectAsync(objectKey, CancellationToken.None);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to delete R2 object {ObjectKey} for job {JobId}.", objectKey, jobId);
+                }
+            }
+        });
+
+        return state;
+    }
+
     public ImportJobState? GetJob(Guid jobId)
     {
         _jobs.TryGetValue(jobId, out var state);

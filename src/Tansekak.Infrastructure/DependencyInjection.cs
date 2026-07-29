@@ -1,10 +1,13 @@
+using Amazon.S3;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Tansekak.Application;
+using Tansekak.Application.Common;
 using Tansekak.Application.Interfaces;
 using Tansekak.Infrastructure.Identity;
 using Tansekak.Infrastructure.Persistence;
@@ -59,8 +62,35 @@ public static class DependencyInjection
         services.AddScoped<IStudentResultImportService, StudentResultImportService>();
         services.AddScoped<IStudentResultService, StudentResultService>();
         services.AddScoped<IDashboardService, DashboardService>();
+        services.Configure<R2Options>(configuration.GetSection(R2Options.SectionName));
+        services.AddSingleton<IAmazonS3>(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<R2Options>>().Value;
+            if (!options.IsConfigured)
+            {
+                return new AmazonS3Client(
+                    "unused",
+                    "unused",
+                    new AmazonS3Config
+                    {
+                        ServiceURL = "https://example.invalid",
+                        ForcePathStyle = true,
+                        AuthenticationRegion = "auto",
+                    });
+            }
+
+            return new AmazonS3Client(
+                options.AccessKeyId,
+                options.SecretAccessKey,
+                new AmazonS3Config
+                {
+                    ServiceURL = options.Endpoint,
+                    ForcePathStyle = true,
+                    AuthenticationRegion = "auto",
+                });
+        });
+        services.AddSingleton<R2ImportStorageService>();
         services.AddSingleton<StudentResultImportJobQueue>();
-        services.AddSingleton<ChunkedUploadSessionStore>();
 
         return services;
     }

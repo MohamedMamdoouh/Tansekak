@@ -96,9 +96,10 @@ export interface ImportJobStarted {
   status: string;
 }
 
-export interface ImportUploadSession {
-  uploadId: string;
-  chunkSizeBytes: number;
+export interface ImportUploadUrl {
+  uploadUrl: string;
+  objectKey: string;
+  expiresInSeconds: number;
 }
 
 export interface ImportJobStatus {

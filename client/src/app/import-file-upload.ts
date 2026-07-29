@@ -3,7 +3,7 @@ import {
   ImportJobStarted,
   ImportJobStatus,
   ImportResult,
-  ImportUploadSession,
+  ImportUploadUrl,
 } from './models';
 import { normalizeImportResult } from './import-error.util';
 
@@ -20,8 +20,9 @@ export interface ImportUploadError {
   error?: ApiResponse<ImportResult> | null;
 }
 
-const DEFAULT_CHUNK_SIZE_BYTES = 5 * 1024 * 1024;
-const SIMPLE_UPLOAD_THRESHOLD_BYTES = 20 * 1024 * 1024;
+const DIRECT_UPLOAD_THRESHOLD_BYTES = 20 * 1024 * 1024;
+const XLSX_CONTENT_TYPE =
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
 export function uploadImportFile(
   url: string,
@@ -46,7 +47,7 @@ export function uploadStudentResultsImport(
   onProgress: (progress: ImportUploadProgress) => void,
   signal?: AbortSignal,
 ): Promise<ImportResult> {
-  if (file.size <= SIMPLE_UPLOAD_THRESHOLD_BYTES) {
+  if (file.size <= DIRECT_UPLOAD_THRESHOLD_BYTES) {
     const form = new FormData();
     form.append('file', file);
     return uploadStudentResultsSingle(
@@ -57,7 +58,7 @@ export function uploadStudentResultsImport(
     );
   }
 
-  return uploadStudentResultsChunked(yearId, file, onProgress, signal);
+  return uploadStudentResultsViaR2(yearId, file, onProgress, signal);
 }
 
 function uploadStudentResultsSingle(
@@ -81,136 +82,94 @@ function uploadStudentResultsSingle(
   });
 }
 
-async function uploadStudentResultsChunked(
+async function uploadStudentResultsViaR2(
   yearId: number,
   file: File,
   onProgress: (progress: ImportUploadProgress) => void,
   signal?: AbortSignal,
 ): Promise<ImportResult> {
-  const initialChunkSizeBytes = DEFAULT_CHUNK_SIZE_BYTES;
-  const totalChunks = Math.ceil(file.size / initialChunkSizeBytes);
-  let uploadId: string | null = null;
-
-  try {
-    if (signal?.aborted) {
-      throw { status: 0, aborted: true } satisfies ImportUploadError;
-    }
-
-    const sessionResponse = await fetch(
-      `/api/admin/admission-years/${yearId}/import-results/sessions`,
-      {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fileName: file.name,
-          totalSize: file.size,
-          totalChunks,
-        }),
-        signal,
-      },
-    );
-
-    if (!sessionResponse.ok) {
-      throw {
-        status: sessionResponse.status,
-        error: ((await sessionResponse.json().catch(() => null)) as ApiResponse<ImportResult> | null),
-      } satisfies ImportUploadError;
-    }
-
-    const sessionBody =
-      (await sessionResponse.json()) as ApiResponse<ImportUploadSession>;
-    uploadId = extractUploadId(sessionBody);
-    const chunkSizeBytes = extractChunkSizeBytes(sessionBody) ?? initialChunkSizeBytes;
-    const effectiveTotalChunks = Math.ceil(file.size / chunkSizeBytes);
-    if (!uploadId || effectiveTotalChunks !== totalChunks) {
-      throw { status: sessionResponse.status, error: null } satisfies ImportUploadError;
-    }
-
-    let uploadedBytes = 0;
-    for (let index = 0; index < effectiveTotalChunks; index++) {
-      if (signal?.aborted) {
-        throw { status: 0, aborted: true } satisfies ImportUploadError;
-      }
-
-      const start = index * chunkSizeBytes;
-      const end = Math.min(start + chunkSizeBytes, file.size);
-      const chunk = file.slice(start, end);
-
-      await uploadChunk(uploadId, index, chunk, signal, (loaded) => {
-        const currentBytes = uploadedBytes + loaded;
-        const percent = Math.min(
-          85,
-          Math.max(1, Math.round((currentBytes / file.size) * 85)),
-        );
-        onProgress({ phase: 'uploading', percent });
-      });
-
-      uploadedBytes += chunk.size;
-      onProgress({
-        phase: 'uploading',
-        percent: Math.min(85, Math.round((uploadedBytes / file.size) * 85)),
-      });
-    }
-
-    onProgress({ phase: 'processing', percent: 90 });
-
-    const completeResponse = await fetch(
-      `/api/admin/import-uploads/${uploadId}/complete`,
-      {
-        method: 'POST',
-        credentials: 'include',
-        signal,
-      },
-    );
-
-    if (!completeResponse.ok && completeResponse.status !== 202) {
-      throw {
-        status: completeResponse.status,
-        error: ((await completeResponse.json().catch(() => null)) as ApiResponse<ImportResult> | null),
-      } satisfies ImportUploadError;
-    }
-
-    const body = (await completeResponse.json()) as ApiResponse<ImportJobStarted>;
-    const jobId = extractJobId(body);
-    if (!jobId) {
-      throw { status: completeResponse.status, error: null } satisfies ImportUploadError;
-    }
-
-    uploadId = null;
-    return pollImportJob(jobId, onProgress, signal);
-  } catch (error) {
-    if (uploadId && !(error as ImportUploadError).aborted) {
-      void fetch(`/api/admin/import-uploads/${uploadId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-    }
-    throw error;
+  if (signal?.aborted) {
+    throw { status: 0, aborted: true } satisfies ImportUploadError;
   }
+
+  const uploadUrlResponse = await fetch(
+    `/api/admin/admission-years/${yearId}/import-results/upload-url`,
+    {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileName: file.name,
+        totalSize: file.size,
+      }),
+      signal,
+    },
+  );
+
+  if (!uploadUrlResponse.ok) {
+    throw {
+      status: uploadUrlResponse.status,
+      error: ((await uploadUrlResponse.json().catch(() => null)) as ApiResponse<ImportResult> | null),
+    } satisfies ImportUploadError;
+  }
+
+  const uploadUrlBody =
+    (await uploadUrlResponse.json()) as ApiResponse<ImportUploadUrl>;
+  const uploadTarget = extractUploadUrl(uploadUrlBody);
+  if (!uploadTarget) {
+    throw { status: uploadUrlResponse.status, error: null } satisfies ImportUploadError;
+  }
+
+  await uploadFileToPresignedUrl(
+    uploadTarget.uploadUrl,
+    file,
+    signal,
+    (percent) => onProgress({ phase: 'uploading', percent }),
+  );
+
+  onProgress({ phase: 'processing', percent: 90 });
+
+  const importResponse = await fetch(
+    `/api/admin/admission-years/${yearId}/import-results/from-storage`,
+    {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        objectKey: uploadTarget.objectKey,
+        fileName: file.name,
+      }),
+      signal,
+    },
+  );
+
+  if (!importResponse.ok && importResponse.status !== 202) {
+    throw {
+      status: importResponse.status,
+      error: ((await importResponse.json().catch(() => null)) as ApiResponse<ImportResult> | null),
+    } satisfies ImportUploadError;
+  }
+
+  const body = (await importResponse.json()) as ApiResponse<ImportJobStarted>;
+  const jobId = extractJobId(body);
+  if (!jobId) {
+    throw { status: importResponse.status, error: null } satisfies ImportUploadError;
+  }
+
+  return pollImportJob(jobId, onProgress, signal);
 }
 
-function parseApiEnvelope<T>(text: string): ApiResponse<T> | null {
-  if (!text) return null;
-  try {
-    return JSON.parse(text) as ApiResponse<T>;
-  } catch {
-    return null;
-  }
-}
-
-function uploadChunk(
-  uploadId: string,
-  chunkIndex: number,
-  chunk: Blob,
+function uploadFileToPresignedUrl(
+  uploadUrl: string,
+  file: File,
   signal: AbortSignal | undefined,
-  onChunkProgress: (loaded: number) => void,
+  onProgress: (percent: number) => void,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('PUT', `/api/admin/import-uploads/${uploadId}/chunks/${chunkIndex}`);
-    xhr.withCredentials = true;
+    xhr.open('PUT', uploadUrl);
     xhr.timeout = 0;
+    xhr.setRequestHeader('Content-Type', XLSX_CONTENT_TYPE);
 
     const abort = () => {
       if (xhr.readyState !== XMLHttpRequest.DONE) {
@@ -222,18 +181,19 @@ function uploadChunk(
 
     xhr.upload.addEventListener('progress', (event) => {
       if (!event.lengthComputable) return;
-      onChunkProgress(event.loaded);
+      const percent = Math.min(
+        85,
+        Math.max(1, Math.round((event.loaded / event.total) * 85)),
+      );
+      onProgress(percent);
     });
 
     xhr.addEventListener('load', () => {
-      if (xhr.status === 204 || (xhr.status >= 200 && xhr.status < 300)) {
+      if (xhr.status >= 200 && xhr.status < 300) {
         resolve();
         return;
       }
-      reject({
-        status: xhr.status,
-        error: parseApiEnvelope<ImportResult>(xhr.responseText),
-      } satisfies ImportUploadError);
+      reject({ status: xhr.status } satisfies ImportUploadError);
     });
 
     xhr.addEventListener('error', () => {
@@ -244,7 +204,7 @@ function uploadChunk(
       reject({ status: 0, aborted: true } satisfies ImportUploadError);
     });
 
-    xhr.send(chunk);
+    xhr.send(file);
   });
 }
 
@@ -464,30 +424,31 @@ function extractImportPayload(
   return envelope.data ?? envelope.Data ?? null;
 }
 
-function extractChunkSizeBytes(
-  body: ApiResponse<ImportUploadSession> | null,
-): number | null {
+function extractUploadUrl(
+  body: ApiResponse<ImportUploadUrl> | null,
+): ImportUploadUrl | null {
   if (!body) return null;
-  const envelope = body as ApiResponse<ImportUploadSession> & {
-    Data?: ImportUploadSession;
+  const envelope = body as ApiResponse<ImportUploadUrl> & {
+    Data?: ImportUploadUrl;
   };
   const payload = envelope.data ?? envelope.Data;
   if (!payload) return null;
-  const raw = payload as ImportUploadSession & { ChunkSizeBytes?: number };
-  return raw.chunkSizeBytes ?? raw.ChunkSizeBytes ?? null;
-}
 
-function extractUploadId(
-  body: ApiResponse<ImportUploadSession> | null,
-): string | null {
-  if (!body) return null;
-  const envelope = body as ApiResponse<ImportUploadSession> & {
-    Data?: ImportUploadSession;
+  const raw = payload as ImportUploadUrl & {
+    UploadUrl?: string;
+    ObjectKey?: string;
+    ExpiresInSeconds?: number;
   };
-  const payload = envelope.data ?? envelope.Data;
-  if (!payload) return null;
-  const raw = payload as ImportUploadSession & { UploadId?: string };
-  return raw.uploadId ?? raw.UploadId ?? null;
+
+  const uploadUrl = raw.uploadUrl ?? raw.UploadUrl;
+  const objectKey = raw.objectKey ?? raw.ObjectKey;
+  if (!uploadUrl || !objectKey) return null;
+
+  return {
+    uploadUrl,
+    objectKey,
+    expiresInSeconds: raw.expiresInSeconds ?? raw.ExpiresInSeconds ?? 0,
+  };
 }
 
 function extractJobId(body: ApiResponse<ImportJobStarted> | null): string | null {
