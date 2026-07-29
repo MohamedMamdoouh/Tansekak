@@ -7,7 +7,12 @@ import { ImportUploadService } from '../../import-upload.service';
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ImportUploadOverlayComponent],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    ImportUploadOverlayComponent,
+  ],
   template: `
     <header class="admin-header">
       <div class="container header-inner">
@@ -28,9 +33,11 @@ import { ImportUploadService } from '../../import-upload.service';
           <a routerLink="/admin/cutoffs" routerLinkActive="active"
             >حدود القبول</a
           >
-          <a routerLink="/admin/import" routerLinkActive="active">استيراد</a>
+          <a routerLink="/admin/import" routerLinkActive="active"
+            >استيراد حدود القبول</a
+          >
           <a routerLink="/admin/import-results" routerLinkActive="active"
-            >نتائج الثانوية</a
+            >استيراد نتائج الثانوية</a
           >
         </nav>
 

@@ -120,14 +120,7 @@ async function uploadStudentResultsViaR2(
     throw { status: uploadUrlResponse.status, error: null } satisfies ImportUploadError;
   }
 
-  await uploadFileToPresignedUrl(
-    uploadTarget.uploadUrl,
-    file,
-    signal,
-    (percent) => onProgress({ phase: 'uploading', percent }),
-  );
-
-  onProgress({ phase: 'processing', percent: 90 });
+  await uploadFileToPresignedUrl(uploadTarget.uploadUrl, file, signal, onProgress);
 
   const importResponse = await fetch(
     `/api/admin/admission-years/${yearId}/import-results/from-storage`,
@@ -163,7 +156,7 @@ function uploadFileToPresignedUrl(
   uploadUrl: string,
   file: File,
   signal: AbortSignal | undefined,
-  onProgress: (percent: number) => void,
+  onProgress: (progress: ImportUploadProgress) => void,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
@@ -171,7 +164,30 @@ function uploadFileToPresignedUrl(
     xhr.timeout = 0;
     xhr.setRequestHeader('Content-Type', XLSX_CONTENT_TYPE);
 
+    let processingTimer: ReturnType<typeof setInterval> | null = null;
+    let processingPercent = 90;
+
+    const stopProcessingTimer = () => {
+      if (processingTimer !== null) {
+        clearInterval(processingTimer);
+        processingTimer = null;
+      }
+    };
+
+    const startProcessingTimer = () => {
+      stopProcessingTimer();
+      processingPercent = 90;
+      onProgress({ phase: 'processing', percent: processingPercent });
+      processingTimer = setInterval(() => {
+        if (processingPercent < 98) {
+          processingPercent += 1;
+          onProgress({ phase: 'processing', percent: processingPercent });
+        }
+      }, 2500);
+    };
+
     const abort = () => {
+      stopProcessingTimer();
       if (xhr.readyState !== XMLHttpRequest.DONE) {
         xhr.abort();
       }
@@ -185,10 +201,13 @@ function uploadFileToPresignedUrl(
         85,
         Math.max(1, Math.round((event.loaded / event.total) * 85)),
       );
-      onProgress(percent);
+      onProgress({ phase: 'uploading', percent });
     });
 
+    xhr.upload.addEventListener('loadend', startProcessingTimer);
+
     xhr.addEventListener('load', () => {
+      stopProcessingTimer();
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve();
         return;
@@ -197,10 +216,12 @@ function uploadFileToPresignedUrl(
     });
 
     xhr.addEventListener('error', () => {
+      stopProcessingTimer();
       reject({ status: 0 } satisfies ImportUploadError);
     });
 
     xhr.addEventListener('abort', () => {
+      stopProcessingTimer();
       reject({ status: 0, aborted: true } satisfies ImportUploadError);
     });
 

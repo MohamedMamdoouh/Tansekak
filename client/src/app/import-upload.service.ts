@@ -70,6 +70,9 @@ export class ImportUploadService {
     if (this.phase() === 'processing') {
       return 'جاري معالجة الملف على الخادم... قد يستغرق ذلك عدة دقائق للملفات الكبيرة. لا تغلق الصفحة.';
     }
+    if (this.progress() >= 70) {
+      return 'جاري إرسال الملف إلى التخزين... انتظر حتى يكتمل الرفع.';
+    }
     return '';
   }
 }
