@@ -1,7 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ApiService } from '../../../api.service';
+import { ApiService, ImportUploadError } from '../../../api.service';
+import { ImportUploadService } from '../../../import-upload.service';
 import { AdmissionYear, ImportResult } from '../../../models';
 
 @Component({
@@ -121,6 +122,7 @@ import { AdmissionYear, ImportResult } from '../../../models';
 export class AdminImportResultsComponent implements OnInit {
   private api = inject(ApiService);
   private fb = inject(FormBuilder);
+  private importUpload = inject(ImportUploadService);
 
   years: AdmissionYear[] = [];
   file: File | null = null;
@@ -155,20 +157,37 @@ export class AdminImportResultsComponent implements OnInit {
 
     this.uploading = true;
     this.message = '';
-    this.api.importStudentResults(yearId, this.file).subscribe({
-      next: (res) => {
+    this.result = null;
+
+    const signal = this.importUpload.begin();
+
+    void this.api
+      .importStudentResultsWithProgress(
+        yearId,
+        this.file,
+        ({ percent, phase }) => this.importUpload.updateProgress(percent, phase),
+        signal,
+      )
+      .then((res) => {
         this.result = res;
         this.message = res.message;
         this.uploading = false;
-      },
-      error: (err) => {
+        this.importUpload.finish();
+      })
+      .catch((err: ImportUploadError) => {
+        if (err.aborted) {
+          this.message = 'تم إلغاء الاستيراد.';
+          this.uploading = false;
+          return;
+        }
+
         this.result = err.error?.data ?? null;
         this.message =
           err.status === 0
             ? 'انقطع الاتصال بالخادم أثناء الاستيراد. الملف قد يكون كبيراً — انتظر دقيقة ثم حاول مرة أخرى بعد إعادة تشغيل الـ API.'
             : (err.error?.message ?? 'فشل الاستيراد.');
         this.uploading = false;
-      },
-    });
+        this.importUpload.finish();
+      });
   }
 }

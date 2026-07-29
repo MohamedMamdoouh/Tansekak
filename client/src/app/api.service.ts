@@ -3,6 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import {
+  ImportUploadError,
+  ImportUploadProgress,
+  uploadImportFile,
+} from './import-file-upload';
+import {
   AdmissionCutoff,
   AdmissionResult,
   AdmissionYear,
@@ -225,4 +230,40 @@ export class ApiService {
       >(`/api/admin/admission-years/${yearId}/import-results`, form)
       .pipe(map((r) => r.data));
   }
+
+  importCutoffsWithProgress(
+    yearId: number,
+    track: string,
+    file: File,
+    onProgress: (progress: ImportUploadProgress) => void,
+    signal?: AbortSignal,
+  ): Promise<ImportResult> {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('track', track);
+    return uploadImportFile(
+      `/api/admin/admission-years/${yearId}/import`,
+      form,
+      onProgress,
+      signal,
+    );
+  }
+
+  importStudentResultsWithProgress(
+    yearId: number,
+    file: File,
+    onProgress: (progress: ImportUploadProgress) => void,
+    signal?: AbortSignal,
+  ): Promise<ImportResult> {
+    const form = new FormData();
+    form.append('file', file);
+    return uploadImportFile(
+      `/api/admin/admission-years/${yearId}/import-results`,
+      form,
+      onProgress,
+      signal,
+    );
+  }
 }
+
+export type { ImportUploadError, ImportUploadProgress };
