@@ -11,9 +11,9 @@ import {
 } from '../../form-validators';
 
 const NOT_FOUND_MESSAGE = 'لم يتم العثور على نتيجة لهذا الرقم.';
-const GENERIC_ERROR_MESSAGE =
-  'حدث خطأ أثناء البحث. حاول مرة أخرى لاحقًا.';
+const GENERIC_ERROR_MESSAGE = 'حدث خطأ أثناء البحث. حاول مرة أخرى لاحقًا.';
 const THANAWEYA_MAX_SCORE = 320;
+const SCORE_ARC_LENGTH = 339.292;
 
 @Component({
   selector: 'app-thanaweya-result',
@@ -27,45 +27,46 @@ const THANAWEYA_MAX_SCORE = 320;
         <span>نتيجة الثانوية</span>
       </nav>
 
-      <section class="lookup-hero hero-gradient">
-        <div class="lookup-hero-text">
+      <section class="lookup-stage" [class.lookup-stage--compact]="result">
+        <div class="lookup-stage-copy">
           <span class="lookup-eyebrow">الثانوية العامة</span>
           <h1 class="lookup-title">نتيجة الثانوية برقم الجلوس</h1>
-          <p class="lookup-lead">
-            اكتب رقم جلوسك وشوف نتيجتك — وبعدها اعرف الكليات المتاحة لمجموعك.
-          </p>
+          @if (!result) {
+            <p class="lookup-lead">
+              اكتب رقم جلوسك وشوف نتيجتك — وبعدها اعرف الكليات المتاحة
+              لمجموعك.
+            </p>
+          }
         </div>
 
-        <form class="lookup-form card" [formGroup]="form" (ngSubmit)="submit()">
-          <div class="form-group lookup-field">
-            <label for="seatingNo" class="lookup-label">رقم الجلوس</label>
+        <form class="lookup-form" [formGroup]="form" (ngSubmit)="submit()">
+          <label for="seatingNo" class="lookup-label">رقم الجلوس</label>
+          <div class="lookup-input-wrap">
             <input
               id="seatingNo"
               type="text"
               inputmode="numeric"
               pattern="[0-9]*"
               formControlName="seatingNo"
-              placeholder="مثال: 1234567"
+              placeholder="1234567"
               autocomplete="off"
               (input)="onSeatingInput($event)"
             />
-            @if (
-              form.get('seatingNo')?.invalid && form.get('seatingNo')?.touched
-            ) {
-              @if (form.get('seatingNo')?.errors?.['required']) {
-                <small class="field-error">يرجى إدخال رقم الجلوس</small>
-              } @else if (form.get('seatingNo')?.errors?.['digitsOnly']) {
-                <small class="field-error"
-                  >رقم الجلوس يجب أن يحتوي على أرقام فقط</small
-                >
-              }
-            }
           </div>
+          @if (
+            form.get('seatingNo')?.invalid && form.get('seatingNo')?.touched
+          ) {
+            @if (form.get('seatingNo')?.errors?.['required']) {
+              <small class="field-error">يرجى إدخال رقم الجلوس</small>
+            } @else if (form.get('seatingNo')?.errors?.['digitsOnly']) {
+              <small class="field-error"
+                >رقم الجلوس يجب أن يحتوي على أرقام فقط</small
+              >
+            }
+          }
 
           @if (error) {
-            <div class="disclaimer-box lookup-notice" role="status">
-              {{ error }}
-            </div>
+            <div class="lookup-notice" role="status">{{ error }}</div>
           }
 
           <button
@@ -73,26 +74,34 @@ const THANAWEYA_MAX_SCORE = 320;
             type="submit"
             [disabled]="loading"
           >
-            {{ loading ? 'جاري البحث...' : 'اعرض النتيجة' }}
+            @if (loading) {
+              <span class="lookup-spinner" aria-hidden="true"></span>
+              جاري البحث...
+            } @else {
+              اعرض النتيجة
+            }
           </button>
         </form>
       </section>
 
       @if (result) {
-        <section class="student-result" aria-label="نتيجة الطالب">
-          <div class="student-result-banner">
-            <div class="student-result-banner-inner">
-              <span class="student-result-badge">نتيجة {{ result.year }}</span>
-              <h2 class="student-result-name">{{ result.arabicName }}</h2>
-              <p class="student-result-seating">
-                رقم الجلوس: <strong>{{ result.seatingNo }}</strong>
+        <section class="result-certificate" aria-label="نتيجة الطالب">
+          <header class="cert-header">
+            <div class="cert-header-inner">
+              <span class="cert-year">نتيجة {{ result.year }}</span>
+              <h2 class="cert-name">{{ result.arabicName }}</h2>
+              <p class="cert-seating">
+                <span class="cert-seating-label">رقم الجلوس</span>
+                <span class="cert-seating-no">{{ result.seatingNo }}</span>
               </p>
             </div>
-          </div>
+          </header>
 
-          <div class="student-result-body card">
+          <div class="cert-perforation" aria-hidden="true"></div>
+
+          <div class="cert-body">
             <div
-              class="student-result-score-ring"
+              class="score-gauge"
               [attr.aria-label]="
                 'المجموع الكلي ' +
                 result.totalDegree +
@@ -103,35 +112,88 @@ const THANAWEYA_MAX_SCORE = 320;
                 '%'
               "
             >
-              <div class="score-ring-inner">
-                <span class="score-value">{{ result.totalDegree }}</span>
+              <svg
+                class="score-gauge-svg"
+                viewBox="0 0 120 120"
+                aria-hidden="true"
+              >
+                <circle class="score-gauge-track" cx="60" cy="60" r="54" />
+                <circle
+                  class="score-gauge-fill"
+                  cx="60"
+                  cy="60"
+                  r="54"
+                  [style.stroke-dashoffset]="
+                    scoreArcOffset(result.totalDegree)
+                  "
+                />
+              </svg>
+              <div class="score-gauge-content">
+                <span class="score-fraction">
+                  <span class="score-value">{{ result.totalDegree }}</span>
+                  <span class="score-max">/{{ thanaweyaMaxScore }}</span>
+                </span>
                 <span class="score-percentage"
                   >{{ resultPercentage(result.totalDegree) }}%</span
                 >
-                <span class="score-label"
-                  >المجموع الكلي من {{ thanaweyaMaxScore }}</span
-                >
+                <span class="score-label">المجموع الكلي</span>
               </div>
             </div>
 
-            <div class="student-result-meta">
-              <div class="meta-chip">
-                <span class="meta-chip-label">حالة الطالب</span>
-                <span class="meta-chip-value">{{ result.studentCaseDesc }}</span>
-              </div>
-              <div class="meta-chip">
-                <span class="meta-chip-label">سنة النتيجة</span>
-                <span class="meta-chip-value">{{ result.year }}</span>
-              </div>
+            <div class="cert-meta">
+              <article class="cert-meta-item">
+                <span class="cert-meta-icon" aria-hidden="true">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                </span>
+                <div class="cert-meta-text">
+                  <span class="cert-meta-label">حالة الطالب</span>
+                  <span class="cert-meta-value">{{
+                    result.studentCaseDesc
+                  }}</span>
+                </div>
+              </article>
+              <article class="cert-meta-item">
+                <span class="cert-meta-icon" aria-hidden="true">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <path d="M16 2v4M8 2v4M3 10h18" />
+                  </svg>
+                </span>
+                <div class="cert-meta-text">
+                  <span class="cert-meta-label">سنة النتيجة</span>
+                  <span class="cert-meta-value">{{ result.year }}</span>
+                </div>
+              </article>
             </div>
 
-            <a
-              class="btn btn-primary btn-lg student-result-cta"
-              [routerLink]="['/predict']"
-              [queryParams]="{ score: result.totalDegree }"
-            >
-              اعرف الكليات المتاحة لمجموعك
-            </a>
+            <div class="cert-next">
+              <p class="cert-next-hint">الخطوة التالية</p>
+              <a
+                class="cert-cta"
+                [routerLink]="['/predict']"
+                [queryParams]="{ score: result.totalDegree }"
+              >
+                <span>اعرف الكليات المتاحة لمجموعك</span>
+                <span class="cert-cta-arrow" aria-hidden="true">←</span>
+              </a>
+            </div>
           </div>
         </section>
       }
@@ -140,74 +202,139 @@ const THANAWEYA_MAX_SCORE = 320;
   styles: [
     `
       .thanaweya-page {
-        padding-bottom: 1rem;
+        padding-bottom: 2.5rem;
       }
 
-      .lookup-hero {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+      /* ── Lookup stage ── */
+      .lookup-stage {
+        position: relative;
+        display: grid;
+        gap: 1.5rem;
+        justify-items: center;
         text-align: center;
-        padding: 2rem 1.5rem 1.75rem;
-        margin-bottom: 1.5rem;
+        padding: 2.25rem 1.75rem 2rem;
+        margin-bottom: 1.75rem;
+        border-radius: 22px;
+        background:
+          radial-gradient(
+            circle at 12% 18%,
+            rgba(245, 158, 11, 0.09) 0%,
+            transparent 42%
+          ),
+          radial-gradient(
+            circle at 88% 82%,
+            rgba(37, 99, 235, 0.07) 0%,
+            transparent 38%
+          ),
+          linear-gradient(165deg, #f8faff 0%, #eef2ff 52%, #fff 100%);
+        border: 1px solid rgba(30, 58, 138, 0.08);
+        box-shadow: 0 14px 40px rgba(15, 23, 42, 0.06);
+        transition:
+          padding 0.35s ease,
+          margin 0.35s ease;
       }
 
-      .lookup-hero-text {
-        max-width: 560px;
-        margin-bottom: 0.25rem;
+      .lookup-stage--compact {
+        padding: 1.35rem 1.25rem 1.25rem;
+        margin-bottom: 1.25rem;
+        gap: 1rem;
+      }
+
+      .lookup-stage--compact .lookup-title {
+        font-size: clamp(1.1rem, 3.5vw, 1.35rem);
+        margin-bottom: 0;
+      }
+
+      .lookup-stage-copy {
+        max-width: 480px;
       }
 
       .lookup-eyebrow {
         display: inline-block;
-        font-size: 0.82rem;
+        font-size: 0.78rem;
         font-weight: 700;
-        letter-spacing: 0.04em;
-        color: var(--color-accent);
-        background: rgba(217, 119, 6, 0.1);
-        border: 1px solid rgba(217, 119, 6, 0.22);
-        padding: 0.25rem 0.75rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #92400e;
+        background: rgba(245, 158, 11, 0.14);
+        border: 1px solid rgba(217, 119, 6, 0.28);
+        padding: 0.28rem 0.85rem;
         border-radius: 999px;
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.85rem;
       }
 
       .lookup-title {
         font-family: var(--font-display);
-        font-size: clamp(1.35rem, 4vw, 2rem);
+        font-size: clamp(1.45rem, 4.5vw, 2.05rem);
         font-weight: 800;
         color: var(--color-primary);
-        line-height: 1.35;
-        margin: 0 0 0.65rem;
+        line-height: 1.32;
+        margin: 0 0 0.7rem;
       }
 
       .lookup-lead {
-        margin: 0 auto 1.25rem;
+        margin: 0;
         color: var(--color-text-muted);
         line-height: 1.75;
-        font-size: clamp(0.95rem, 2.5vw, 1.02rem);
-        max-width: 46ch;
+        font-size: clamp(0.94rem, 2.5vw, 1.02rem);
+        max-width: 42ch;
+        margin-inline: auto;
       }
 
       .lookup-form {
         width: 100%;
-        max-width: 420px;
-        padding: 1.35rem;
-        margin: 0 auto;
+        max-width: 380px;
+        display: grid;
+        gap: 0.85rem;
       }
 
       .lookup-label {
-        text-align: center;
-        margin-bottom: 0.5rem;
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--color-primary);
+        margin: 0;
       }
 
-      .lookup-field {
-        margin-bottom: 1.15rem;
+      .lookup-input-wrap {
+        position: relative;
       }
 
-      .lookup-field input {
+      .lookup-input-wrap::before {
+        content: '#';
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-family: var(--font-display);
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: rgba(30, 58, 138, 0.28);
+        pointer-events: none;
+      }
+
+      .lookup-input-wrap input {
+        width: 100%;
         text-align: center;
-        font-size: 1.15rem;
-        letter-spacing: 0.06em;
-        font-weight: 600;
+        font-family: var(--font-display);
+        font-size: 1.35rem;
+        letter-spacing: 0.14em;
+        font-weight: 700;
+        padding: 0.95rem 2.5rem;
+        border: 2px solid rgba(30, 58, 138, 0.14);
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: inset 0 2px 6px rgba(15, 23, 42, 0.04);
+        transition:
+          border-color 0.2s ease,
+          box-shadow 0.2s ease;
+      }
+
+      .lookup-input-wrap input:focus {
+        outline: none;
+        border-color: var(--color-primary-light);
+        box-shadow:
+          inset 0 2px 6px rgba(15, 23, 42, 0.04),
+          0 0 0 4px rgba(37, 99, 235, 0.12);
       }
 
       .lookup-submit {
@@ -215,200 +342,363 @@ const THANAWEYA_MAX_SCORE = 320;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 0.5rem;
+        gap: 0.55rem;
+        margin-top: 0.15rem;
+      }
+
+      .lookup-spinner {
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid rgba(255, 255, 255, 0.35);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
       }
 
       .field-error {
         color: #dc2626;
-        display: block;
-        margin-top: 0.35rem;
-        font-size: 0.9rem;
+        font-size: 0.88rem;
         text-align: center;
+        margin: -0.25rem 0 0;
       }
 
       .lookup-notice {
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        color: #92400e;
+        font-size: 0.92rem;
+        line-height: 1.6;
         text-align: center;
-        margin-bottom: 1rem;
-        line-height: 1.65;
-        font-size: 0.95rem;
       }
 
-      /* ── Student result card ── */
-      .student-result {
-        max-width: 520px;
-        margin: 0 auto 2rem;
-        animation: result-enter 0.45s ease;
-      }
-
-      .student-result-banner {
-        background: linear-gradient(
-          145deg,
-          #0f172a 0%,
-          #1e3a8a 55%,
-          #1d4ed8 100%
-        );
-        border-radius: 20px 20px 0 0;
-        padding: 1.75rem 1.5rem 2.5rem;
-        position: relative;
+      /* ── Certificate result ── */
+      .result-certificate {
+        max-width: 480px;
+        margin: 0 auto;
+        border-radius: 22px;
         overflow: hidden;
+        background: #fefdfb;
+        border: 1px solid rgba(30, 58, 138, 0.1);
+        box-shadow:
+          0 24px 60px rgba(15, 23, 42, 0.14),
+          0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+        animation: cert-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .cert-header {
+        position: relative;
+        padding: 1.85rem 1.5rem 1.65rem;
+        background: linear-gradient(
+          148deg,
+          #0b1533 0%,
+          #152a5c 45%,
+          #1e3a8a 100%
+        );
         color: #fff;
         text-align: center;
+        overflow: hidden;
       }
 
-      .student-result-banner::before {
+      .cert-header::before {
         content: '';
         position: absolute;
-        inset: -30% auto auto 50%;
-        width: 280px;
-        height: 280px;
-        transform: translateX(-50%);
+        inset: 0;
+        background-image: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.06) 1px,
+          transparent 1px
+        );
+        background-size: 18px 18px;
+        opacity: 0.45;
+        pointer-events: none;
+      }
+
+      .cert-header::after {
+        content: '';
+        position: absolute;
+        inset: auto -20% -60% -20%;
+        height: 180px;
         border-radius: 50%;
         background: radial-gradient(
           circle,
-          rgba(245, 158, 11, 0.18) 0%,
-          transparent 70%
+          rgba(245, 158, 11, 0.22) 0%,
+          transparent 68%
         );
         pointer-events: none;
       }
 
-      .student-result-banner-inner {
+      .cert-header-inner {
         position: relative;
         z-index: 1;
       }
 
-      .student-result-badge {
+      .cert-year {
         display: inline-block;
-        font-size: 0.78rem;
+        font-size: 0.76rem;
         font-weight: 700;
-        letter-spacing: 0.03em;
-        background: rgba(255, 255, 255, 0.12);
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        padding: 0.25rem 0.75rem;
+        letter-spacing: 0.05em;
+        padding: 0.28rem 0.8rem;
         border-radius: 999px;
-        margin-bottom: 0.75rem;
+        background: rgba(245, 158, 11, 0.18);
+        border: 1px solid rgba(245, 158, 11, 0.35);
+        color: #fde68a;
+        margin-bottom: 0.85rem;
       }
 
-      .student-result-name {
+      .cert-name {
         font-family: var(--font-display);
-        font-size: clamp(1.2rem, 4vw, 1.55rem);
+        font-size: clamp(1.25rem, 4.5vw, 1.65rem);
         font-weight: 800;
-        margin: 0 0 0.5rem;
-        line-height: 1.45;
+        line-height: 1.4;
+        margin: 0 0 0.85rem;
       }
 
-      .student-result-seating {
+      .cert-seating {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.2rem;
         margin: 0;
-        font-size: 0.92rem;
-        opacity: 0.85;
+        padding: 0.55rem 1.1rem;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
       }
 
-      .student-result-seating strong {
-        font-weight: 700;
-        color: var(--color-accent-light);
+      .cert-seating-label {
+        font-size: 0.72rem;
+        opacity: 0.72;
         letter-spacing: 0.04em;
       }
 
-      .student-result-body {
-        margin-top: -1.75rem;
-        position: relative;
-        z-index: 2;
-        padding: 1.5rem 1.35rem 1.75rem;
-        border-radius: 20px;
+      .cert-seating-no {
+        font-family: var(--font-display);
+        font-size: 1.15rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        color: var(--color-accent-light);
+      }
+
+      .cert-perforation {
+        height: 14px;
+        background:
+          radial-gradient(circle at 7px 7px, #fefdfb 6px, transparent 6.5px),
+          linear-gradient(180deg, #152a5c 0%, #fefdfb 100%);
+        background-size:
+          14px 14px,
+          100% 100%;
+        background-repeat: repeat-x, no-repeat;
+        background-position:
+          center top,
+          center;
+      }
+
+      .cert-body {
+        padding: 1.65rem 1.4rem 1.75rem;
         text-align: center;
-        box-shadow: 0 16px 48px rgba(15, 23, 42, 0.14);
+        animation: cert-body-enter 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.12s
+          both;
       }
 
-      .student-result-score-ring {
-        display: flex;
-        justify-content: center;
-        margin-bottom: 1.35rem;
+      .score-gauge {
+        position: relative;
+        width: clamp(168px, 44vw, 196px);
+        height: clamp(168px, 44vw, 196px);
+        margin: 0 auto 1.5rem;
       }
 
-      .score-ring-inner {
+      .score-gauge-svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+      }
+
+      .score-gauge-track,
+      .score-gauge-fill {
+        fill: none;
+        stroke-width: 7;
+        stroke-linecap: round;
+      }
+
+      .score-gauge-track {
+        stroke: rgba(30, 58, 138, 0.1);
+      }
+
+      .score-gauge-fill {
+        stroke: var(--color-accent);
+        stroke-dasharray: 339.292;
+        transition: stroke-dashoffset 1s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .score-gauge-content {
+        position: absolute;
+        inset: 0;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        width: clamp(140px, 38vw, 168px);
-        height: clamp(140px, 38vw, 168px);
-        border-radius: 50%;
-        background: linear-gradient(
-          145deg,
-          #fff 0%,
-          var(--color-surface-alt) 100%
-        );
-        border: 4px solid var(--color-accent-light);
-        box-shadow:
-          0 0 0 6px rgba(245, 158, 11, 0.12),
-          0 12px 32px rgba(30, 58, 138, 0.12);
+        gap: 0.15rem;
+      }
+
+      .score-fraction {
+        display: flex;
+        align-items: baseline;
+        gap: 0.1rem;
+        line-height: 1;
       }
 
       .score-value {
         font-family: var(--font-display);
-        font-size: clamp(2rem, 7vw, 2.65rem);
+        font-size: clamp(2.1rem, 7vw, 2.75rem);
         font-weight: 800;
-        line-height: 1;
         color: var(--color-primary);
+      }
+
+      .score-max {
+        font-family: var(--font-display);
+        font-size: clamp(0.95rem, 3vw, 1.1rem);
+        font-weight: 700;
+        color: var(--color-text-muted);
       }
 
       .score-percentage {
-        margin-top: 0.2rem;
         font-family: var(--font-display);
-        font-size: clamp(1rem, 3.5vw, 1.15rem);
-        font-weight: 700;
-        line-height: 1;
+        font-size: clamp(1.05rem, 3.5vw, 1.2rem);
+        font-weight: 800;
         color: var(--color-accent);
+        line-height: 1;
       }
 
       .score-label {
-        margin-top: 0.35rem;
-        font-size: 0.78rem;
+        margin-top: 0.15rem;
+        font-size: 0.76rem;
         font-weight: 600;
         color: var(--color-text-muted);
-        line-height: 1.35;
+        letter-spacing: 0.02em;
       }
 
-      .student-result-meta {
+      .cert-meta {
         display: grid;
-        gap: 0.65rem;
-        margin-bottom: 1.35rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
       }
 
-      .meta-chip {
+      .cert-meta-item {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.75rem 1rem;
+        align-items: flex-start;
+        gap: 0.65rem;
+        padding: 0.85rem 0.75rem;
+        text-align: right;
         background: var(--color-surface);
         border: 1px solid rgba(30, 58, 138, 0.08);
-        border-radius: 12px;
+        border-radius: 14px;
       }
 
-      .meta-chip-label {
-        font-size: 0.88rem;
-        color: var(--color-text-muted);
+      .cert-meta-icon {
         flex-shrink: 0;
-      }
-
-      .meta-chip-value {
-        font-weight: 700;
-        font-size: 0.92rem;
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border-radius: 10px;
+        background: rgba(37, 99, 235, 0.08);
         color: var(--color-primary);
-        text-align: left;
       }
 
-      .student-result-cta {
-        width: 100%;
-        display: inline-flex;
+      .cert-meta-text {
+        display: grid;
+        gap: 0.15rem;
+        min-width: 0;
+      }
+
+      .cert-meta-label {
+        font-size: 0.72rem;
+        color: var(--color-text-muted);
+      }
+
+      .cert-meta-value {
+        font-weight: 700;
+        font-size: 0.88rem;
+        color: var(--color-primary);
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+      }
+
+      .cert-next {
+        padding-top: 0.25rem;
+        border-top: 1px dashed rgba(30, 58, 138, 0.14);
+      }
+
+      .cert-next-hint {
+        margin: 0 0 0.75rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: var(--color-text-muted);
+      }
+
+      .cert-cta {
+        display: flex;
         align-items: center;
         justify-content: center;
+        gap: 0.65rem;
+        width: 100%;
+        padding: 0.95rem 1.25rem;
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 1rem;
+        color: #fff;
+        background: linear-gradient(
+          135deg,
+          var(--color-primary-light) 0%,
+          var(--color-primary) 100%
+        );
+        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.32);
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
       }
 
-      @keyframes result-enter {
+      .cert-cta:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px rgba(37, 99, 235, 0.38);
+      }
+
+      .cert-cta-arrow {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--color-accent-light);
+        transition: transform 0.2s ease;
+      }
+
+      .cert-cta:hover .cert-cta-arrow {
+        transform: translateX(-4px);
+      }
+
+      @keyframes cert-enter {
         from {
           opacity: 0;
-          transform: translateY(12px);
+          transform: translateY(20px) scale(0.98);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      @keyframes cert-body-enter {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
         }
         to {
           opacity: 1;
@@ -417,39 +707,57 @@ const THANAWEYA_MAX_SCORE = 320;
       }
 
       @media (max-width: 480px) {
-        .lookup-hero {
-          padding: 1.35rem 1rem 1.25rem;
+        .lookup-stage {
+          padding: 1.5rem 1rem 1.35rem;
+          border-radius: 18px;
         }
 
-        .lookup-form {
-          padding: 1.15rem;
+        .lookup-stage--compact {
+          padding: 1.1rem 0.95rem 1rem;
         }
 
-        .student-result-banner {
-          padding: 1.35rem 1rem 2.25rem;
-          border-radius: 16px 16px 0 0;
+        .lookup-input-wrap input {
+          font-size: 1.2rem;
+          padding: 0.85rem 2.25rem;
         }
 
-        .student-result-body {
-          padding: 1.25rem 1rem 1.5rem;
-          border-radius: 16px;
+        .cert-header {
+          padding: 1.45rem 1rem 1.35rem;
         }
 
-        .meta-chip {
-          flex-direction: column;
-          align-items: stretch;
-          text-align: center;
-          gap: 0.25rem;
+        .cert-body {
+          padding: 1.35rem 1rem 1.5rem;
         }
 
-        .meta-chip-value {
-          text-align: center;
+        .cert-meta {
+          grid-template-columns: 1fr;
+        }
+
+        .cert-meta-item {
+          padding: 0.75rem;
         }
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .student-result {
+        .result-certificate,
+        .cert-body {
           animation: none;
+        }
+
+        .score-gauge-fill {
+          transition: none;
+        }
+
+        .lookup-spinner {
+          animation: none;
+        }
+
+        .cert-cta:hover {
+          transform: none;
+        }
+
+        .cert-cta:hover .cert-cta-arrow {
+          transform: none;
         }
       }
     `,
@@ -471,6 +779,11 @@ export class ThanaweyaResultComponent {
 
   resultPercentage(totalDegree: number): string {
     return ((totalDegree / THANAWEYA_MAX_SCORE) * 100).toFixed(2);
+  }
+
+  scoreArcOffset(totalDegree: number): number {
+    const progress = Math.min(Math.max(totalDegree / THANAWEYA_MAX_SCORE, 0), 1);
+    return SCORE_ARC_LENGTH * (1 - progress);
   }
 
   onSeatingInput(event: Event): void {
