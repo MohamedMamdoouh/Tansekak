@@ -85,6 +85,10 @@ export function importErrorMessage(
     return 'انقطع الاتصال بالخادم اثناء الاستيراد. الملف قد يكون كبيرا — انتظر دقيقة ثم حاول مرة اخرى.';
   }
 
+  if (status === 400 && response?.message) {
+    return response.message;
+  }
+
   if (status === 502 || status === 504) {
     return 'انتهت مهلة الخادم (5 دقائق). قد يكون الاستيراد لا يزال جاريا — انتظر دقيقة ثم تحقق من عدد النتائج في لوحة التحكم.';
   }

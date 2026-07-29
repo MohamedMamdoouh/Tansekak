@@ -66,69 +66,61 @@ public class ChunkedUploadSessionStore(
         return new ImportUploadSessionDto(uploadId, ChunkSizeBytes);
     }
 
-    public bool TrySaveChunk(Guid uploadId, int chunkIndex, Stream chunkStream, out string? error)
+    public async Task<(bool Success, string? Error)> TrySaveChunkAsync(
+        Guid uploadId,
+        int chunkIndex,
+        Stream chunkStream,
+        CancellationToken cancellationToken)
     {
-        error = null;
         if (!_sessions.TryGetValue(uploadId, out var session))
-        {
-            error = "Upload session not found.";
-            return false;
-        }
+            return (false, "Upload session not found.");
 
         if (chunkIndex < 0 || chunkIndex >= session.TotalChunks)
-        {
-            error = "Chunk index is out of range.";
-            return false;
-        }
+            return (false, "Chunk index is out of range.");
 
         var chunkPath = GetChunkPath(session, chunkIndex);
+        await using (var output = File.Create(chunkPath))
+        {
+            await chunkStream.CopyToAsync(output, cancellationToken);
+        }
+
         lock (session.SyncRoot)
         {
-            using var output = File.Create(chunkPath);
-            chunkStream.CopyTo(output);
             session.ReceivedChunks.Add(chunkIndex);
         }
 
-        return true;
+        return (true, null);
     }
 
-    public ImportJobState? TryCompleteSession(Guid uploadId, out string? error)
+    public async Task<(ImportJobState? Job, string? Error)> TryCompleteSessionAsync(
+        Guid uploadId,
+        CancellationToken cancellationToken)
     {
-        error = null;
         if (!_sessions.TryGetValue(uploadId, out var session))
-        {
-            error = "Upload session not found.";
-            return null;
-        }
+            return (null, "Upload session not found.");
 
         lock (session.SyncRoot)
         {
             if (session.ReceivedChunks.Count != session.TotalChunks)
-            {
-                error = $"Missing chunks: received {session.ReceivedChunks.Count} of {session.TotalChunks}.";
-                return null;
-            }
+                return (null, $"Missing chunks: received {session.ReceivedChunks.Count} of {session.TotalChunks}.");
 
             for (var i = 0; i < session.TotalChunks; i++)
             {
                 if (!session.ReceivedChunks.Contains(i))
-                {
-                    error = $"Missing chunk {i}.";
-                    return null;
-                }
+                    return (null, $"Missing chunk {i}.");
             }
         }
 
         var assembledPath = Path.Combine(Path.GetTempPath(), $"tansekak-import-{uploadId:N}.xlsx");
         try
         {
-            MergeChunks(session, assembledPath);
+            await MergeChunksAsync(session, assembledPath, cancellationToken);
             var job = jobQueue.Enqueue(session.YearId, assembledPath, session.FileName);
             logger.LogInformation(
                 "Completed chunked upload {UploadId} and queued import job {JobId}.",
                 uploadId,
                 job.JobId);
-            return job;
+            return (job, null);
         }
         finally
         {
@@ -147,14 +139,17 @@ public class ChunkedUploadSessionStore(
         return true;
     }
 
-    private static void MergeChunks(ChunkedUploadSession session, string outputPath)
+    private static async Task MergeChunksAsync(
+        ChunkedUploadSession session,
+        string outputPath,
+        CancellationToken cancellationToken)
     {
-        using var output = File.Create(outputPath);
+        await using var output = File.Create(outputPath);
         for (var i = 0; i < session.TotalChunks; i++)
         {
             var chunkPath = GetChunkPath(session, i);
-            using var input = File.OpenRead(chunkPath);
-            input.CopyTo(output);
+            await using var input = File.OpenRead(chunkPath);
+            await input.CopyToAsync(output, cancellationToken);
         }
     }
 

@@ -361,17 +361,17 @@ public class ImportUploadsController(ChunkedUploadSessionStore uploadSessions) :
     [RequestSizeLimit(ChunkedUploadSessionStore.ChunkSizeBytes + 1_048_576)]
     public async Task<IActionResult> UploadChunk(Guid uploadId, int chunkIndex, CancellationToken ct)
     {
-        if (!uploadSessions.TrySaveChunk(uploadId, chunkIndex, Request.Body, out var error))
+        var (success, error) = await uploadSessions.TrySaveChunkAsync(uploadId, chunkIndex, Request.Body, ct);
+        if (!success)
             return BadRequest(ApiResponse<object>.Fail(error ?? "Failed to save chunk."));
 
-        await Task.CompletedTask;
         return NoContent();
     }
 
     [HttpPost("{uploadId:guid}/complete")]
-    public ActionResult<ApiResponse<ImportJobStartedDto>> CompleteUpload(Guid uploadId)
+    public async Task<ActionResult<ApiResponse<ImportJobStartedDto>>> CompleteUpload(Guid uploadId, CancellationToken ct)
     {
-        var job = uploadSessions.TryCompleteSession(uploadId, out var error);
+        var (job, error) = await uploadSessions.TryCompleteSessionAsync(uploadId, ct);
         if (job is null)
             return BadRequest(ApiResponse<ImportJobStartedDto>.Fail(error ?? "Failed to complete upload."));
 

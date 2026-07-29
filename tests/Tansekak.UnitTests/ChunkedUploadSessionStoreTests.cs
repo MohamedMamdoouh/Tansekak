@@ -18,16 +18,18 @@ public class ChunkedUploadSessionStoreTests
     }
 
     [Fact]
-    public void TryCompleteSession_FailsWhenChunksMissing()
+    public async Task TryCompleteSession_FailsWhenChunksMissing()
     {
         var store = CreateStore();
         var session = store.CreateSession(1, "results.xlsx", 10, 2);
 
-        var saved = store.TrySaveChunk(session.UploadId, 0, ToStream([1, 2, 3, 4, 5]), out var saveError);
+        var (saved, saveError) = await store.TrySaveChunkAsync(
+            session.UploadId, 0, ToStream([1, 2, 3, 4, 5]), CancellationToken.None);
         Assert.True(saved);
         Assert.Null(saveError);
 
-        var job = store.TryCompleteSession(session.UploadId, out var completeError);
+        var (job, completeError) = await store.TryCompleteSessionAsync(
+            session.UploadId, CancellationToken.None);
 
         Assert.Null(job);
         Assert.NotNull(completeError);
@@ -35,17 +37,18 @@ public class ChunkedUploadSessionStoreTests
     }
 
     [Fact]
-    public void TryCompleteSession_MergesChunksInOrder()
+    public async Task TryCompleteSession_MergesChunksInOrder()
     {
         var store = CreateStore();
         var chunk0 = new byte[] { 1, 2, 3 };
         var chunk1 = new byte[] { 4, 5 };
         var session = store.CreateSession(1, "results.xlsx", chunk0.Length + chunk1.Length, 2);
 
-        Assert.True(store.TrySaveChunk(session.UploadId, 0, ToStream(chunk0), out _));
-        Assert.True(store.TrySaveChunk(session.UploadId, 1, ToStream(chunk1), out _));
+        Assert.True((await store.TrySaveChunkAsync(session.UploadId, 0, ToStream(chunk0), CancellationToken.None)).Success);
+        Assert.True((await store.TrySaveChunkAsync(session.UploadId, 1, ToStream(chunk1), CancellationToken.None)).Success);
 
-        var job = store.TryCompleteSession(session.UploadId, out var completeError);
+        var (job, completeError) = await store.TryCompleteSessionAsync(
+            session.UploadId, CancellationToken.None);
 
         Assert.Null(completeError);
         Assert.NotNull(job);

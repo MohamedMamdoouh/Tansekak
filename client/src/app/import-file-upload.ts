@@ -190,6 +190,15 @@ async function uploadStudentResultsChunked(
   }
 }
 
+function parseApiEnvelope<T>(text: string): ApiResponse<T> | null {
+  if (!text) return null;
+  try {
+    return JSON.parse(text) as ApiResponse<T>;
+  } catch {
+    return null;
+  }
+}
+
 function uploadChunk(
   uploadId: string,
   chunkIndex: number,
@@ -223,7 +232,7 @@ function uploadChunk(
       }
       reject({
         status: xhr.status,
-        error: parseJsonResponse<ImportResult>(xhr),
+        error: parseApiEnvelope<ImportResult>(xhr.responseText),
       } satisfies ImportUploadError);
     });
 
