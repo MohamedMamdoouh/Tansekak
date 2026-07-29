@@ -150,6 +150,15 @@ Required variables:
 | `ADMIN_PASSWORD` | Admin user password seeded on first run |
 | `ADMIN_EMAIL` | Optional; defaults to `admin@tansekak.local` |
 
+Optional — required only for Excel imports **larger than 20 MB** (see [Cloudflare R2](#cloudflare-r2-large-imports)):
+
+| Variable | Description |
+|----------|-------------|
+| `R2__AccountId` | Cloudflare account ID |
+| `R2__AccessKeyId` | R2 API token access key |
+| `R2__SecretAccessKey` | R2 API token secret |
+| `R2__BucketName` | R2 bucket name (default: `tansekak-imports`) |
+
 Start the stack:
 
 ```powershell
@@ -172,6 +181,10 @@ docker compose up --build
 | `ConnectionStrings__DefaultConnection` | Your Neon connection string |
 | `AdminSeed__Email` | `admin@tansekak.local` |
 | `AdminSeed__Password` | A strong admin password |
+| `R2__AccountId` | Cloudflare account ID (see [Cloudflare R2](#cloudflare-r2-large-imports)) |
+| `R2__AccessKeyId` | R2 API token access key |
+| `R2__SecretAccessKey` | R2 API token secret |
+| `R2__BucketName` | `tansekak-imports` |
 
 4. Generate a public domain in Railway → Settings → Networking.
 5. Deploy latest commit (`Ctrl+K` → **Deploy Latest Commit**).
@@ -198,6 +211,80 @@ Docker and production override via `ConnectionStrings__DefaultConnection`.
 | `AdminSeed:Email` | Admin user email for first-run seed |
 | `AdminSeed:Password` | Admin user password for first-run seed |
 | `Frontend:Origin` | CORS origin (set in `appsettings.Development.json` for local Angular dev) |
+| `R2:AccountId` | Cloudflare account ID for large Excel imports |
+| `R2:AccessKeyId` | R2 S3-compatible access key |
+| `R2:SecretAccessKey` | R2 S3-compatible secret key |
+| `R2:BucketName` | R2 bucket for temporary import files |
+
+Environment variables use `__` as the nested separator (e.g. `R2__AccountId`).
+
+### Cloudflare R2 (large imports)
+
+Student result imports **≤20 MB** upload directly to the API. Files **>20 MB** use presigned URLs: the browser uploads to Cloudflare R2, then the API reads the object, imports it, and deletes it.
+
+R2 is **optional** for small files but **required** for large Excel imports. Without R2 credentials, uploads over 20 MB return HTTP 503.
+
+#### Automated setup (API token with R2 write access)
+
+If you have a Cloudflare API token with R2 bucket permissions, run:
+
+```powershell
+$env:CLOUDFLARE_API_TOKEN = "your-cloudflare-api-token"
+$env:R2__AccountId = "your-account-id"
+.\scripts\setup-cloudflare-r2.ps1
+```
+
+This creates the `tansekak-imports` bucket and applies the CORS policy. You still need to create an **R2 API token** (step 2 below) for S3-compatible access keys used by the app.
+
+#### 1. Create bucket
+
+In [Cloudflare Dashboard](https://dash.cloudflare.com) → **R2 Object Storage** → **Create bucket**:
+
+- Name: `tansekak-imports` (or your preferred name — set `R2__BucketName` to match)
+- Copy your **Account ID** from the R2 overview page → `R2__AccountId`
+
+No public bucket access is needed.
+
+#### 2. Create API token
+
+**R2 → Manage R2 API Tokens → Create API Token**:
+
+| Setting | Value |
+|---------|-------|
+| Permissions | **Object Read & Write** scoped to `tansekak-imports` |
+| TTL | No expiry (or rotate periodically) |
+
+Save the **Access Key ID** → `R2__AccessKeyId` and **Secret Access Key** → `R2__SecretAccessKey` (shown once).
+
+#### 3. Configure bucket CORS
+
+Large uploads send a cross-origin **PUT** from the browser to `*.r2.cloudflarestorage.com`. In **R2 → your bucket → Settings → CORS policy**, add:
+
+```json
+[
+  {
+    "AllowedOrigins": [
+      "https://tansekak-production.up.railway.app",
+      "http://localhost:4200"
+    ],
+    "AllowedMethods": ["PUT"],
+    "AllowedHeaders": ["Content-Type"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+Replace the Railway origin with your production domain if different. Keep `http://localhost:4200` when testing large imports via `npm start` (the PUT does not go through the API proxy).
+
+Optional: add a lifecycle rule to delete objects under prefix `imports/` after 1 day to clean up orphaned uploads.
+
+#### Upload flow (>20 MB)
+
+1. `POST /api/admin/admission-years/{yearId}/import-results/upload-url` — returns presigned PUT URL + `objectKey`
+2. Browser `PUT` file bytes to R2
+3. `POST /api/admin/admission-years/{yearId}/import-results/from-storage` — starts async import
+4. `GET /api/admin/import-jobs/{jobId}` — poll until `status` is `completed` or `failed`
 
 ### Environment behavior
 
@@ -293,7 +380,10 @@ All responses use the envelope `{ success, message, data, errors? }`.
 | `GET/POST/PUT/PATCH` | `/api/admin/admission-years` | Admission year CRUD + publish |
 | `GET/POST/PUT/DELETE` | `/api/admin/admission-cutoffs` | Cutoff CRUD (paginated) |
 | `POST` | `/api/admin/admission-years/{yearId}/import` | Import cutoffs from `.md` |
-| `POST` | `/api/admin/admission-years/{yearId}/import-results` | Import student results from `.xlsx` |
+| `POST` | `/api/admin/admission-years/{yearId}/import-results` | Import student results from `.xlsx` (direct upload, ≤20 MB) |
+| `POST` | `/api/admin/admission-years/{yearId}/import-results/upload-url` | Get presigned R2 upload URL (large files) |
+| `POST` | `/api/admin/admission-years/{yearId}/import-results/from-storage` | Start import from R2 object (large files) |
+| `GET` | `/api/admin/import-jobs/{jobId}` | Poll async import job status |
 
 ## Import formats
 
@@ -313,6 +403,15 @@ All responses use the envelope `{ success, message, data, errors? }`.
 - Required columns (header row, English only): `seating_no`, `arabic_name`, `total_degree`, `student_case_desc`
 - Imported for the selected admission year
 - Student totals are not capped at the admission cutoff maximum score
+
+**Upload paths**
+
+| File size | Path |
+|-----------|------|
+| ≤20 MB | Direct `POST /import-results` (multipart upload to API) |
+| >20 MB | Presigned R2 upload — requires [Cloudflare R2](#cloudflare-r2-large-imports) configured on the server |
+
+Large imports run asynchronously; poll `GET /api/admin/import-jobs/{jobId}` until complete.
 
 ## Tests
 
