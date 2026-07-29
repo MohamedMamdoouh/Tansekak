@@ -91,24 +91,6 @@ export interface ImportResult {
   }[];
 }
 
-export interface ImportJobStarted {
-  jobId: string;
-  status: string;
-}
-
-export interface ImportUploadUrl {
-  uploadUrl: string;
-  objectKey: string;
-  expiresInSeconds: number;
-}
-
-export interface ImportJobStatus {
-  jobId: string;
-  status: string;
-  result?: ImportResult;
-  message?: string;
-}
-
 export interface StudentResult {
   seatingNo: string;
   arabicName: string;

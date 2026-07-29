@@ -1,14 +1,11 @@
-import { Component, NgZone, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ApiService, ImportUploadError } from '../../../api.service';
-import { ImportUploadService } from '../../../import-upload.service';
-import { AdmissionYear, ImportResult } from '../../../models';
-import {
-  importErrorMessage,
-  normalizeImportResult,
-  parseImportErrorResponse,
-} from '../../../import-error.util';
+import { ApiService } from '../../../api.service';
+import { AdmissionYear } from '../../../models';
+
+const IMPORT_UNAVAILABLE_MESSAGE =
+  'خدمة الاستيراد غير متاحة حالياً. حاول مرة أخرى لاحقاً.';
 
 @Component({
   selector: 'app-admin-import-results',
@@ -17,19 +14,19 @@ import {
   template: `
     <div class="container">
       <h1>استيراد نتائج الثانوية</h1>
+      <div class="service-unavailable" role="status">
+        {{ importUnavailableMessage }}
+      </div>
       <div class="card">
         <form [formGroup]="form" (ngSubmit)="upload()">
           <div class="form-group">
             <label>سنة القبول</label>
-            <select formControlName="yearId">
+            <select formControlName="yearId" [disabled]="true">
               <option [ngValue]="null">اختر السنة</option>
               @for (y of years; track y.id) {
                 <option [ngValue]="y.id">{{ y.year }}</option>
               }
             </select>
-            @if (form.get('yearId')?.invalid && form.get('yearId')?.touched) {
-              <small class="field-error">يرجى اختيار سنة القبول</small>
-            }
           </div>
 
           <p class="note">
@@ -38,7 +35,7 @@ import {
           </p>
 
           <p class="hint">
-            صيغة الملف: Excel (.xlsx). الأعمدة المطلوبة (بالإنجليزية):
+            صيغة الملف: Excel (.xlsx). الأعمدة المطلوبة:
             <code
               >seating_no | arabic_name | total_degree | student_case_desc</code
             >
@@ -46,44 +43,13 @@ import {
 
           <div class="form-group">
             <label>ملف Excel (.xlsx)</label>
-            <input type="file" (change)="onFile($event)" accept=".xlsx" />
-            @if (fileTouched && !file) {
-              <small class="field-error">يرجى اختيار ملف Excel</small>
-            }
+            <input type="file" [disabled]="true" accept=".xlsx" />
           </div>
 
-          <button class="btn btn-primary" type="submit" [disabled]="uploading">
-            {{
-              uploading
-                ? 'جاري الاستيراد (قد يستغرق دقائق للملفات الكبيرة)...'
-                : 'استيراد'
-            }}
+          <button class="btn btn-primary" type="submit" [disabled]="true">
+            استيراد
           </button>
         </form>
-
-        @if (message) {
-          <p [class]="result?.success ? 'success' : 'error'">{{ message }}</p>
-        }
-        @if (result?.errors?.length) {
-          <table>
-            <thead>
-              <tr>
-                <th>الصف</th>
-                <th>العمود</th>
-                <th>الرسالة</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (e of result!.errors!; track $index) {
-                <tr>
-                  <td>{{ e.rowNumber }}</td>
-                  <td>{{ e.column }}</td>
-                  <td>{{ e.message }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        }
       </div>
     </div>
   `,
@@ -92,10 +58,14 @@ import {
       h1 {
         margin-top: 0;
       }
-      .field-error {
-        color: #dc2626;
-        display: block;
-        margin-top: 0.25rem;
+      .service-unavailable {
+        background: #fef3c7;
+        border: 1px solid #f59e0b;
+        color: #92400e;
+        padding: 0.85rem 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        line-height: 1.65;
       }
       .note {
         background: #eff6ff;
@@ -107,38 +77,18 @@ import {
         color: #6b7280;
         font-size: 0.9rem;
       }
-      .success {
-        color: #059669;
-      }
-      table {
-        width: 100%;
-        margin-top: 1rem;
-        border-collapse: collapse;
-      }
-      th,
-      td {
-        padding: 0.5rem;
-        text-align: right;
-        border-bottom: 1px solid #eef2f7;
-      }
     `,
   ],
 })
 export class AdminImportResultsComponent implements OnInit {
   private api = inject(ApiService);
   private fb = inject(FormBuilder);
-  private importUpload = inject(ImportUploadService);
-  private ngZone = inject(NgZone);
 
+  readonly importUnavailableMessage = IMPORT_UNAVAILABLE_MESSAGE;
   years: AdmissionYear[] = [];
-  file: File | null = null;
-  fileTouched = false;
-  uploading = false;
-  message = '';
-  result: ImportResult | null = null;
 
   form = this.fb.group({
-    yearId: [null as number | null, Validators.required],
+    yearId: [{ value: null as number | null, disabled: true }, Validators.required],
   });
 
   ngOnInit(): void {
@@ -149,52 +99,7 @@ export class AdminImportResultsComponent implements OnInit {
     });
   }
 
-  onFile(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.file = input.files?.[0] ?? null;
-    this.fileTouched = true;
-  }
-
   upload(): void {
-    this.form.markAllAsTouched();
-    this.fileTouched = true;
-    const yearId = this.form.value.yearId;
-    if (this.form.invalid || !this.file || !yearId) return;
-
-    this.uploading = true;
-    this.message = '';
-    this.result = null;
-
-    const signal = this.importUpload.begin();
-
-    void this.api
-      .importStudentResultsWithProgress(
-        yearId,
-        this.file,
-        ({ percent, phase }) => this.importUpload.updateProgress(percent, phase),
-        signal,
-      )
-      .then((res) => {
-        this.ngZone.run(() => {
-          this.result = normalizeImportResult(res);
-          this.message = this.result.message;
-          this.uploading = false;
-          this.importUpload.finish();
-        });
-      })
-      .catch((err: ImportUploadError) => {
-        this.ngZone.run(() => {
-          this.uploading = false;
-          this.importUpload.finish();
-
-          if (err.aborted) {
-            this.message = 'تم إلغاء الاستيراد.';
-            return;
-          }
-
-          this.result = parseImportErrorResponse(err.error);
-          this.message = importErrorMessage(err.status, err.error);
-        });
-      });
+    // Service disabled — upload controls are inactive.
   }
 }

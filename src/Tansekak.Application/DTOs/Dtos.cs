@@ -75,17 +75,3 @@ public record DashboardDto(
 
 public record ImportValidationErrorDto(int RowNumber, string Column, string ErrorCode, string Message);
 public record ImportResultDto(bool Success, string Message, int? ImportedCount = null, IReadOnlyList<ImportValidationErrorDto>? Errors = null);
-
-public record ImportJobStartedDto(Guid JobId, string Status);
-public record ImportJobStatusDto(Guid JobId, string Status, ImportResultDto? Result, string? Message);
-
-public record CreateImportUploadUrlDto(string FileName, long TotalSize);
-public record ImportUploadUrlDto(string UploadUrl, string ObjectKey, int ExpiresInSeconds);
-public record ImportFromStorageDto(string ObjectKey, string FileName);
-
-public record StudentResultDto(
-    string SeatingNo,
-    string ArabicName,
-    decimal TotalDegree,
-    string StudentCaseDesc,
-    int Year);

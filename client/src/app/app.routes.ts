@@ -30,7 +30,7 @@ export const routes: Routes = [
       { path: '', component: AdminDashboardComponent },
       { path: 'cutoffs', component: AdminCutoffsComponent },
       { path: 'import', component: AdminImportComponent, canDeactivate: [importUploadGuard] },
-      { path: 'import-results', component: AdminImportResultsComponent, canDeactivate: [importUploadGuard] },
+      { path: 'import-results', component: AdminImportResultsComponent },
     ],
   },
   { path: '**', redirectTo: '' }

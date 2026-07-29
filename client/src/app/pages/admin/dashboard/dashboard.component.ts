@@ -104,7 +104,7 @@ interface StatCard {
               <span class="action-arrow" aria-hidden="true">←</span>
             </a>
 
-            <a routerLink="/admin/import-results" class="action-card card">
+            <a routerLink="/admin/import-results" class="action-card card action-card--unavailable">
               <div class="action-icon action-icon--accent" aria-hidden="true">
                 <svg
                   width="24"
@@ -120,6 +120,7 @@ interface StatCard {
               <div>
                 <h3>استيراد نتائج الثانوية</h3>
                 <p>رفع ملف Excel بنتائج الطلاب واستبدال بيانات السنة المختارة.</p>
+                <p class="action-unavailable">خدمة الاستيراد غير متاحة حالياً. حاول مرة أخرى لاحقاً.</p>
               </div>
               <span class="action-arrow" aria-hidden="true">←</span>
             </a>
@@ -298,6 +299,16 @@ interface StatCard {
         color: var(--color-text-muted);
         font-size: 0.9rem;
         line-height: 1.6;
+      }
+
+      .action-unavailable {
+        margin-top: 0.5rem !important;
+        color: #92400e !important;
+        font-weight: 600;
+      }
+
+      .action-card--unavailable {
+        opacity: 0.85;
       }
 
       .action-arrow {

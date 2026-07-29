@@ -17,8 +17,10 @@ import { SocialLinksComponent } from '../../components/social-links/social-links
             width="200"
             height="200"
           />
-          <h1 class="section-title">{{ profile.name }}</h1>
-          <p class="designer-title">{{ profile.title }}</p>
+          <div class="designer-heading">
+            <h1 class="section-title">{{ profile.name }}</h1>
+            <p class="designer-title">{{ profile.title }}</p>
+          </div>
           <p class="designer-bio">{{ profile.bio }}</p>
           <app-social-links [links]="profile.socialLinks" />
         </div>
@@ -51,8 +53,19 @@ import { SocialLinksComponent } from '../../components/social-links/social-links
         box-shadow: 0 8px 24px rgba(30, 58, 138, 0.15);
       }
 
+      .designer-heading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+      }
+
+      .designer-heading .section-title {
+        margin-bottom: 0;
+      }
+
       .designer-title {
-        margin: -0.5rem 0 0;
+        margin: 0;
         color: var(--color-primary);
         font-weight: 600;
         font-size: 1.05rem;

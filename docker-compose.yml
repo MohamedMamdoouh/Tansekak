@@ -8,10 +8,6 @@ services:
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=Tansekak;Username=postgres;Password=${POSTGRES_PASSWORD}"
       AdminSeed__Email: ${ADMIN_EMAIL:-admin@tansekak.local}
       AdminSeed__Password: ${ADMIN_PASSWORD}
-      R2__AccountId: ${R2__AccountId}
-      R2__AccessKeyId: ${R2__AccessKeyId}
-      R2__SecretAccessKey: ${R2__SecretAccessKey}
-      R2__BucketName: ${R2__BucketName:-tansekak-imports}
     depends_on:
       db:
         condition: service_healthy

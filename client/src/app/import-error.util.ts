@@ -82,11 +82,11 @@ export function importErrorMessage(
   response: ApiResponse<ImportResult> | null | undefined,
 ): string {
   if (status === 0) {
-    return 'انقطع الاتصال بالخادم اثناء الاستيراد. تحقق من اتصال الانترنت وإعدادات CORS في R2 ثم حاول مرة اخرى.';
+    return 'انقطع الاتصال بالخادم اثناء الاستيراد. تحقق من اتصال الانترنت ثم حاول مرة اخرى.';
   }
 
   if (status === 403) {
-    return 'فشل رفع الملف إلى التخزين (403). تحقق من صلاحيات R2 API token ثم حاول مرة اخرى.';
+    return 'ليس لديك صلاحية لتنفيذ هذا الاستيراد.';
   }
 
   if (status === 400 && response?.message) {
@@ -94,10 +94,7 @@ export function importErrorMessage(
   }
 
   if (status === 503) {
-    return (
-      response?.message ??
-      'رفع الملفات الكبيرة غير مهيأ على الخادم. أضف إعدادات R2 على Railway ثم حاول مرة اخرى.'
-    );
+    return response?.message ?? 'الخدمة غير متاحة حالياً. حاول مرة أخرى لاحقاً.';
   }
 
   if (status === 502 || status === 504) {

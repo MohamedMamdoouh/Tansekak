@@ -68,16 +68,6 @@ public interface IImportService
     Task<ImportResultDto> ImportAsync(int yearId, string track, Stream fileStream, string fileName, CancellationToken cancellationToken = default);
 }
 
-public interface IStudentResultImportService
-{
-    Task<ImportResultDto> ImportAsync(int yearId, Stream fileStream, string fileName, CancellationToken cancellationToken = default);
-}
-
-public interface IStudentResultService
-{
-    Task<StudentResultDto?> LookupBySeatingNoAsync(string seatingNo, CancellationToken cancellationToken = default);
-}
-
 public interface IDashboardService
 {
     Task<DashboardDto> GetDashboardAsync(CancellationToken cancellationToken = default);

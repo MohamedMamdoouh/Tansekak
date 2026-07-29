@@ -6,7 +6,6 @@ import {
   ImportUploadError,
   ImportUploadProgress,
   uploadImportFile,
-  uploadStudentResultsImport,
 } from './import-file-upload';
 import {
   AdmissionCutoff,
@@ -20,7 +19,6 @@ import {
   PagedCutoffs,
   PredictRequest,
   PredictResponse,
-  StudentResult,
   UniversityFaculty,
 } from './models';
 
@@ -38,33 +36,6 @@ export class ApiService {
     return this.http
       .post<ApiResponse<PredictResponse>>('/api/admission/predict', body)
       .pipe(map((r) => this.normalizePredictResponse(r.data)));
-  }
-
-  lookupThanaweyaResult(seatingNo: string): Observable<StudentResult> {
-    return this.http
-      .get<ApiResponse<StudentResult>>(
-        `/api/thanaweya-results/${encodeURIComponent(seatingNo)}`,
-      )
-      .pipe(map((r) => this.normalizeStudentResult(r.data)));
-  }
-
-  private normalizeStudentResult(
-    data: StudentResult | null | undefined,
-  ): StudentResult {
-    const raw = data as StudentResult & {
-      SeatingNo?: string;
-      ArabicName?: string;
-      TotalDegree?: number;
-      StudentCaseDesc?: string;
-      Year?: number;
-    };
-    return {
-      seatingNo: raw.seatingNo ?? raw.SeatingNo ?? '',
-      arabicName: raw.arabicName ?? raw.ArabicName ?? '',
-      totalDegree: raw.totalDegree ?? raw.TotalDegree ?? 0,
-      studentCaseDesc: raw.studentCaseDesc ?? raw.StudentCaseDesc ?? '',
-      year: raw.year ?? raw.Year ?? 0,
-    };
   }
 
   private normalizePredictResponse(
@@ -219,19 +190,6 @@ export class ApiService {
       .pipe(map((r) => r.data));
   }
 
-  importStudentResults(
-    yearId: number,
-    file: File,
-  ): Observable<ImportResult> {
-    const form = new FormData();
-    form.append('file', file);
-    return this.http
-      .post<
-        ApiResponse<ImportResult>
-      >(`/api/admin/admission-years/${yearId}/import-results`, form)
-      .pipe(map((r) => r.data));
-  }
-
   importCutoffsWithProgress(
     yearId: number,
     track: string,
@@ -248,15 +206,6 @@ export class ApiService {
       onProgress,
       signal,
     );
-  }
-
-  importStudentResultsWithProgress(
-    yearId: number,
-    file: File,
-    onProgress: (progress: ImportUploadProgress) => void,
-    signal?: AbortSignal,
-  ): Promise<ImportResult> {
-    return uploadStudentResultsImport(yearId, file, onProgress, signal);
   }
 }
 
