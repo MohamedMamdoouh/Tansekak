@@ -63,6 +63,7 @@ import { SocialLinksComponent } from '../../components/social-links/social-links
         color: var(--color-text-muted);
         line-height: 1.8;
         font-size: 1.05rem;
+        white-space: pre-line;
       }
     `,
   ],
