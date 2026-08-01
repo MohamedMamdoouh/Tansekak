@@ -54,6 +54,32 @@ public class StudentTrackRankCalculatorTests
     }
 
     [Fact]
+    public void ResolveTrack_InfersFromAlefMaksuraVariant()
+    {
+        var entity = new Tansekak.Domain.Entities.StudentResult
+        {
+            StudentCaseDesc = "ناجح - علمى رياضة"
+        };
+
+        var track = StudentTrackRankCalculator.ResolveTrack(entity);
+
+        Assert.Equal(Tansekak.Domain.Enums.AcademicTrack.Mathematics, track);
+    }
+
+    [Fact]
+    public void ResolveTrack_InfersLiteratureWithoutHamza()
+    {
+        var entity = new Tansekak.Domain.Entities.StudentResult
+        {
+            StudentCaseDesc = "ناجح - ادبي"
+        };
+
+        var track = StudentTrackRankCalculator.ResolveTrack(entity);
+
+        Assert.Equal(Tansekak.Domain.Enums.AcademicTrack.Literature, track);
+    }
+
+    [Fact]
     public void ResolveTrack_ReturnsNull_WhenTrackUnknown()
     {
         var entity = new Tansekak.Domain.Entities.StudentResult

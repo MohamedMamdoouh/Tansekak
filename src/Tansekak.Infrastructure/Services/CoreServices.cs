@@ -134,13 +134,21 @@ public class StudentResultService(AppDbContext db) : IStudentResultService
 
             if (trackTotalStudents > 0)
             {
-                var higherCount = await peers.CountAsync(x =>
-                    x.TotalDegree > entity.TotalDegree ||
-                    (x.TotalDegree == entity.TotalDegree &&
-                     string.Compare(x.SeatingNo, entity.SeatingNo, StringComparison.Ordinal) < 0),
+                var higherByScore = await peers.CountAsync(
+                    x => x.TotalDegree > entity.TotalDegree,
                     cancellationToken);
 
-                trackRank = higherCount + 1;
+                var sameScoreSeatingNos = await peers
+                    .Where(x =>
+                        x.TotalDegree == entity.TotalDegree &&
+                        x.SeatingNo != entity.SeatingNo)
+                    .Select(x => x.SeatingNo)
+                    .ToListAsync(cancellationToken);
+
+                var higherByTieBreak = sameScoreSeatingNos.Count(seatingNo =>
+                    string.Compare(seatingNo, entity.SeatingNo, StringComparison.Ordinal) < 0);
+
+                trackRank = higherByScore + higherByTieBreak + 1;
             }
         }
 

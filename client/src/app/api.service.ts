@@ -45,7 +45,51 @@ export class ApiService {
       .get<ApiResponse<StudentResult>>(
         `/api/thanaweya-results/${encodeURIComponent(seatingNo)}`,
       )
-      .pipe(map((r) => r.data));
+      .pipe(
+        map((r) => {
+          const envelope = r as ApiResponse<StudentResult> & {
+            Data?: StudentResult;
+          };
+          return this.normalizeStudentResult(r.data ?? envelope.Data);
+        }),
+      );
+  }
+
+  private normalizeStudentResult(
+    data: StudentResult | null | undefined,
+  ): StudentResult {
+    if (!data) {
+      return {
+        seatingNo: '',
+        arabicName: '',
+        totalDegree: 0,
+        studentCaseDesc: '',
+        year: 0,
+      };
+    }
+
+    const raw = data as StudentResult & {
+      SeatingNo?: string;
+      ArabicName?: string;
+      TotalDegree?: number;
+      StudentCaseDesc?: string;
+      Year?: number;
+      Track?: string | null;
+      TrackRank?: number | null;
+      TrackTotalStudents?: number | null;
+    };
+
+    return {
+      seatingNo: raw.seatingNo ?? raw.SeatingNo ?? '',
+      arabicName: raw.arabicName ?? raw.ArabicName ?? '',
+      totalDegree: raw.totalDegree ?? raw.TotalDegree ?? 0,
+      studentCaseDesc: raw.studentCaseDesc ?? raw.StudentCaseDesc ?? '',
+      year: raw.year ?? raw.Year ?? 0,
+      track: raw.track ?? raw.Track ?? null,
+      trackRank: raw.trackRank ?? raw.TrackRank ?? null,
+      trackTotalStudents:
+        raw.trackTotalStudents ?? raw.TrackTotalStudents ?? null,
+    };
   }
 
   private normalizePredictResponse(

@@ -27,13 +27,26 @@ public static class StudentTrackRankCalculator
         {
             AcademicTrack.Science => query.Where(x =>
                 x.Track == AcademicTrack.Science ||
-                (x.Track == null && x.StudentCaseDesc.Contains("علمي علوم"))),
+                (x.Track == null && (
+                    x.StudentCaseDesc.Contains("علمي علوم") ||
+                    x.StudentCaseDesc.Contains("علمى علوم") ||
+                    x.StudentCaseDesc.Contains("علوم")))),
             AcademicTrack.Mathematics => query.Where(x =>
                 x.Track == AcademicTrack.Mathematics ||
-                (x.Track == null && x.StudentCaseDesc.Contains("علمي رياضة"))),
+                (x.Track == null && (
+                    x.StudentCaseDesc.Contains("علمي رياضة") ||
+                    x.StudentCaseDesc.Contains("علمى رياضة") ||
+                    x.StudentCaseDesc.Contains("علمي رياضه") ||
+                    x.StudentCaseDesc.Contains("علمى رياضه") ||
+                    x.StudentCaseDesc.Contains("رياضة") ||
+                    x.StudentCaseDesc.Contains("رياضه")))),
             AcademicTrack.Literature => query.Where(x =>
                 x.Track == AcademicTrack.Literature ||
-                (x.Track == null && x.StudentCaseDesc.Contains("أدبي"))),
+                (x.Track == null && (
+                    x.StudentCaseDesc.Contains("أدبي") ||
+                    x.StudentCaseDesc.Contains("ادبي") ||
+                    x.StudentCaseDesc.Contains("أدبى") ||
+                    x.StudentCaseDesc.Contains("ادبى")))),
             _ => query.Where(_ => false)
         };
 }

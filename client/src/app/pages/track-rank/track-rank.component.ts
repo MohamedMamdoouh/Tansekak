@@ -99,8 +99,9 @@ const THANAWEYA_MAX_SCORE = 320;
                   <span class="rank-badge-value">{{ result.trackRank }}</span>
                 </div>
                 <p class="rank-subtitle">
-                  من {{ result.trackTotalStudents }} طالب في
-                  {{ trackLabel(result.track!) }}
+                  من {{ result.trackTotalStudents }} طالب@if (result.track) {
+                    <span> في {{ trackLabel(result.track) }}</span>
+                  }
                 </p>
               </div>
             } @else {
@@ -546,11 +547,7 @@ export class TrackRankComponent {
   }
 
   hasRank(result: StudentResult): boolean {
-    return (
-      result.trackRank != null &&
-      result.trackTotalStudents != null &&
-      !!result.track
-    );
+    return result.trackRank != null && result.trackTotalStudents != null;
   }
 
   trackLabel(track: string): string {

@@ -339,6 +339,9 @@ public class PublicApiTests : IClassFixture<TansekakWebApplicationFactory>
         var response = await _client.GetAsync($"/api/thanaweya-results/{targetSeatingNo}");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("trackRank", body, StringComparison.OrdinalIgnoreCase);
+
         var json = await response.Content.ReadFromJsonAsync<ApiEnvelope<StudentResultData>>();
         Assert.NotNull(json?.Data);
         Assert.Equal(3, json!.Data!.TrackRank);

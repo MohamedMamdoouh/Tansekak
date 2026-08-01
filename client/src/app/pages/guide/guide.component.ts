@@ -30,7 +30,7 @@ interface GuideStep {
           بعد ما تظهرلك نتيجة التنسيق الرسمية، اتبع الخطوات دي عشان تكمّل
           تسجيلك في الكلية.
         </p>
-        <div class="grid grid-2 guide-steps-grid">
+        <div class="grid grid-3 guide-steps-grid">
           @for (step of enrollmentSteps; track step.title; let i = $index) {
             <article class="card step-card">
               <span class="step-card-num">{{ i + 1 }}</span>
