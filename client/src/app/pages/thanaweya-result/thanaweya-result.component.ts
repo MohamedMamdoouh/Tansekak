@@ -85,8 +85,6 @@ const THANAWEYA_MAX_SCORE = 320;
       @if (result) {
         <section class="result-slip" aria-label="نتيجة الطالب">
           <div class="slip-sheet">
-            <div class="slip-watermark" aria-hidden="true">نتيجة</div>
-
             <header class="slip-header">
               <div class="slip-header-brand">
                 <span class="slip-header-eyebrow">بيان نتيجة</span>
@@ -94,8 +92,8 @@ const THANAWEYA_MAX_SCORE = 320;
               </div>
               <div class="slip-header-year">
                 <span class="slip-header-year-label">عام</span>
-                <span class="slip-header-year-value num">{{
-                  fmt(result.year)
+                <span class="slip-header-year-value">{{
+                  result.year
                 }}</span>
               </div>
             </header>
@@ -106,8 +104,8 @@ const THANAWEYA_MAX_SCORE = 320;
               <p class="slip-name">{{ result.arabicName }}</p>
               <div class="slip-seating">
                 <span class="slip-seating-label">رقم الجلوس</span>
-                <span class="slip-seating-no num">{{
-                  fmt(result.seatingNo)
+                <span class="slip-seating-no">{{
+                  result.seatingNo
                 }}</span>
               </div>
             </div>
@@ -131,11 +129,11 @@ const THANAWEYA_MAX_SCORE = 320;
                 >
               </div>
               <div class="slip-score-display">
-                <span class="slip-score-value num">{{
-                  fmt(result.totalDegree)
+                <span class="slip-score-value">{{
+                  result.totalDegree
                 }}</span>
-                <span class="slip-score-max num"
-                  >/ {{ fmt(thanaweyaMaxScore) }}</span
+                <span class="slip-score-max"
+                  >/ {{ thanaweyaMaxScore }}</span
                 >
               </div>
               <div class="slip-scale" aria-hidden="true">
@@ -146,8 +144,8 @@ const THANAWEYA_MAX_SCORE = 320;
                   ></div>
                 </div>
                 <div class="slip-scale-labels">
-                  <span class="num">0</span>
-                  <span class="num">{{ fmt(thanaweyaMaxScore) }}</span>
+                  <span>0</span>
+                  <span>{{ thanaweyaMaxScore }}</span>
                 </div>
               </div>
             </div>
@@ -240,20 +238,6 @@ const THANAWEYA_MAX_SCORE = 320;
           0 28px 56px rgba(15, 23, 42, 0.11),
           0 4px 12px rgba(15, 23, 42, 0.05),
           inset 0 1px 0 rgba(255, 255, 255, 0.8);
-      }
-
-      .slip-watermark {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) rotate(-18deg);
-        font-family: var(--font-display);
-        font-size: clamp(4rem, 18vw, 6.5rem);
-        font-weight: 800;
-        color: rgba(30, 58, 138, 0.04);
-        pointer-events: none;
-        user-select: none;
-        white-space: nowrap;
       }
 
       .slip-header {

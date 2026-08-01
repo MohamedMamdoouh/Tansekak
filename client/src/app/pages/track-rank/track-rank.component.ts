@@ -91,13 +91,13 @@ const THANAWEYA_MAX_SCORE = 320;
                   trackLabel(result.track)
                 }}</span>
               }
-              <span class="rank-year num">{{ fmt(result.year) }}</span>
+              <span class="rank-year">{{ result.year }}</span>
             </div>
             <h2 class="rank-student-name">{{ result.arabicName }}</h2>
             <p class="rank-seating">
               <span class="rank-seating-label">رقم الجلوس</span>
-              <span class="rank-seating-no num">{{
-                fmt(result.seatingNo)
+              <span class="rank-seating-no">{{
+                result.seatingNo
               }}</span>
             </p>
           </header>
@@ -153,10 +153,10 @@ const THANAWEYA_MAX_SCORE = 320;
             <div class="rank-meta">
               <article class="rank-meta-item">
                 <span class="rank-meta-label">المجموع الكلي</span>
-                <span class="rank-meta-value num"
-                  >{{ fmt(result.totalDegree)
+                <span class="rank-meta-value"
+                  >{{ result.totalDegree
                   }}<span class="rank-meta-denom"
-                    >/{{ fmt(thanaweyaMaxScore) }}</span
+                    >/{{ thanaweyaMaxScore }}</span
                   ></span
                 >
               </article>
