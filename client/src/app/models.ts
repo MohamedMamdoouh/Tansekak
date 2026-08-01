@@ -98,6 +98,8 @@ export interface StudentResult {
   studentCaseDesc: string;
   year: number;
   track?: string | null;
+  trackRank?: number | null;
+  trackTotalStudents?: number | null;
 }
 
 export interface CutoffResyncResult {

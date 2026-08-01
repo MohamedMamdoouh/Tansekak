@@ -79,7 +79,9 @@ public record StudentResultDto(
     decimal TotalDegree,
     string StudentCaseDesc,
     int Year,
-    string? Track = null);
+    string? Track = null,
+    int? TrackRank = null,
+    int? TrackTotalStudents = null);
 
 public record ImportValidationErrorDto(int RowNumber, string Column, string ErrorCode, string Message);
 public record ImportResultDto(bool Success, string Message, int? ImportedCount = null, IReadOnlyList<ImportValidationErrorDto>? Errors = null);

@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ApiService } from '../../api.service';
-import { StudentResult } from '../../models';
+import { StudentResult, TRACK_LABELS } from '../../models';
 import {
   applyDigitsOnlyInput,
   digitsOnlyValidator,
@@ -188,6 +188,36 @@ const SCORE_ARC_LENGTH = 339.292;
                   <span class="cert-meta-value">{{ result.year }}</span>
                 </div>
               </article>
+              @if (hasTrackRank(result)) {
+                <article class="cert-meta-item cert-meta-item--rank">
+                  <span class="cert-meta-icon" aria-hidden="true">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M6 9H4.5a2.5 2.5 0 010-5H6" />
+                      <path d="M18 9h1.5a2.5 2.5 0 000-5H18" />
+                      <path d="M4 22h16" />
+                      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                      <path d="M18 2H6v7a6 6 0 0012 0V2z" />
+                    </svg>
+                  </span>
+                  <div class="cert-meta-text">
+                    <span class="cert-meta-label">الترتيب على الشعبة</span>
+                    <span class="cert-meta-value">{{
+                      trackRankLabel(result)
+                    }}</span>
+                    <a class="cert-rank-link" routerLink="/track-rank"
+                      >تفاصيل الترتيب</a
+                    >
+                  </div>
+                </article>
+              }
             </div>
 
             <div class="cert-next">
@@ -245,10 +275,6 @@ const SCORE_ARC_LENGTH = 339.292;
         box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
       }
 
-      .lookup-stage--compact .lookup-eyebrow {
-        margin-bottom: 0.5rem;
-      }
-
       .lookup-stage--compact .lookup-title {
         font-size: clamp(1.05rem, 3.5vw, 1.25rem);
         margin-bottom: 0;
@@ -256,18 +282,6 @@ const SCORE_ARC_LENGTH = 339.292;
 
       .lookup-stage-copy {
         max-width: 440px;
-      }
-
-      .lookup-eyebrow {
-        display: inline-block;
-        font-size: 0.75rem;
-        font-weight: 700;
-        color: #92400e;
-        background: #fffbeb;
-        border: 1px solid #fde68a;
-        padding: 0.25rem 0.75rem;
-        border-radius: 999px;
-        margin-bottom: 0.75rem;
       }
 
       .lookup-title {
@@ -431,18 +445,6 @@ const SCORE_ARC_LENGTH = 339.292;
         z-index: 1;
       }
 
-      .cert-year {
-        display: inline-block;
-        font-size: 0.72rem;
-        font-weight: 700;
-        padding: 0.22rem 0.7rem;
-        border-radius: 999px;
-        background: rgba(245, 158, 11, 0.15);
-        border: 1px solid rgba(245, 158, 11, 0.3);
-        color: #fde68a;
-        margin-bottom: 0.75rem;
-      }
-
       .cert-name {
         font-family: var(--font-display);
         font-size: clamp(1.2rem, 4vw, 1.5rem);
@@ -589,6 +591,18 @@ const SCORE_ARC_LENGTH = 339.292;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.65rem;
         margin-bottom: 1.35rem;
+      }
+
+      .cert-meta-item--rank {
+        grid-column: 1 / -1;
+      }
+
+      .cert-rank-link {
+        display: inline-block;
+        margin-top: 0.25rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--color-primary-light);
       }
 
       .cert-meta-item {
@@ -764,6 +778,7 @@ export class ThanaweyaResultComponent {
   private api = inject(ApiService);
 
   readonly thanaweyaMaxScore = THANAWEYA_MAX_SCORE;
+  readonly trackLabels = TRACK_LABELS;
 
   loading = false;
   error = '';
@@ -825,5 +840,17 @@ export class ThanaweyaResultComponent {
       params.track = this.result.track;
     }
     return params;
+  }
+
+  hasTrackRank(result: StudentResult): boolean {
+    return result.trackRank != null && result.trackTotalStudents != null;
+  }
+
+  trackRankLabel(result: StudentResult): string {
+    const trackName = result.track
+      ? (this.trackLabels[result.track] ?? result.track)
+      : '';
+    const base = `${result.trackRank} من ${result.trackTotalStudents}`;
+    return trackName ? `${base} (${trackName})` : base;
   }
 }

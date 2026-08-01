@@ -6,6 +6,11 @@ interface GuideItem {
   answer: string;
 }
 
+interface GuideStep {
+  title: string;
+  description: string;
+}
+
 @Component({
   selector: 'app-guide',
   standalone: true,
@@ -15,8 +20,59 @@ interface GuideItem {
       <section class="page-section">
         <h1 class="section-title">افهم التنسيق</h1>
         <p class="section-subtitle">
-          إجابات لأغلب الأسئلة اللي ممكن تيجي في بال أي طالب ثانوية عامة — من
-          غير تعقيد.
+          خطوات التقديم، الأسئلة الشائعة، ونصايح عملية — من غير تعقيد.
+        </p>
+      </section>
+
+      <section class="page-section">
+        <h2 class="section-title section-title-sm">خطوات التقديم في الكلية</h2>
+        <p class="section-subtitle">
+          بعد ما تظهرلك نتيجة التنسيق الرسمية، اتبع الخطوات دي عشان تكمّل
+          تسجيلك في الكلية.
+        </p>
+        <div class="grid grid-2 guide-steps-grid">
+          @for (step of enrollmentSteps; track step.title; let i = $index) {
+            <article class="card step-card">
+              <span class="step-card-num">{{ i + 1 }}</span>
+              <h3>{{ step.title }}</h3>
+              <p>{{ step.description }}</p>
+            </article>
+          }
+        </div>
+        <div class="guide-note">
+          <strong>مهم:</strong> المواعيد والمستندات ممكن تختلف من كلية للتانية.
+          دايماً راجع إعلان الكلية على موقع التنسيق الإلكتروني الرسمي أو صفحة
+          الكلية قبل ما تروح.
+        </div>
+      </section>
+
+      <section class="page-section">
+        <h2 class="section-title section-title-sm">قبل ما تسجل رغباتك</h2>
+        <p class="section-subtitle">
+          خطوات سريعة تخليك تدخل التنسيق وانت جاهز ومخطّط صح.
+        </p>
+        <div class="grid grid-3 guide-steps-grid">
+          @for (step of preparationSteps; track step.title; let i = $index) {
+            <article class="card step-card">
+              <span class="step-card-num">{{ i + 1 }}</span>
+              <h3>{{ step.title }}</h3>
+              <p>{{ step.description }}</p>
+            </article>
+          }
+        </div>
+        <div class="guide-quick-links">
+          <a routerLink="/thanaweya-result" class="btn btn-secondary"
+            >نتيجة الثانوية</a
+          >
+          <a routerLink="/track-rank" class="btn btn-secondary">ترتيب الشعبة</a>
+          <a routerLink="/predict" class="btn btn-primary">اعرف كليتك</a>
+        </div>
+      </section>
+
+      <section class="page-section">
+        <h2 class="section-title section-title-sm">أسئلة شائعة</h2>
+        <p class="section-subtitle">
+          إجابات لأغلب الأسئلة اللي ممكن تيجي في بال أي طالب ثانوية عامة.
         </p>
 
         <div #accordionTop class="guide-accordion">
@@ -60,12 +116,98 @@ interface GuideItem {
       </section>
     </div>
   `,
+  styles: [
+    `
+      .section-title-sm {
+        font-size: clamp(1.25rem, 3vw, 1.55rem);
+      }
+
+      .guide-steps-grid {
+        margin-bottom: 1.25rem;
+      }
+
+      .guide-note {
+        padding: 1rem 1.15rem;
+        border-radius: 12px;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        color: #92400e;
+        font-size: 0.95rem;
+        line-height: 1.7;
+      }
+
+      .guide-quick-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        justify-content: center;
+        margin-top: 0.5rem;
+      }
+
+      @media (max-width: 640px) {
+        .guide-quick-links .btn {
+          width: 100%;
+        }
+      }
+    `,
+  ],
 })
 export class GuideComponent {
   @ViewChild('accordionTop') accordionTop?: ElementRef<HTMLElement>;
 
   page = 1;
   readonly pageSize = 6;
+
+  readonly enrollmentSteps: GuideStep[] = [
+    {
+      title: 'احفظ نتيجة التنسيق',
+      description:
+        'اطبع أو احفظ PDF لنتيجة التنسيق من الموقع الرسمي. من غيرها مش هتقدر تكمل في الكلية.',
+    },
+    {
+      title: 'جهّز المستندات',
+      description:
+        'شهادة الثانوية الأصلية، بطاقة الرقم القومي، صور شخصية، وصورة شهادة الميلاد. بعض الكليات بتطلب أوراق إضافية.',
+    },
+    {
+      title: 'روح الكلية في الميعاد',
+      description:
+        'كل كلية ليها موعد تقديم محدد. روح في الوقت المعلن — التأخير ممكن يفوتك.',
+    },
+    {
+      title: 'سلّم الأوراق وادفع المصاريف',
+      description:
+        'في الكلية هتراجع أوراقك وتدفع رسوم التسجيل أو التأمين لو مطلوب. احتفظ بإيصال الدفع.',
+    },
+    {
+      title: 'اعمل الكشف الطبي (لو مطلوب)',
+      description:
+        'كليات الطب والصيدلة والتمريض والأسنان غالباً بتطلب كشف طبي. اسأل الكلية عن المكان والموعد.',
+    },
+    {
+      title: 'أكمل تسجيلك في الكلية',
+      description:
+        'بعد ما تخلص كل الإجراءات، بتكمل تسجيلك الرسمي في الكلية وتتابع إعلانات الكلية عن بداية الدراسة.',
+    },
+  ];
+
+  readonly preparationSteps: GuideStep[] = [
+    {
+      title: 'اعرف مجموعك وشعبتك',
+      description:
+        'من نتيجة الثانوية — مجموعك الكلي وشعبتك (علمي علوم، علمي رياضة، أو أدبي) هما أساس التنسيق.',
+    },
+    {
+      title: 'شوف الكليات المتاحة',
+      description:
+        'استخدم «اعرف كليتك» في تنسيقك عشان تعرف إيه الكليات اللي مجموعك يسمح بيها قبل ما تكتب رغباتك.',
+    },
+    {
+      title: 'رتّب رغباتك بذكاء',
+      description:
+        'حط الكلية اللي في قلبك في الأول، بعدها البدائل. راجع كل حاجة قبل ما تأكد — مفيش تعديل بعد التأكيد.',
+    },
+  ];
 
   items: GuideItem[] = [
     {
@@ -97,6 +239,73 @@ export class GuideComponent {
         '<li>اضغط تأكيد واستنى نتيجة المرحلة الأولى.</li>' +
         '</ol>' +
         '<p><strong>نصيحة:</strong> استخدم تنسيقك الأول عشان تعرف الكليات المتاحة لمجموعك قبل ما تسجل.</p>',
+    },
+    {
+      question: 'إيه المستندات المطلوبة للتقديم في الكلية؟',
+      answer:
+        'غالباً الكليات بتطلب:' +
+        '<ul>' +
+        '<li>شهادة الثانوية العامة الأصلية.</li>' +
+        '<li>بطاقة الرقم القومي (أصل + صورة).</li>' +
+        '<li>عدد من الصور الشخصية حسب طلب الكلية.</li>' +
+        '<li>صورة شهادة الميلاد.</li>' +
+        '<li>نتيجة التنسيق مطبوعة من الموقع الرسمي.</li>' +
+        '</ul>' +
+        '<p>بعض الكليات بتطلب أوراق إضافية — راجع إعلان الكلية قبل ما تروح.</p>',
+    },
+    {
+      question: 'في كشف طبي للكليات الصحية؟',
+      answer:
+        '<p><strong>آه.</strong> كليات الطب والصيدلة والتمريض والأسنان وغيرها غالباً بتطلب كشف طبي.</p>' +
+        '<p>الكشف بيتعمل في جهات معتمدة تحددها الكلية أو وزارة التعليم. ' +
+        'اسأل في الكلية عن المكان والتكلفة والموعد — متأجلش لآخر يوم.</p>',
+    },
+    {
+      question: 'إزاي أتابع مواعيد التنسيق الرسمية؟',
+      answer:
+        'تابع المصادر الرسمية بس:' +
+        '<ul>' +
+        '<li>موقع التنسيق الإلكتروني الرسمي.</li>' +
+        '<li>صفحات وزارة التعليم العالي على فيسبوك.</li>' +
+        '<li>إعلانات مديريتك التعليمية أو مدرستك.</li>' +
+        '</ul>' +
+        '<p>متعتمدش على منشورات غير رسمية — المواعيد بتتغير وممكن تفوتك.</p>',
+    },
+    {
+      question: 'لو ما دخلتش أي كلية في المرحلة الأولى أعمل إيه؟',
+      answer:
+        'متيأسش — لسه عندك فرص:' +
+        '<ol>' +
+        '<li>استنى إعلان <strong>المرحلة التانية</strong> — بتسجل رغبات جديدة من الكليات اللي فاضل فيها أماكن.</li>' +
+        '<li>لو ما دخلتش برضو، في <strong>مرحلة تالتة</strong> — غالباً كليات في محافظات بعيدة أو مسائي.</li>' +
+        '<li>فكر في <strong>المعاهد</strong> أو <strong>المسائي</strong> لو مجموعك يسمح.</li>' +
+        '</ol>' +
+        '<p>استخدم تنسيقك في كل مرحلة عشان تعرف إيه المتاح لمجموعك.</p>',
+    },
+    {
+      question: 'أقدر أحط كليات ومعاهد في نفس الرغبات؟',
+      answer:
+        '<p><strong>آه.</strong> ممكن تكتب كليات ومعاهد في نفس قائمة الرغبات — حسب ما النظام الرسمي يسمح.</p>' +
+        '<p>رتّبهم حسب الأولوية: حط اللي في قلبك في الأول سواء كلية أو معهد. ' +
+        'النظام بيدخلك أول رغبة مجموعك يسمح بيها وفيها مكان.</p>',
+    },
+    {
+      question: 'إزاي أعرف ترتيبي على شعبتي؟',
+      answer:
+        'استخدم صفحة <strong>ترتيب الشعبة</strong> في تنسيقك — اكتب رقم جلوسك واعرف ترتيبك بين طلاب شعبتك في نفس سنة النتيجة.' +
+        '<p>ده بيساعدك تفهم مستواك مقارنة بزمايلك — مش بيأثر على التنسيق الرسمي.</p>',
+    },
+    {
+      question: 'إيه أهم حاجة أعملها قبل ما أأكد رغباتي؟',
+      answer:
+        'قبل ما تضغط تأكيد:' +
+        '<ol>' +
+        '<li>استخدم تنسيقك وشوف الكليات المتاحة لمجموعك.</li>' +
+        '<li>رتّب الرغبات من الأهم للأقل — الأولى هي اللي هتدخلها لو مجموعك يسمح.</li>' +
+        '<li>راجع كل رغبة — الاسم، المحافظة، انتساب ولا مسائي.</li>' +
+        '<li>اسأل حد فاهم (معلم، مرشد) لو محتار.</li>' +
+        '</ol>' +
+        '<p><strong>تذكّر:</strong> بعد التأكيد مفيش تعديل في نفس المرحلة.</p>',
     },
     {
       question: 'ايه هو تقليل الاغتراب؟',

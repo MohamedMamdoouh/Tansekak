@@ -106,6 +106,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             e.Property(x => x.Track);
             e.HasIndex(x => x.SeatingNo);
             e.HasIndex(x => new { x.AdmissionYearId, x.SeatingNo }).IsUnique();
+            e.HasIndex(x => new { x.AdmissionYearId, x.Track, x.TotalDegree, x.SeatingNo });
             e.HasOne(x => x.AdmissionYear).WithMany(x => x.StudentResults)
                 .HasForeignKey(x => x.AdmissionYearId).OnDelete(DeleteBehavior.Restrict);
         });

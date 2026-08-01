@@ -117,9 +117,32 @@ public class StudentResultService(AppDbContext db) : IStudentResultService
         if (entity is null)
             return null;
 
-        var track = entity.Track.HasValue
-            ? TrackHelper.ToDisplayName(entity.Track.Value)
-            : StudentTrackInferrer.ToDisplayName(StudentTrackInferrer.TryInferFromCaseDesc(entity.StudentCaseDesc));
+        var resolvedTrack = StudentTrackRankCalculator.ResolveTrack(entity);
+        var track = StudentTrackInferrer.ToDisplayName(resolvedTrack);
+
+        int? trackRank = null;
+        int? trackTotalStudents = null;
+
+        if (resolvedTrack.HasValue)
+        {
+            var peers = StudentTrackRankCalculator.FilterByTrack(
+                db.StudentResults.AsNoTracking()
+                    .Where(x => x.AdmissionYearId == currentYear.Id),
+                resolvedTrack.Value);
+
+            trackTotalStudents = await peers.CountAsync(cancellationToken);
+
+            if (trackTotalStudents > 0)
+            {
+                var higherCount = await peers.CountAsync(x =>
+                    x.TotalDegree > entity.TotalDegree ||
+                    (x.TotalDegree == entity.TotalDegree &&
+                     string.Compare(x.SeatingNo, entity.SeatingNo, StringComparison.Ordinal) < 0),
+                    cancellationToken);
+
+                trackRank = higherCount + 1;
+            }
+        }
 
         return new StudentResultDto(
             entity.SeatingNo,
@@ -127,6 +150,8 @@ public class StudentResultService(AppDbContext db) : IStudentResultService
             entity.TotalDegree,
             entity.StudentCaseDesc,
             currentYear.Year,
-            track);
+            track,
+            trackRank,
+            trackTotalStudents);
     }
 }
