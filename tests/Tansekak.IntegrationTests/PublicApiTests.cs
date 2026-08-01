@@ -417,6 +417,54 @@ public class PublicApiTests : IClassFixture<TansekakWebApplicationFactory>
         Assert.Null(json.Data.TrackTotalStudents);
     }
 
+    [Fact]
+    public async Task ThanaweyaResult_InfersTrackAndRank_FromSeatingNoPattern()
+    {
+        const string seatingNo = "2700100";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var currentYear = db.AdmissionYears.Single(x => x.IsCurrent);
+            await ClearStudentResultsAsync(db, currentYear.Id);
+            db.StudentResults.AddRange(
+                new StudentResult
+                {
+                    AdmissionYearId = currentYear.Id,
+                    SeatingNo = "2700101",
+                    ArabicName = "طالب 1",
+                    TotalDegree = 300m,
+                    StudentCaseDesc = "ناجح دور أول"
+                },
+                new StudentResult
+                {
+                    AdmissionYearId = currentYear.Id,
+                    SeatingNo = seatingNo,
+                    ArabicName = "طالب 2",
+                    TotalDegree = 295m,
+                    StudentCaseDesc = "ناجح دور أول"
+                },
+                new StudentResult
+                {
+                    AdmissionYearId = currentYear.Id,
+                    SeatingNo = "2400100",
+                    ArabicName = "طالب رياضة",
+                    TotalDegree = 310m,
+                    StudentCaseDesc = "ناجح دور أول"
+                });
+            await db.SaveChangesAsync();
+        }
+
+        var response = await _client.GetAsync($"/api/thanaweya-results/{seatingNo}");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var json = await response.Content.ReadFromJsonAsync<ApiEnvelope<StudentResultData>>();
+        Assert.NotNull(json?.Data);
+        Assert.Equal("Science", json!.Data!.Track);
+        Assert.Equal(2, json.Data.TrackRank);
+        Assert.Equal(2, json.Data.TrackTotalStudents);
+    }
+
     private async Task<HttpClient> CreateAuthenticatedClientAsync()
     {
         var client = _factory.CreateClient(new WebApplicationFactoryClientOptions

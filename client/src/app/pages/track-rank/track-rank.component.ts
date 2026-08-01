@@ -11,7 +11,7 @@ import {
 } from '../../form-validators';
 
 const NOT_FOUND_MESSAGE = 'لم يتم العثور على نتيجة لهذا الرقم.';
-const GENERIC_ERROR_MESSAGE = 'حدث خطأ أثناء البحث. حاول مرة أخرى لاحقًا.';
+const GENERIC_ERROR_MESSAGE = 'حدث خطأ أثناء البحث. حاول مرة أخرى لاحقا.';
 const THANAWEYA_MAX_SCORE = 320;
 
 @Component({
@@ -106,7 +106,7 @@ const THANAWEYA_MAX_SCORE = 320;
               </div>
             } @else {
               <div class="rank-unavailable">
-                <p class="rank-unavailable-title">تعذّر تحديد الترتيب</p>
+                <p class="rank-unavailable-title">تعذر تحديد الترتيب</p>
                 <p class="rank-unavailable-text">
                   لم نتمكن من تحديد شعبتك من بيانات النتيجة. راجع حالة الطالب في
                   صفحة النتيجة الكاملة.

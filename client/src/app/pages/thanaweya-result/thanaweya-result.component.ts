@@ -11,9 +11,8 @@ import {
 } from '../../form-validators';
 
 const NOT_FOUND_MESSAGE = 'لم يتم العثور على نتيجة لهذا الرقم.';
-const GENERIC_ERROR_MESSAGE = 'حدث خطأ أثناء البحث. حاول مرة أخرى لاحقًا.';
+const GENERIC_ERROR_MESSAGE = 'حدث خطأ أثناء البحث. حاول مرة أخرى لاحقا.';
 const THANAWEYA_MAX_SCORE = 320;
-const SCORE_ARC_LENGTH = 339.292;
 
 @Component({
   selector: 'app-thanaweya-result',
@@ -83,22 +82,31 @@ const SCORE_ARC_LENGTH = 339.292;
       </section>
 
       @if (result) {
-        <section class="result-certificate" aria-label="نتيجة الطالب">
-          <header class="cert-header">
-            <div class="cert-header-inner">
-              <h2 class="cert-name">{{ result.arabicName }}</h2>
-              <p class="cert-seating">
-                <span class="cert-seating-label">رقم الجلوس</span>
-                <span class="cert-seating-no">{{ result.seatingNo }}</span>
-              </p>
+        <section class="result-slip" aria-label="نتيجة الطالب">
+          <div class="slip-sheet">
+            <header class="slip-header">
+              <div class="slip-header-brand">
+                <span class="slip-header-eyebrow">بيان نتيجة</span>
+                <h2 class="slip-header-title">الثانوية العامة</h2>
+              </div>
+              <div class="slip-header-year">
+                <span class="slip-header-year-label">عام</span>
+                <span class="slip-header-year-value">{{ result.year }}</span>
+              </div>
+            </header>
+
+            <div class="slip-divider" aria-hidden="true"></div>
+
+            <div class="slip-identity">
+              <p class="slip-name">{{ result.arabicName }}</p>
+              <div class="slip-seating">
+                <span class="slip-seating-label">رقم الجلوس</span>
+                <span class="slip-seating-no">{{ result.seatingNo }}</span>
+              </div>
             </div>
-          </header>
 
-          <div class="cert-perforation" aria-hidden="true"></div>
-
-          <div class="cert-body">
             <div
-              class="score-gauge"
+              class="slip-score"
               [attr.aria-label]="
                 'المجموع الكلي ' +
                 result.totalDegree +
@@ -109,128 +117,70 @@ const SCORE_ARC_LENGTH = 339.292;
                 '%'
               "
             >
-              <svg
-                class="score-gauge-svg"
-                viewBox="0 0 120 120"
-                aria-hidden="true"
-              >
-                <defs>
-                  <linearGradient
-                    id="scoreArcGradient"
-                    x1="0%"
-                    y1="0%"
-                    x2="100%"
-                    y2="100%"
-                  >
-                    <stop offset="0%" stop-color="#fbbf24" />
-                    <stop offset="100%" stop-color="#d97706" />
-                  </linearGradient>
-                </defs>
-                <circle class="score-gauge-track" cx="60" cy="60" r="54" />
-                <circle
-                  class="score-gauge-fill"
-                  cx="60"
-                  cy="60"
-                  r="54"
-                  [style.stroke-dashoffset]="scoreArcOffset(result.totalDegree)"
-                />
-              </svg>
-              <div class="score-gauge-content">
-                <span class="score-fraction">
-                  <span class="score-value">{{ result.totalDegree }}</span>
-                  <span class="score-max">/{{ thanaweyaMaxScore }}</span>
-                </span>
-                <span class="score-percentage"
+              <div class="slip-score-head">
+                <span class="slip-score-label">المجموع الكلي</span>
+                <span class="slip-score-pct"
                   >{{ resultPercentage(result.totalDegree) }}%</span
                 >
-                <span class="score-label">المجموع الكلي</span>
+              </div>
+              <div class="slip-score-display">
+                <span class="slip-score-value">{{
+                  result.totalDegree
+                }}</span>
+                <span class="slip-score-max">/ {{ thanaweyaMaxScore }}</span>
+              </div>
+              <div class="slip-scale" aria-hidden="true">
+                <div class="slip-scale-track">
+                  <div
+                    class="slip-scale-fill"
+                    [style.width.%]="scoreProgress(result.totalDegree)"
+                  ></div>
+                </div>
+                <div class="slip-scale-labels">
+                  <span>0</span>
+                  <span>{{ thanaweyaMaxScore }}</span>
+                </div>
               </div>
             </div>
 
-            <div class="cert-meta">
-              <article class="cert-meta-item">
-                <span class="cert-meta-icon" aria-hidden="true">
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                </span>
-                <div class="cert-meta-text">
-                  <span class="cert-meta-label">حالة الطالب</span>
-                  <span class="cert-meta-value">{{
-                    result.studentCaseDesc
+            <dl class="slip-details">
+              <div class="slip-detail">
+                <dt>حالة الطالب</dt>
+                <dd>{{ result.studentCaseDesc }}</dd>
+              </div>
+              @if (result.track) {
+                <div class="slip-detail">
+                  <dt>الشعبة</dt>
+                  <dd>{{ trackLabel(result.track) }}</dd>
+                </div>
+              }
+            </dl>
+
+            @if (hasTrackRank(result)) {
+              <div class="slip-rank">
+                <div class="slip-rank-copy">
+                  <span class="slip-rank-label">الترتيب على الشعبة</span>
+                  <span class="slip-rank-value">{{
+                    trackRankLabel(result)
                   }}</span>
                 </div>
-              </article>
-              <article class="cert-meta-item">
-                <span class="cert-meta-icon" aria-hidden="true">
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <rect x="3" y="4" width="18" height="18" rx="2" />
-                    <path d="M16 2v4M8 2v4M3 10h18" />
-                  </svg>
-                </span>
-                <div class="cert-meta-text">
-                  <span class="cert-meta-label">سنة النتيجة</span>
-                  <span class="cert-meta-value">{{ result.year }}</span>
-                </div>
-              </article>
-              @if (hasTrackRank(result)) {
-                <article class="cert-meta-item cert-meta-item--rank">
-                  <span class="cert-meta-icon" aria-hidden="true">
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <path d="M6 9H4.5a2.5 2.5 0 010-5H6" />
-                      <path d="M18 9h1.5a2.5 2.5 0 000-5H18" />
-                      <path d="M4 22h16" />
-                      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-                      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-                      <path d="M18 2H6v7a6 6 0 0012 0V2z" />
-                    </svg>
-                  </span>
-                  <div class="cert-meta-text">
-                    <span class="cert-meta-label">الترتيب على الشعبة</span>
-                    <span class="cert-meta-value">{{
-                      trackRankLabel(result)
-                    }}</span>
-                    <a class="cert-rank-link" routerLink="/track-rank"
-                      >تفاصيل الترتيب</a
-                    >
-                  </div>
-                </article>
-              }
-            </div>
+                <a class="slip-rank-link" routerLink="/track-rank"
+                  >تفاصيل الترتيب</a
+                >
+              </div>
+            }
 
-            <div class="cert-next">
-              <p class="cert-next-hint">الخطوة التالية</p>
+            <footer class="slip-footer">
+              <p class="slip-footer-hint">الخطوة التالية</p>
               <a
-                class="cert-cta"
+                class="slip-cta"
                 [routerLink]="['/predict']"
                 [queryParams]="predictQueryParams()"
               >
                 <span>اعرف الكليات المتاحة لمجموعك</span>
-                <span class="cert-cta-arrow" aria-hidden="true">←</span>
+                <span class="slip-cta-arrow" aria-hidden="true">←</span>
               </a>
-            </div>
+            </footer>
           </div>
         </section>
       }
@@ -239,7 +189,7 @@ const SCORE_ARC_LENGTH = 339.292;
   styles: [
     `
       .thanaweya-page {
-        max-width: 520px;
+        max-width: 560px;
         margin-inline: auto;
         padding-bottom: 3rem;
       }
@@ -407,308 +357,339 @@ const SCORE_ARC_LENGTH = 339.292;
         text-align: center;
       }
 
-      /* ── Result certificate ── */
-      .result-certificate {
-        border-radius: 20px;
-        overflow: hidden;
-        background: #fff;
-        border: 1px solid rgba(30, 58, 138, 0.08);
+      /* ── Result slip ── */
+      .result-slip {
+        animation: slip-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .slip-sheet {
+        position: relative;
+        padding: 1.35rem 1.25rem 1.5rem;
+        border-radius: 4px;
+        background: #faf8f4;
+        border: 1px solid #d8d2c8;
         box-shadow:
-          0 1px 2px rgba(15, 23, 42, 0.04),
-          0 20px 50px rgba(15, 23, 42, 0.1);
-        animation: cert-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+          0 24px 48px rgba(15, 23, 42, 0.1),
+          0 4px 12px rgba(15, 23, 42, 0.05);
       }
 
-      .cert-header {
-        position: relative;
-        padding: 1.65rem 1.35rem 1.5rem;
-        background: linear-gradient(160deg, #0f172a 0%, #1e3a8a 100%);
-        color: #fff;
-        text-align: center;
+      .slip-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        padding-bottom: 1rem;
       }
 
-      .cert-header::after {
-        content: '';
-        position: absolute;
-        inset: auto 0 0;
-        height: 3px;
-        background: linear-gradient(
-          90deg,
-          transparent,
-          var(--color-accent-light),
-          transparent
-        );
-      }
-
-      .cert-header-inner {
-        position: relative;
-        z-index: 1;
-      }
-
-      .cert-name {
-        font-family: var(--font-display);
-        font-size: clamp(1.2rem, 4vw, 1.5rem);
-        font-weight: 800;
-        line-height: 1.45;
-        margin: 0 0 0.85rem;
-      }
-
-      .cert-seating {
-        display: inline-flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.15rem;
-        margin: 0;
-        padding: 0.5rem 1rem;
-        border-radius: 10px;
-        background: rgba(255, 255, 255, 0.07);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-      }
-
-      .cert-seating-label {
+      .slip-header-eyebrow {
+        display: block;
         font-size: 0.68rem;
-        opacity: 0.7;
+        font-weight: 700;
+        color: var(--color-accent);
+        margin-bottom: 0.2rem;
       }
 
-      .cert-seating-no {
+      .slip-header-title {
+        margin: 0;
         font-family: var(--font-display);
-        font-size: 1.1rem;
+        font-size: clamp(1.05rem, 3.5vw, 1.25rem);
         font-weight: 800;
-        letter-spacing: 0.1em;
-        color: var(--color-accent-light);
+        color: var(--color-primary);
+        line-height: 1.35;
       }
 
-      .cert-perforation {
-        height: 10px;
-        background:
-          radial-gradient(circle at 5px 5px, #fff 4px, transparent 4.5px),
-          #1e3a8a;
-        background-size: 10px 10px;
-        background-repeat: repeat-x;
-        background-position: center;
-        opacity: 0.85;
-      }
-
-      .cert-body {
-        padding: 1.5rem 1.25rem 1.65rem;
-        text-align: center;
-        animation: cert-body-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.1s
-          both;
-      }
-
-      .score-gauge {
-        position: relative;
-        width: clamp(156px, 40vw, 180px);
-        height: clamp(156px, 40vw, 180px);
-        margin: 0 auto 1.35rem;
-      }
-
-      .score-gauge::before {
-        content: '';
-        position: absolute;
-        inset: 12%;
-        border-radius: 50%;
-        background: radial-gradient(
-          circle,
-          rgba(245, 158, 11, 0.06) 0%,
-          transparent 70%
-        );
-      }
-
-      .score-gauge-svg {
-        width: 100%;
-        height: 100%;
-        transform: rotate(-90deg);
-        filter: drop-shadow(0 2px 6px rgba(217, 119, 6, 0.15));
-      }
-
-      .score-gauge-track,
-      .score-gauge-fill {
-        fill: none;
-        stroke-width: 6;
-        stroke-linecap: round;
-      }
-
-      .score-gauge-track {
-        stroke: #eef2ff;
-      }
-
-      .score-gauge-fill {
-        stroke: url(#scoreArcGradient);
-        stroke-dasharray: 339.292;
-        transition: stroke-dashoffset 0.9s cubic-bezier(0.22, 1, 0.36, 1);
-      }
-
-      .score-gauge-content {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
+      .slip-header-year {
+        flex-shrink: 0;
+        display: grid;
+        justify-items: center;
         gap: 0.1rem;
+        padding: 0.45rem 0.75rem;
+        border: 1.5px solid var(--color-primary);
+        border-radius: 2px;
+        background: #fff;
       }
 
-      .score-fraction {
-        display: flex;
-        align-items: baseline;
-        gap: 0.08rem;
-        line-height: 1;
-      }
-
-      .score-value {
+      .slip-header-year-label,
+      .slip-header-year-value {
         font-family: var(--font-display);
-        font-size: clamp(1.95rem, 6.5vw, 2.5rem);
         font-weight: 800;
         color: var(--color-primary);
       }
 
-      .score-max {
-        font-family: var(--font-display);
-        font-size: clamp(0.88rem, 2.8vw, 1rem);
-        font-weight: 600;
+      .slip-header-year-label {
+        font-size: 0.62rem;
         color: var(--color-text-muted);
       }
 
-      .score-percentage {
-        font-family: var(--font-display);
-        font-size: clamp(0.95rem, 3vw, 1.1rem);
-        font-weight: 800;
-        color: var(--color-accent);
+      .slip-header-year-value {
+        font-size: 1.15rem;
         line-height: 1;
-        margin-top: 0.1rem;
       }
 
-      .score-label {
-        margin-top: 0.2rem;
-        font-size: 0.72rem;
-        font-weight: 600;
-        color: var(--color-text-muted);
+      .slip-divider {
+        height: 2px;
+        margin-bottom: 1.15rem;
+        background: linear-gradient(
+          90deg,
+          var(--color-primary) 0%,
+          var(--color-accent) 45%,
+          var(--color-primary) 100%
+        );
       }
 
-      .cert-meta {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.65rem;
+      .slip-identity {
+        text-align: center;
         margin-bottom: 1.35rem;
       }
 
-      .cert-meta-item--rank {
-        grid-column: 1 / -1;
+      .slip-name {
+        margin: 0 0 0.85rem;
+        font-family: var(--font-display);
+        font-size: clamp(1.25rem, 4.5vw, 1.55rem);
+        font-weight: 800;
+        line-height: 1.45;
+        color: #0f172a;
       }
 
-      .cert-rank-link {
-        display: inline-block;
-        margin-top: 0.25rem;
+      .slip-seating {
+        display: inline-grid;
+        gap: 0.15rem;
+        padding: 0.45rem 1.1rem;
+        border: 1px dashed #c4bfb4;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.65);
+      }
+
+      .slip-seating-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: var(--color-text-muted);
+      }
+
+      .slip-seating-no {
+        font-family: var(--font-display);
+        font-size: 1.05rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        color: var(--color-primary);
+      }
+
+      .slip-score {
+        margin-bottom: 1.25rem;
+        padding: 1.15rem 1rem 1rem;
+        border-radius: 2px;
+        background: linear-gradient(165deg, #0f172a 0%, #1e3a8a 100%);
+        color: #fff;
+      }
+
+      .slip-score-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.55rem;
+      }
+
+      .slip-score-label {
         font-size: 0.72rem;
+        font-weight: 700;
+        opacity: 0.82;
+      }
+
+      .slip-score-value,
+      .slip-score-max,
+      .slip-score-pct {
+        font-family: var(--font-display);
+        font-weight: 800;
+      }
+
+      .slip-score-pct {
+        font-size: 0.88rem;
+        color: var(--color-accent-light);
+      }
+
+      .slip-score-display {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 0.35rem;
+        margin-bottom: 1rem;
+        line-height: 1;
+      }
+
+      .slip-score-value {
+        font-size: clamp(3rem, 12vw, 3.75rem);
+        letter-spacing: -0.02em;
+      }
+
+      .slip-score-max {
+        font-size: clamp(1rem, 3.5vw, 1.2rem);
+        font-weight: 600;
+        opacity: 0.55;
+      }
+
+      .slip-scale-track {
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.14);
+        overflow: hidden;
+      }
+
+      .slip-scale-fill {
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(
+          90deg,
+          var(--color-accent-light) 0%,
+          var(--color-accent) 100%
+        );
+        transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .slip-scale-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0.35rem;
+        font-size: 0.62rem;
+        font-weight: 600;
+        opacity: 0.5;
+      }
+
+      .slip-details {
+        margin: 0 0 1rem;
+        padding: 0;
+        display: grid;
+        gap: 0;
+        border: 1px solid #e8e4dc;
+        border-radius: 2px;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .slip-detail {
+        display: grid;
+        grid-template-columns: minmax(7rem, 38%) 1fr;
+        gap: 0.75rem;
+        padding: 0.75rem 0.9rem;
+        border-bottom: 1px solid #f0ece6;
+      }
+
+      .slip-detail:last-child {
+        border-bottom: none;
+      }
+
+      .slip-detail dt,
+      .slip-detail dd {
+        margin: 0;
+        line-height: 1.5;
+      }
+
+      .slip-detail dt {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--color-text-muted);
+      }
+
+      .slip-detail dd {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--color-primary);
+        overflow-wrap: anywhere;
+      }
+
+      .slip-rank {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.15rem;
+        padding: 0.85rem 0.95rem;
+        border-radius: 2px;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+      }
+
+      .slip-rank-copy {
+        display: grid;
+        gap: 0.15rem;
+        min-width: 0;
+      }
+
+      .slip-rank-label,
+      .slip-rank-value {
+        font-weight: 700;
+      }
+
+      .slip-rank-label {
+        font-size: 0.68rem;
+        color: #92400e;
+      }
+
+      .slip-rank-value {
+        font-family: var(--font-display);
+        font-size: 0.92rem;
+        font-weight: 800;
+        color: #78350f;
+        line-height: 1.45;
+      }
+
+      .slip-rank-link {
+        flex-shrink: 0;
+        font-size: 0.78rem;
         font-weight: 700;
         color: var(--color-primary-light);
       }
 
-      .cert-meta-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 0.6rem;
-        padding: 0.8rem 0.7rem;
-        text-align: right;
-        background: var(--color-surface);
-        border: 1px solid rgba(30, 58, 138, 0.06);
-        border-radius: 12px;
+      .slip-footer {
+        padding-top: 1.1rem;
+        border-top: 1px dashed #d8d2c8;
       }
 
-      .cert-meta-icon {
-        flex-shrink: 0;
-        width: 32px;
-        height: 32px;
-        display: grid;
-        place-items: center;
-        border-radius: 8px;
-        background: #fff;
-        color: var(--color-primary);
-        box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
-      }
-
-      .cert-meta-text {
-        display: grid;
-        gap: 0.12rem;
-        min-width: 0;
-      }
-
-      .cert-meta-label {
-        font-size: 0.68rem;
-        color: var(--color-text-muted);
-      }
-
-      .cert-meta-value {
-        font-weight: 700;
-        font-size: 0.84rem;
-        color: var(--color-primary);
-        line-height: 1.4;
-        overflow-wrap: anywhere;
-      }
-
-      .cert-next {
-        padding-top: 1.15rem;
-        border-top: 1px solid rgba(30, 58, 138, 0.08);
-      }
-
-      .cert-next-hint {
+      .slip-footer-hint {
         margin: 0 0 0.65rem;
-        font-size: 0.72rem;
+        font-size: 0.68rem;
         font-weight: 700;
         color: var(--color-text-muted);
+        text-align: center;
       }
 
-      .cert-cta {
+      .slip-cta {
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 0.55rem;
         width: 100%;
-        padding: 0.9rem 1.15rem;
-        border-radius: 12px;
+        padding: 0.95rem 1.15rem;
+        border-radius: 2px;
         font-weight: 700;
         font-size: 0.95rem;
         color: #fff;
         background: var(--color-primary-light);
-        box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25);
-        transition:
-          background 0.2s ease,
-          box-shadow 0.2s ease,
-          transform 0.2s ease;
+        box-shadow: 0 4px 16px rgba(37, 99, 235, 0.22);
+        transition: background 0.2s ease, transform 0.2s ease;
       }
 
-      .cert-cta:hover {
+      .slip-cta:hover {
         background: var(--color-primary);
         transform: translateY(-1px);
-        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3);
+        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.28);
       }
 
-      .cert-cta-arrow {
+      .slip-cta-arrow {
         font-size: 1.1rem;
         color: var(--color-accent-light);
         transition: transform 0.2s ease;
       }
 
-      .cert-cta:hover .cert-cta-arrow {
+      .slip-cta:hover .slip-cta-arrow {
         transform: translateX(-3px);
       }
 
-      @keyframes cert-enter {
+      @keyframes slip-enter {
         from {
           opacity: 0;
-          transform: translateY(16px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      @keyframes cert-body-enter {
-        from {
-          opacity: 0;
-          transform: translateY(8px);
+          transform: translateY(18px);
         }
         to {
           opacity: 1;
@@ -735,26 +716,37 @@ const SCORE_ARC_LENGTH = 339.292;
           padding: 0.8rem 2.2rem;
         }
 
-        .cert-header {
-          padding: 1.35rem 1rem 1.25rem;
+        .slip-sheet {
+          padding: 1.1rem 0.95rem 1.25rem;
         }
 
-        .cert-body {
-          padding: 1.25rem 1rem 1.4rem;
+        .slip-header {
+          flex-direction: column;
+          align-items: stretch;
         }
 
-        .cert-meta {
+        .slip-header-year {
+          justify-self: start;
+          width: fit-content;
+        }
+
+        .slip-detail {
           grid-template-columns: 1fr;
+          gap: 0.25rem;
+        }
+
+        .slip-rank {
+          flex-direction: column;
+          align-items: stretch;
         }
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .result-certificate,
-        .cert-body {
+        .result-slip {
           animation: none;
         }
 
-        .score-gauge-fill {
+        .slip-scale-fill {
           transition: none;
         }
 
@@ -762,11 +754,11 @@ const SCORE_ARC_LENGTH = 339.292;
           animation: none;
         }
 
-        .cert-cta:hover {
+        .slip-cta:hover {
           transform: none;
         }
 
-        .cert-cta:hover .cert-cta-arrow {
+        .slip-cta:hover .slip-cta-arrow {
           transform: none;
         }
       }
@@ -792,12 +784,15 @@ export class ThanaweyaResultComponent {
     return ((totalDegree / THANAWEYA_MAX_SCORE) * 100).toFixed(2);
   }
 
-  scoreArcOffset(totalDegree: number): number {
-    const progress = Math.min(
-      Math.max(totalDegree / THANAWEYA_MAX_SCORE, 0),
-      1,
+  scoreProgress(totalDegree: number): number {
+    return Math.min(
+      Math.max((totalDegree / THANAWEYA_MAX_SCORE) * 100, 0),
+      100,
     );
-    return SCORE_ARC_LENGTH * (1 - progress);
+  }
+
+  trackLabel(track: string): string {
+    return this.trackLabels[track] ?? track;
   }
 
   onSeatingInput(event: Event): void {

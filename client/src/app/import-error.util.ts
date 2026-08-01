@@ -95,7 +95,7 @@ export function importErrorMessage(
 
   if (status === 503) {
     return (
-      response?.message ?? 'الخدمة غير متاحة حاليًا. حاول مرة أخرى لاحقًا.'
+      response?.message ?? 'الخدمة غير متاحة حاليا. حاول مرة أخرى لاحقا.'
     );
   }
 

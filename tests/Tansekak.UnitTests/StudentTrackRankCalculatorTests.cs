@@ -1,4 +1,5 @@
 using Tansekak.Application.Common;
+using Tansekak.Domain.Enums;
 
 namespace Tansekak.UnitTests;
 
@@ -90,5 +91,24 @@ public class StudentTrackRankCalculatorTests
         var track = StudentTrackRankCalculator.ResolveTrack(entity);
 
         Assert.Null(track);
+    }
+
+    [Theory]
+    [InlineData("2001970", AcademicTrack.Literature)]
+    [InlineData("2456789", AcademicTrack.Mathematics)]
+    [InlineData("2789012", AcademicTrack.Science)]
+    public void ResolveTrack_InfersFromSeatingNo_WhenCaseDescHasNoTrack(
+        string seatingNo,
+        AcademicTrack expected)
+    {
+        var entity = new Tansekak.Domain.Entities.StudentResult
+        {
+            SeatingNo = seatingNo,
+            StudentCaseDesc = "ناجح دور أول"
+        };
+
+        var track = StudentTrackRankCalculator.ResolveTrack(entity);
+
+        Assert.Equal(expected, track);
     }
 }

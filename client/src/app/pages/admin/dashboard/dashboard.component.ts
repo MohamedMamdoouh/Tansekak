@@ -126,7 +126,7 @@ interface StatCard {
                   رفع ملف Excel بنتائج الطلاب واستبدال بيانات السنة المختارة.
                 </p>
                 <p class="action-unavailable">
-                  خدمة استيراد نتائج الثانوية ليست متاحة حاليًا.
+                  خدمة استيراد نتائج الثانوية ليست متاحة حاليا.
                 </p>
               </div>
               <span class="action-arrow" aria-hidden="true">←</span>

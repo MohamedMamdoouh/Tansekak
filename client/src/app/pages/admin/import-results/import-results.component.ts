@@ -4,7 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ApiService } from '../../../api.service';
 import { AdmissionYear } from '../../../models';
 
-const IMPORT_UNAVAILABLE_MESSAGE = 'خدمة الاستيراد غير متاحة حاليًا.';
+const IMPORT_UNAVAILABLE_MESSAGE = 'خدمة الاستيراد غير متاحة حاليا.';
 
 @Component({
   selector: 'app-admin-import-results',
