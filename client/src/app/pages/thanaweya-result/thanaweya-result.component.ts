@@ -9,6 +9,7 @@ import {
   applyDigitsOnlyInput,
   digitsOnlyValidator,
 } from '../../form-validators';
+import { formatNumber } from '../../format-number.util';
 
 const NOT_FOUND_MESSAGE = 'لم يتم العثور على نتيجة لهذا الرقم.';
 const GENERIC_ERROR_MESSAGE = 'حدث خطأ أثناء البحث. حاول مرة أخرى لاحقا.';
@@ -84,6 +85,8 @@ const THANAWEYA_MAX_SCORE = 320;
       @if (result) {
         <section class="result-slip" aria-label="نتيجة الطالب">
           <div class="slip-sheet">
+            <div class="slip-watermark" aria-hidden="true">نتيجة</div>
+
             <header class="slip-header">
               <div class="slip-header-brand">
                 <span class="slip-header-eyebrow">بيان نتيجة</span>
@@ -91,7 +94,9 @@ const THANAWEYA_MAX_SCORE = 320;
               </div>
               <div class="slip-header-year">
                 <span class="slip-header-year-label">عام</span>
-                <span class="slip-header-year-value">{{ result.year }}</span>
+                <span class="slip-header-year-value num">{{
+                  fmt(result.year)
+                }}</span>
               </div>
             </header>
 
@@ -101,7 +106,9 @@ const THANAWEYA_MAX_SCORE = 320;
               <p class="slip-name">{{ result.arabicName }}</p>
               <div class="slip-seating">
                 <span class="slip-seating-label">رقم الجلوس</span>
-                <span class="slip-seating-no">{{ result.seatingNo }}</span>
+                <span class="slip-seating-no num">{{
+                  fmt(result.seatingNo)
+                }}</span>
               </div>
             </div>
 
@@ -119,15 +126,17 @@ const THANAWEYA_MAX_SCORE = 320;
             >
               <div class="slip-score-head">
                 <span class="slip-score-label">المجموع الكلي</span>
-                <span class="slip-score-pct"
+                <span class="slip-score-pct num"
                   >{{ resultPercentage(result.totalDegree) }}%</span
                 >
               </div>
               <div class="slip-score-display">
-                <span class="slip-score-value">{{
-                  result.totalDegree
+                <span class="slip-score-value num">{{
+                  fmt(result.totalDegree)
                 }}</span>
-                <span class="slip-score-max">/ {{ thanaweyaMaxScore }}</span>
+                <span class="slip-score-max num"
+                  >/ {{ fmt(thanaweyaMaxScore) }}</span
+                >
               </div>
               <div class="slip-scale" aria-hidden="true">
                 <div class="slip-scale-track">
@@ -137,8 +146,8 @@ const THANAWEYA_MAX_SCORE = 320;
                   ></div>
                 </div>
                 <div class="slip-scale-labels">
-                  <span>0</span>
-                  <span>{{ thanaweyaMaxScore }}</span>
+                  <span class="num">0</span>
+                  <span class="num">{{ fmt(thanaweyaMaxScore) }}</span>
                 </div>
               </div>
             </div>
@@ -158,14 +167,31 @@ const THANAWEYA_MAX_SCORE = 320;
 
             @if (hasTrackRank(result)) {
               <div class="slip-rank">
-                <div class="slip-rank-copy">
+                <div class="slip-rank-head">
                   <span class="slip-rank-label">الترتيب على الشعبة</span>
-                  <span class="slip-rank-value">{{
-                    trackRankLabel(result)
-                  }}</span>
+                  @if (result.track) {
+                    <span class="slip-rank-track">{{
+                      trackLabel(result.track)
+                    }}</span>
+                  }
+                </div>
+                <div class="slip-rank-stats">
+                  <div class="slip-rank-stat slip-rank-stat--primary">
+                    <span class="slip-rank-stat-value num">{{
+                      fmt(result.trackRank)
+                    }}</span>
+                    <span class="slip-rank-stat-label">ترتيبك</span>
+                  </div>
+                  <span class="slip-rank-sep" aria-hidden="true">من</span>
+                  <div class="slip-rank-stat">
+                    <span class="slip-rank-stat-value num">{{
+                      fmt(result.trackTotalStudents)
+                    }}</span>
+                    <span class="slip-rank-stat-label">طالب</span>
+                  </div>
                 </div>
                 <a class="slip-rank-link" routerLink="/track-rank"
-                  >تفاصيل الترتيب</a
+                  >تفاصيل الترتيب ←</a
                 >
               </div>
             }
@@ -189,172 +215,13 @@ const THANAWEYA_MAX_SCORE = 320;
   styles: [
     `
       .thanaweya-page {
-        max-width: 560px;
+        max-width: 580px;
         margin-inline: auto;
         padding-bottom: 3rem;
       }
 
       .thanaweya-page .breadcrumb {
         margin-bottom: 1.25rem;
-      }
-
-      /* ── Lookup ── */
-      .lookup-stage {
-        display: grid;
-        gap: 1.35rem;
-        justify-items: center;
-        text-align: center;
-        padding: 2rem 1.5rem;
-        margin-bottom: 1.5rem;
-        border-radius: 20px;
-        background: #fff;
-        border: 1px solid rgba(30, 58, 138, 0.07);
-        box-shadow:
-          0 1px 2px rgba(15, 23, 42, 0.04),
-          0 12px 36px rgba(15, 23, 42, 0.06);
-        transition:
-          padding 0.3s ease,
-          margin 0.3s ease,
-          box-shadow 0.3s ease;
-      }
-
-      .lookup-stage--compact {
-        padding: 1.25rem 1.15rem;
-        margin-bottom: 1rem;
-        gap: 0.85rem;
-        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
-      }
-
-      .lookup-stage--compact .lookup-title {
-        font-size: clamp(1.05rem, 3.5vw, 1.25rem);
-        margin-bottom: 0;
-      }
-
-      .lookup-stage-copy {
-        max-width: 440px;
-      }
-
-      .lookup-title {
-        font-family: var(--font-display);
-        font-size: clamp(1.35rem, 4vw, 1.85rem);
-        font-weight: 800;
-        color: var(--color-primary);
-        line-height: 1.35;
-        margin: 0 0 0.6rem;
-      }
-
-      .lookup-lead {
-        margin: 0;
-        color: var(--color-text-muted);
-        line-height: 1.7;
-        font-size: 0.96rem;
-        max-width: 38ch;
-        margin-inline: auto;
-      }
-
-      .lookup-form {
-        width: 100%;
-        max-width: 340px;
-        display: grid;
-        gap: 0.75rem;
-        padding-top: 0.25rem;
-      }
-
-      .lookup-label {
-        font-size: 0.84rem;
-        font-weight: 700;
-        color: var(--color-text-muted);
-        margin: 0;
-      }
-
-      .lookup-input-wrap {
-        position: relative;
-      }
-
-      .lookup-input-wrap::before {
-        content: '#';
-        position: absolute;
-        right: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
-        font-family: var(--font-display);
-        font-size: 1rem;
-        font-weight: 700;
-        color: rgba(30, 58, 138, 0.22);
-        pointer-events: none;
-      }
-
-      .lookup-input-wrap input {
-        width: 100%;
-        text-align: center;
-        font-family: var(--font-display);
-        font-size: 1.25rem;
-        letter-spacing: 0.12em;
-        font-weight: 700;
-        padding: 0.9rem 2.4rem;
-        border: 1.5px solid #e5e7eb;
-        border-radius: 12px;
-        background: var(--color-surface);
-        transition:
-          border-color 0.2s ease,
-          background 0.2s ease,
-          box-shadow 0.2s ease;
-      }
-
-      .lookup-input-wrap input::placeholder {
-        color: #cbd5e1;
-        letter-spacing: 0.08em;
-        font-weight: 600;
-      }
-
-      .lookup-input-wrap input:focus {
-        outline: none;
-        border-color: var(--color-primary-light);
-        background: #fff;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-      }
-
-      .lookup-submit {
-        width: 100%;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        margin-top: 0.25rem;
-        border-radius: 12px;
-      }
-
-      .lookup-spinner {
-        width: 1rem;
-        height: 1rem;
-        border: 2px solid rgba(255, 255, 255, 0.35);
-        border-top-color: #fff;
-        border-radius: 50%;
-        animation: spin 0.7s linear infinite;
-      }
-
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      .field-error {
-        color: #dc2626;
-        font-size: 0.84rem;
-        text-align: center;
-        margin: -0.15rem 0 0;
-      }
-
-      .lookup-notice {
-        padding: 0.7rem 0.9rem;
-        border-radius: 10px;
-        background: #fffbeb;
-        border: 1px solid #fde68a;
-        color: #92400e;
-        font-size: 0.88rem;
-        line-height: 1.55;
-        text-align: center;
       }
 
       /* ── Result slip ── */
@@ -364,16 +231,33 @@ const THANAWEYA_MAX_SCORE = 320;
 
       .slip-sheet {
         position: relative;
-        padding: 1.35rem 1.25rem 1.5rem;
-        border-radius: 4px;
-        background: #faf8f4;
-        border: 1px solid #d8d2c8;
+        overflow: hidden;
+        padding: 1.5rem 1.35rem 1.6rem;
+        border-radius: 6px;
+        background: linear-gradient(180deg, #fdfbf7 0%, #f7f3ec 100%);
+        border: 1px solid #cfc8bc;
         box-shadow:
-          0 24px 48px rgba(15, 23, 42, 0.1),
-          0 4px 12px rgba(15, 23, 42, 0.05);
+          0 28px 56px rgba(15, 23, 42, 0.11),
+          0 4px 12px rgba(15, 23, 42, 0.05),
+          inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      }
+
+      .slip-watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-18deg);
+        font-family: var(--font-display);
+        font-size: clamp(4rem, 18vw, 6.5rem);
+        font-weight: 800;
+        color: rgba(30, 58, 138, 0.04);
+        pointer-events: none;
+        user-select: none;
+        white-space: nowrap;
       }
 
       .slip-header {
+        position: relative;
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
@@ -392,7 +276,7 @@ const THANAWEYA_MAX_SCORE = 320;
       .slip-header-title {
         margin: 0;
         font-family: var(--font-display);
-        font-size: clamp(1.05rem, 3.5vw, 1.25rem);
+        font-size: clamp(1.1rem, 3.5vw, 1.3rem);
         font-weight: 800;
         color: var(--color-primary);
         line-height: 1.35;
@@ -403,9 +287,9 @@ const THANAWEYA_MAX_SCORE = 320;
         display: grid;
         justify-items: center;
         gap: 0.1rem;
-        padding: 0.45rem 0.75rem;
-        border: 1.5px solid var(--color-primary);
-        border-radius: 2px;
+        padding: 0.5rem 0.85rem;
+        border: 2px solid var(--color-primary);
+        border-radius: 4px;
         background: #fff;
       }
 
@@ -422,30 +306,33 @@ const THANAWEYA_MAX_SCORE = 320;
       }
 
       .slip-header-year-value {
-        font-size: 1.15rem;
+        font-size: 1.2rem;
         line-height: 1;
       }
 
       .slip-divider {
-        height: 2px;
-        margin-bottom: 1.15rem;
-        background: linear-gradient(
+        height: 3px;
+        margin-bottom: 1.2rem;
+        border-radius: 1px;
+        background: repeating-linear-gradient(
           90deg,
-          var(--color-primary) 0%,
-          var(--color-accent) 45%,
-          var(--color-primary) 100%
+          var(--color-primary) 0,
+          var(--color-primary) 8px,
+          var(--color-accent) 8px,
+          var(--color-accent) 16px
         );
       }
 
       .slip-identity {
+        position: relative;
         text-align: center;
-        margin-bottom: 1.35rem;
+        margin-bottom: 1.4rem;
       }
 
       .slip-name {
-        margin: 0 0 0.85rem;
+        margin: 0 0 0.9rem;
         font-family: var(--font-display);
-        font-size: clamp(1.25rem, 4.5vw, 1.55rem);
+        font-size: clamp(1.3rem, 4.5vw, 1.6rem);
         font-weight: 800;
         line-height: 1.45;
         color: #0f172a;
@@ -453,11 +340,11 @@ const THANAWEYA_MAX_SCORE = 320;
 
       .slip-seating {
         display: inline-grid;
-        gap: 0.15rem;
-        padding: 0.45rem 1.1rem;
-        border: 1px dashed #c4bfb4;
-        border-radius: 2px;
-        background: rgba(255, 255, 255, 0.65);
+        gap: 0.2rem;
+        padding: 0.5rem 1.25rem;
+        border: 1px solid #b8b0a4;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.75);
       }
 
       .slip-seating-label {
@@ -468,18 +355,25 @@ const THANAWEYA_MAX_SCORE = 320;
 
       .slip-seating-no {
         font-family: var(--font-display);
-        font-size: 1.05rem;
+        font-size: 1.1rem;
         font-weight: 800;
-        letter-spacing: 0.14em;
+        letter-spacing: 0.06em;
         color: var(--color-primary);
       }
 
       .slip-score {
+        position: relative;
         margin-bottom: 1.25rem;
-        padding: 1.15rem 1rem 1rem;
-        border-radius: 2px;
-        background: linear-gradient(165deg, #0f172a 0%, #1e3a8a 100%);
+        padding: 1.25rem 1.1rem 1.05rem;
+        border-radius: 6px;
+        background: linear-gradient(
+          155deg,
+          #0f172a 0%,
+          #1e3a8a 55%,
+          #1e40af 100%
+        );
         color: #fff;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
       }
 
       .slip-score-head {
@@ -487,13 +381,13 @@ const THANAWEYA_MAX_SCORE = 320;
         align-items: center;
         justify-content: space-between;
         gap: 0.75rem;
-        margin-bottom: 0.55rem;
+        margin-bottom: 0.6rem;
       }
 
       .slip-score-label {
-        font-size: 0.72rem;
+        font-size: 0.74rem;
         font-weight: 700;
-        opacity: 0.82;
+        opacity: 0.85;
       }
 
       .slip-score-value,
@@ -504,32 +398,35 @@ const THANAWEYA_MAX_SCORE = 320;
       }
 
       .slip-score-pct {
-        font-size: 0.88rem;
+        font-size: 0.92rem;
         color: var(--color-accent-light);
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+        background: rgba(245, 158, 11, 0.15);
       }
 
       .slip-score-display {
         display: flex;
         align-items: baseline;
         justify-content: center;
-        gap: 0.35rem;
-        margin-bottom: 1rem;
+        gap: 0.4rem;
+        margin-bottom: 1.05rem;
         line-height: 1;
       }
 
       .slip-score-value {
-        font-size: clamp(3rem, 12vw, 3.75rem);
-        letter-spacing: -0.02em;
+        font-size: clamp(3.1rem, 13vw, 4rem);
+        letter-spacing: -0.01em;
       }
 
       .slip-score-max {
-        font-size: clamp(1rem, 3.5vw, 1.2rem);
+        font-size: clamp(1rem, 3.5vw, 1.25rem);
         font-weight: 600;
         opacity: 0.55;
       }
 
       .slip-scale-track {
-        height: 6px;
+        height: 7px;
         border-radius: 999px;
         background: rgba(255, 255, 255, 0.14);
         overflow: hidden;
@@ -549,10 +446,10 @@ const THANAWEYA_MAX_SCORE = 320;
       .slip-scale-labels {
         display: flex;
         justify-content: space-between;
-        margin-top: 0.35rem;
-        font-size: 0.62rem;
+        margin-top: 0.4rem;
+        font-size: 0.65rem;
         font-weight: 600;
-        opacity: 0.5;
+        opacity: 0.55;
       }
 
       .slip-details {
@@ -560,8 +457,8 @@ const THANAWEYA_MAX_SCORE = 320;
         padding: 0;
         display: grid;
         gap: 0;
-        border: 1px solid #e8e4dc;
-        border-radius: 2px;
+        border: 1px solid #ddd6cb;
+        border-radius: 4px;
         overflow: hidden;
         background: #fff;
       }
@@ -570,7 +467,7 @@ const THANAWEYA_MAX_SCORE = 320;
         display: grid;
         grid-template-columns: minmax(7rem, 38%) 1fr;
         gap: 0.75rem;
-        padding: 0.75rem 0.9rem;
+        padding: 0.8rem 1rem;
         border-bottom: 1px solid #f0ece6;
       }
 
@@ -591,59 +488,102 @@ const THANAWEYA_MAX_SCORE = 320;
       }
 
       .slip-detail dd {
-        font-size: 0.88rem;
+        font-size: 0.9rem;
         font-weight: 700;
         color: var(--color-primary);
         overflow-wrap: anywhere;
       }
 
       .slip-rank {
+        margin-bottom: 1.15rem;
+        padding: 1rem 1.05rem;
+        border-radius: 6px;
+        background: #fff;
+        border: 1px solid #e8dfd0;
+        box-shadow: 0 4px 16px rgba(217, 119, 6, 0.08);
+      }
+
+      .slip-rank-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 0.75rem;
+        gap: 0.5rem;
         flex-wrap: wrap;
-        margin-bottom: 1.15rem;
-        padding: 0.85rem 0.95rem;
-        border-radius: 2px;
+        margin-bottom: 0.85rem;
+      }
+
+      .slip-rank-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--color-text-muted);
+      }
+
+      .slip-rank-track {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #92400e;
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
         background: #fffbeb;
         border: 1px solid #fde68a;
       }
 
-      .slip-rank-copy {
+      .slip-rank-stats {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.85rem;
+        margin-bottom: 0.85rem;
+      }
+
+      .slip-rank-stat {
         display: grid;
-        gap: 0.15rem;
+        gap: 0.1rem;
+        text-align: center;
         min-width: 0;
       }
 
-      .slip-rank-label,
-      .slip-rank-value {
-        font-weight: 700;
+      .slip-rank-stat--primary .slip-rank-stat-value {
+        color: var(--color-primary);
+        font-size: clamp(1.75rem, 6vw, 2.25rem);
       }
 
-      .slip-rank-label {
-        font-size: 0.68rem;
-        color: #92400e;
-      }
-
-      .slip-rank-value {
+      .slip-rank-stat-value {
         font-family: var(--font-display);
-        font-size: 0.92rem;
+        font-size: clamp(1.35rem, 4.5vw, 1.65rem);
         font-weight: 800;
+        line-height: 1.1;
         color: #78350f;
-        line-height: 1.45;
+      }
+
+      .slip-rank-stat-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: var(--color-text-muted);
+      }
+
+      .slip-rank-sep {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #a8a29e;
+        flex-shrink: 0;
       }
 
       .slip-rank-link {
-        flex-shrink: 0;
-        font-size: 0.78rem;
+        display: block;
+        text-align: center;
+        font-size: 0.82rem;
         font-weight: 700;
         color: var(--color-primary-light);
       }
 
+      .slip-rank-link:hover {
+        color: var(--color-primary);
+      }
+
       .slip-footer {
-        padding-top: 1.1rem;
-        border-top: 1px dashed #d8d2c8;
+        padding-top: 1.15rem;
+        border-top: 1px dashed #cfc8bc;
       }
 
       .slip-footer-hint {
@@ -661,13 +601,15 @@ const THANAWEYA_MAX_SCORE = 320;
         gap: 0.55rem;
         width: 100%;
         padding: 0.95rem 1.15rem;
-        border-radius: 2px;
+        border-radius: 6px;
         font-weight: 700;
         font-size: 0.95rem;
         color: #fff;
         background: var(--color-primary-light);
         box-shadow: 0 4px 16px rgba(37, 99, 235, 0.22);
-        transition: background 0.2s ease, transform 0.2s ease;
+        transition:
+          background 0.2s ease,
+          transform 0.2s ease;
       }
 
       .slip-cta:hover {
@@ -702,22 +644,8 @@ const THANAWEYA_MAX_SCORE = 320;
           padding-bottom: 2rem;
         }
 
-        .lookup-stage {
-          padding: 1.35rem 1rem;
-          border-radius: 16px;
-        }
-
-        .lookup-stage--compact {
-          padding: 1rem 0.9rem;
-        }
-
-        .lookup-input-wrap input {
-          font-size: 1.15rem;
-          padding: 0.8rem 2.2rem;
-        }
-
         .slip-sheet {
-          padding: 1.1rem 0.95rem 1.25rem;
+          padding: 1.15rem 1rem 1.3rem;
         }
 
         .slip-header {
@@ -735,9 +663,8 @@ const THANAWEYA_MAX_SCORE = 320;
           gap: 0.25rem;
         }
 
-        .slip-rank {
-          flex-direction: column;
-          align-items: stretch;
+        .slip-rank-stats {
+          gap: 0.55rem;
         }
       }
 
@@ -748,10 +675,6 @@ const THANAWEYA_MAX_SCORE = 320;
 
         .slip-scale-fill {
           transition: none;
-        }
-
-        .lookup-spinner {
-          animation: none;
         }
 
         .slip-cta:hover {
@@ -771,6 +694,7 @@ export class ThanaweyaResultComponent {
 
   readonly thanaweyaMaxScore = THANAWEYA_MAX_SCORE;
   readonly trackLabels = TRACK_LABELS;
+  readonly fmt = formatNumber;
 
   loading = false;
   error = '';
@@ -839,13 +763,5 @@ export class ThanaweyaResultComponent {
 
   hasTrackRank(result: StudentResult): boolean {
     return result.trackRank != null && result.trackTotalStudents != null;
-  }
-
-  trackRankLabel(result: StudentResult): string {
-    const trackName = result.track
-      ? (this.trackLabels[result.track] ?? result.track)
-      : '';
-    const base = `${result.trackRank} من ${result.trackTotalStudents}`;
-    return trackName ? `${base} (${trackName})` : base;
   }
 }

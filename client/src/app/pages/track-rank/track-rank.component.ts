@@ -9,6 +9,7 @@ import {
   applyDigitsOnlyInput,
   digitsOnlyValidator,
 } from '../../form-validators';
+import { formatNumber } from '../../format-number.util';
 
 const NOT_FOUND_MESSAGE = 'لم يتم العثور على نتيجة لهذا الرقم.';
 const GENERIC_ERROR_MESSAGE = 'حدث خطأ أثناء البحث. حاول مرة أخرى لاحقا.';
@@ -84,24 +85,59 @@ const THANAWEYA_MAX_SCORE = 320;
       @if (result) {
         <section class="rank-card" aria-label="ترتيب الطالب على الشعبة">
           <header class="rank-header">
+            <div class="rank-header-top">
+              @if (result.track) {
+                <span class="rank-track-badge">{{
+                  trackLabel(result.track)
+                }}</span>
+              }
+              <span class="rank-year num">{{ fmt(result.year) }}</span>
+            </div>
             <h2 class="rank-student-name">{{ result.arabicName }}</h2>
             <p class="rank-seating">
               <span class="rank-seating-label">رقم الجلوس</span>
-              <span class="rank-seating-no">{{ result.seatingNo }}</span>
+              <span class="rank-seating-no num">{{
+                fmt(result.seatingNo)
+              }}</span>
             </p>
           </header>
 
           <div class="rank-body">
             @if (hasRank(result)) {
-              <div class="rank-badge-wrap">
-                <div class="rank-badge" [attr.aria-label]="rankAriaLabel(result)">
-                  <span class="rank-badge-label">الترتيب</span>
-                  <span class="rank-badge-value">{{ result.trackRank }}</span>
+              <div class="rank-spotlight">
+                <p class="rank-spotlight-label">ترتيبك</p>
+                <p
+                  class="rank-spotlight-value num"
+                  [attr.aria-label]="rankAriaLabel(result)"
+                >
+                  {{ fmt(result.trackRank) }}
+                </p>
+                <p class="rank-spotlight-of">
+                  من
+                  <strong class="num">{{
+                    fmt(result.trackTotalStudents)
+                  }}</strong>
+                  طالب
+                </p>
+
+                <div class="rank-stand" aria-hidden="true">
+                  <div class="rank-stand-track">
+                    <div
+                      class="rank-stand-marker"
+                      [style.inset-inline-start.%]="rankPositionPercent(result)"
+                    ></div>
+                  </div>
+                  <div class="rank-stand-labels">
+                    <span>الأوائل</span>
+                    <span>منتصف القائمة</span>
+                    <span>آخر القائمة</span>
+                  </div>
                 </div>
-                <p class="rank-subtitle">
-                  من {{ result.trackTotalStudents }} طالب@if (result.track) {
-                    <span> في {{ trackLabel(result.track) }}</span>
-                  }
+
+                <p class="rank-percentile">
+                  أفضل
+                  <strong class="num">{{ rankPercentile(result) }}</strong>
+                  % من طلاب الشعبة
                 </p>
               </div>
             } @else {
@@ -117,13 +153,18 @@ const THANAWEYA_MAX_SCORE = 320;
             <div class="rank-meta">
               <article class="rank-meta-item">
                 <span class="rank-meta-label">المجموع الكلي</span>
-                <span class="rank-meta-value"
-                  >{{ result.totalDegree }}/{{ thanaweyaMaxScore }}</span
+                <span class="rank-meta-value num"
+                  >{{ fmt(result.totalDegree)
+                  }}<span class="rank-meta-denom"
+                    >/{{ fmt(thanaweyaMaxScore) }}</span
+                  ></span
                 >
               </article>
               <article class="rank-meta-item">
-                <span class="rank-meta-label">سنة النتيجة</span>
-                <span class="rank-meta-value">{{ result.year }}</span>
+                <span class="rank-meta-label">النسبة المئوية</span>
+                <span class="rank-meta-value num"
+                  >{{ scorePercentage(result.totalDegree) }}%</span
+                >
               </article>
             </div>
 
@@ -147,7 +188,7 @@ const THANAWEYA_MAX_SCORE = 320;
   styles: [
     `
       .track-rank-page {
-        max-width: 520px;
+        max-width: 540px;
         margin-inline: auto;
         padding-bottom: 3rem;
       }
@@ -156,179 +197,62 @@ const THANAWEYA_MAX_SCORE = 320;
         margin-bottom: 1.25rem;
       }
 
-      .lookup-stage {
-        display: grid;
-        gap: 1.35rem;
-        justify-items: center;
-        text-align: center;
-        padding: 2rem 1.5rem;
-        margin-bottom: 1.5rem;
-        border-radius: 20px;
-        background: #fff;
-        border: 1px solid rgba(30, 58, 138, 0.07);
-        box-shadow:
-          0 1px 2px rgba(15, 23, 42, 0.04),
-          0 12px 36px rgba(15, 23, 42, 0.06);
-        transition:
-          padding 0.3s ease,
-          margin 0.3s ease,
-          box-shadow 0.3s ease;
-      }
-
-      .lookup-stage--compact {
-        padding: 1.25rem 1.15rem;
-        margin-bottom: 1rem;
-        gap: 0.85rem;
-        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
-      }
-
-      .lookup-stage--compact .lookup-title {
-        font-size: clamp(1.05rem, 3.5vw, 1.25rem);
-        margin-bottom: 0;
-      }
-
-      .lookup-stage-copy {
-        max-width: 440px;
-      }
-
-      .lookup-title {
-        font-family: var(--font-display);
-        font-size: clamp(1.35rem, 4vw, 1.85rem);
-        font-weight: 800;
-        color: var(--color-primary);
-        line-height: 1.35;
-        margin: 0 0 0.6rem;
-      }
-
-      .lookup-lead {
-        margin: 0;
-        color: var(--color-text-muted);
-        line-height: 1.7;
-        font-size: 0.96rem;
-        max-width: 38ch;
-        margin-inline: auto;
-      }
-
-      .lookup-form {
-        width: 100%;
-        max-width: 340px;
-        display: grid;
-        gap: 0.75rem;
-        padding-top: 0.25rem;
-      }
-
-      .lookup-label {
-        font-size: 0.84rem;
-        font-weight: 700;
-        color: var(--color-text-muted);
-        margin: 0;
-      }
-
-      .lookup-input-wrap {
-        position: relative;
-      }
-
-      .lookup-input-wrap::before {
-        content: '#';
-        position: absolute;
-        right: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
-        font-family: var(--font-display);
-        font-size: 1rem;
-        font-weight: 700;
-        color: rgba(30, 58, 138, 0.22);
-        pointer-events: none;
-      }
-
-      .lookup-input-wrap input {
-        width: 100%;
-        text-align: center;
-        font-family: var(--font-display);
-        font-size: 1.25rem;
-        letter-spacing: 0.12em;
-        font-weight: 700;
-        padding: 0.9rem 2.4rem;
-        border: 1.5px solid #e5e7eb;
-        border-radius: 12px;
-        background: var(--color-surface);
-        transition:
-          border-color 0.2s ease,
-          background 0.2s ease,
-          box-shadow 0.2s ease;
-      }
-
-      .lookup-input-wrap input:focus {
-        outline: none;
-        border-color: var(--color-primary-light);
-        background: #fff;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-      }
-
-      .lookup-submit {
-        width: 100%;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        margin-top: 0.25rem;
-        border-radius: 12px;
-      }
-
-      .lookup-spinner {
-        width: 1rem;
-        height: 1rem;
-        border: 2px solid rgba(255, 255, 255, 0.35);
-        border-top-color: #fff;
-        border-radius: 50%;
-        animation: spin 0.7s linear infinite;
-      }
-
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      .field-error {
-        color: #dc2626;
-        font-size: 0.84rem;
-        text-align: center;
-        margin: -0.15rem 0 0;
-      }
-
-      .lookup-notice {
-        padding: 0.7rem 0.9rem;
-        border-radius: 10px;
-        background: #fffbeb;
-        border: 1px solid #fde68a;
-        color: #92400e;
-        font-size: 0.88rem;
-        line-height: 1.55;
-        text-align: center;
-      }
-
+      /* ── Rank card ── */
       .rank-card {
-        border-radius: 20px;
+        border-radius: 16px;
         overflow: hidden;
         background: #fff;
         border: 1px solid rgba(30, 58, 138, 0.08);
         box-shadow:
           0 1px 2px rgba(15, 23, 42, 0.04),
-          0 20px 50px rgba(15, 23, 42, 0.1);
+          0 24px 56px rgba(15, 23, 42, 0.1);
         animation: rank-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1);
       }
 
       .rank-header {
-        padding: 1.5rem 1.25rem 1.25rem;
-        background: linear-gradient(160deg, #0f172a 0%, #1e3a8a 100%);
+        padding: 1.35rem 1.25rem 1.2rem;
+        background: linear-gradient(
+          155deg,
+          #0f172a 0%,
+          #1e3a8a 60%,
+          #1e40af 100%
+        );
         color: #fff;
         text-align: center;
       }
 
+      .rank-header-top {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.85rem;
+      }
+
+      .rank-track-badge {
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.25rem 0.65rem;
+        border-radius: 999px;
+        background: rgba(245, 158, 11, 0.2);
+        border: 1px solid rgba(245, 158, 11, 0.35);
+        color: var(--color-accent-light);
+      }
+
+      .rank-year {
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.25rem 0.55rem;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        opacity: 0.9;
+      }
+
       .rank-student-name {
         font-family: var(--font-display);
-        font-size: clamp(1.15rem, 4vw, 1.45rem);
+        font-size: clamp(1.2rem, 4vw, 1.5rem);
         font-weight: 800;
         line-height: 1.45;
         margin: 0 0 0.75rem;
@@ -340,68 +264,121 @@ const THANAWEYA_MAX_SCORE = 320;
         align-items: center;
         gap: 0.15rem;
         margin: 0;
-        padding: 0.5rem 1rem;
-        border-radius: 10px;
+        padding: 0.45rem 0.95rem;
+        border-radius: 6px;
         background: rgba(255, 255, 255, 0.07);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.12);
       }
 
       .rank-seating-label {
-        font-size: 0.68rem;
-        opacity: 0.7;
+        font-size: 0.65rem;
+        opacity: 0.75;
       }
 
       .rank-seating-no {
         font-family: var(--font-display);
         font-size: 1.05rem;
         font-weight: 800;
-        letter-spacing: 0.1em;
+        letter-spacing: 0.04em;
         color: var(--color-accent-light);
       }
 
       .rank-body {
         padding: 1.75rem 1.25rem 1.5rem;
+      }
+
+      .rank-spotlight {
         text-align: center;
-      }
-
-      .rank-badge-wrap {
         margin-bottom: 1.5rem;
+        padding: 1.35rem 1rem 1.25rem;
+        border-radius: 12px;
+        background: linear-gradient(180deg, #fffbeb 0%, #fef9ee 100%);
+        border: 1px solid #f0dfa8;
       }
 
-      .rank-badge {
-        display: inline-flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        width: clamp(140px, 36vw, 168px);
-        height: clamp(140px, 36vw, 168px);
-        border-radius: 50%;
-        background: linear-gradient(145deg, #fffbeb 0%, #fef3c7 100%);
-        border: 3px solid #fbbf24;
-        box-shadow: 0 8px 28px rgba(217, 119, 6, 0.18);
-        margin-bottom: 0.85rem;
-      }
-
-      .rank-badge-label {
+      .rank-spotlight-label {
+        margin: 0 0 0.35rem;
         font-size: 0.78rem;
         font-weight: 700;
         color: #92400e;
-        margin-bottom: 0.15rem;
+        letter-spacing: 0.04em;
       }
 
-      .rank-badge-value {
+      .rank-spotlight-value {
+        margin: 0;
         font-family: var(--font-display);
-        font-size: clamp(2.4rem, 8vw, 3rem);
+        font-size: clamp(3rem, 14vw, 4.25rem);
         font-weight: 800;
         line-height: 1;
         color: var(--color-primary);
+        letter-spacing: -0.02em;
       }
 
-      .rank-subtitle {
-        margin: 0;
-        font-size: 0.95rem;
+      .rank-spotlight-of {
+        margin: 0.45rem 0 1.15rem;
+        font-size: 1rem;
         color: var(--color-text-muted);
-        line-height: 1.6;
+        line-height: 1.5;
+      }
+
+      .rank-spotlight-of strong {
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: 1.15rem;
+        color: #78350f;
+      }
+
+      .rank-stand {
+        margin-bottom: 0.85rem;
+      }
+
+      .rank-stand-track {
+        position: relative;
+        height: 8px;
+        border-radius: 999px;
+        background: linear-gradient(
+          90deg,
+          #2563eb 0%,
+          #93c5fd 50%,
+          #e5e7eb 100%
+        );
+        overflow: visible;
+      }
+
+      .rank-stand-marker {
+        position: absolute;
+        top: 50%;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--color-accent);
+        border: 3px solid #fff;
+        box-shadow: 0 2px 8px rgba(217, 119, 6, 0.45);
+        transform: translate(-50%, -50%);
+        transition: inset-inline-start 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .rank-stand-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0.45rem;
+        font-size: 0.62rem;
+        font-weight: 600;
+        color: var(--color-text-muted);
+      }
+
+      .rank-percentile {
+        margin: 0;
+        font-size: 0.88rem;
+        color: #78350f;
+        line-height: 1.5;
+      }
+
+      .rank-percentile strong {
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: 1.05rem;
+        color: var(--color-primary);
       }
 
       .rank-unavailable {
@@ -410,6 +387,7 @@ const THANAWEYA_MAX_SCORE = 320;
         border-radius: 12px;
         background: #fffbeb;
         border: 1px solid #fde68a;
+        text-align: center;
       }
 
       .rank-unavailable-title {
@@ -433,23 +411,33 @@ const THANAWEYA_MAX_SCORE = 320;
       }
 
       .rank-meta-item {
-        padding: 0.8rem 0.7rem;
+        padding: 0.85rem 0.75rem;
         background: var(--color-surface);
         border: 1px solid rgba(30, 58, 138, 0.06);
         border-radius: 12px;
+        text-align: center;
       }
 
       .rank-meta-label {
         display: block;
         font-size: 0.68rem;
+        font-weight: 700;
         color: var(--color-text-muted);
-        margin-bottom: 0.15rem;
+        margin-bottom: 0.25rem;
       }
 
       .rank-meta-value {
-        font-weight: 700;
-        font-size: 0.9rem;
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: clamp(1.05rem, 3.5vw, 1.2rem);
         color: var(--color-primary);
+        line-height: 1.2;
+      }
+
+      .rank-meta-denom {
+        font-size: 0.78em;
+        font-weight: 600;
+        opacity: 0.55;
       }
 
       .rank-actions {
@@ -478,13 +466,12 @@ const THANAWEYA_MAX_SCORE = 320;
           padding-bottom: 2rem;
         }
 
-        .lookup-stage {
-          padding: 1.35rem 1rem;
-          border-radius: 16px;
-        }
-
         .rank-meta {
           grid-template-columns: 1fr;
+        }
+
+        .rank-stand-labels {
+          font-size: 0.58rem;
         }
       }
 
@@ -493,8 +480,8 @@ const THANAWEYA_MAX_SCORE = 320;
           animation: none;
         }
 
-        .lookup-spinner {
-          animation: none;
+        .rank-stand-marker {
+          transition: none;
         }
       }
     `,
@@ -506,6 +493,7 @@ export class TrackRankComponent {
 
   readonly thanaweyaMaxScore = THANAWEYA_MAX_SCORE;
   readonly trackLabels = TRACK_LABELS;
+  readonly fmt = formatNumber;
 
   loading = false;
   error = '';
@@ -556,6 +544,26 @@ export class TrackRankComponent {
 
   rankAriaLabel(result: StudentResult): string {
     return `الترتيب ${result.trackRank} من ${result.trackTotalStudents} في ${this.trackLabel(result.track!)}`;
+  }
+
+  rankPositionPercent(result: StudentResult): number {
+    if (!this.hasRank(result)) return 0;
+    const rank = result.trackRank!;
+    const total = result.trackTotalStudents!;
+    if (total <= 1) return 0;
+    return Math.min(Math.max(((rank - 1) / (total - 1)) * 100, 0), 100);
+  }
+
+  rankPercentile(result: StudentResult): string {
+    if (!this.hasRank(result)) return '0';
+    const rank = result.trackRank!;
+    const total = result.trackTotalStudents!;
+    const pct = ((total - rank + 1) / total) * 100;
+    return pct.toFixed(1);
+  }
+
+  scorePercentage(totalDegree: number): string {
+    return ((totalDegree / THANAWEYA_MAX_SCORE) * 100).toFixed(2);
   }
 
   predictQueryParams(): { score: number; track?: string } {
