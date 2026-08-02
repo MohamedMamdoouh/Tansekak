@@ -28,6 +28,7 @@ public class JsonSeedService(
         if (await db.AdmissionCutoffs.AnyAsync(cancellationToken))
         {
             logger.LogInformation("Database already seeded.");
+            await SyncCurrentAdmissionYearFromSeedAsync(cancellationToken);
             return;
         }
 
@@ -116,6 +117,38 @@ public class JsonSeedService(
             universities.Count,
             validUniversityFaculties.Count,
             validCutoffs.Count);
+    }
+
+    private async Task SyncCurrentAdmissionYearFromSeedAsync(CancellationToken cancellationToken)
+    {
+        var dataPath = SeedDataPathResolver.Resolve(env);
+        if (dataPath is null)
+            return;
+
+        var years = await ReadJsonAsync<SeedAdmissionYear>(
+            Path.Combine(dataPath, "AdmissionYears.json"),
+            cancellationToken);
+        var seedCurrent = years.FirstOrDefault(x => x.IsCurrent);
+        if (seedCurrent is null)
+            return;
+
+        var dbCurrent = await db.AdmissionYears
+            .FirstOrDefaultAsync(x => x.IsCurrent, cancellationToken);
+        if (dbCurrent is null)
+            return;
+
+        if (dbCurrent.Year == seedCurrent.Year &&
+            dbCurrent.MaximumScore == seedCurrent.MaximumScore)
+            return;
+
+        logger.LogInformation(
+            "Syncing current admission year from seed: {OldYear} -> {NewYear}.",
+            dbCurrent.Year,
+            seedCurrent.Year);
+
+        dbCurrent.Year = seedCurrent.Year;
+        dbCurrent.MaximumScore = seedCurrent.MaximumScore;
+        await db.SaveChangesAsync(cancellationToken);
     }
 
     private static Faculty MapFaculty(SeedFaculty seed) => new()
