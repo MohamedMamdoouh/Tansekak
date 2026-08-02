@@ -83,129 +83,139 @@ const THANAWEYA_MAX_SCORE = 320;
       </section>
 
       @if (result) {
-        <section class="result-slip" aria-label="نتيجة الطالب">
-          <div class="slip-sheet">
-            <header class="slip-header">
-              <div class="slip-header-brand">
-                <span class="slip-header-eyebrow">بيان نتيجة</span>
-                <h2 class="slip-header-title">الثانوية العامة</h2>
-              </div>
-              <div class="slip-header-year">
-                <span class="slip-header-year-label">عام</span>
-                <span class="slip-header-year-value">{{
-                  result.year
-                }}</span>
-              </div>
-            </header>
-
-            <div class="slip-divider" aria-hidden="true"></div>
-
-            <div class="slip-identity">
-              <p class="slip-name">{{ result.arabicName }}</p>
-              <div class="slip-seating">
-                <span class="slip-seating-label">رقم الجلوس</span>
-                <span class="slip-seating-no">{{
+        <section class="result-card" aria-label="نتيجة الطالب">
+          <div class="result-profile">
+            <div class="result-avatar" aria-hidden="true">
+              {{ studentInitial(result.arabicName) }}
+            </div>
+            <div class="result-profile-body">
+              <p class="result-eyebrow">
+                الثانوية العامة
+                <span class="result-year-badge num">{{ result.year }}</span>
+              </p>
+              <h2 class="result-name">{{ result.arabicName }}</h2>
+              <p class="result-seating">
+                <span class="result-seating-label">رقم الجلوس</span>
+                <span class="result-seating-no num">{{
                   result.seatingNo
                 }}</span>
-              </div>
+              </p>
             </div>
+          </div>
 
+          <div
+            class="result-score"
+            [attr.aria-label]="
+              'المجموع الكلي ' +
+              result.totalDegree +
+              ' من ' +
+              thanaweyaMaxScore +
+              '، النسبة ' +
+              resultPercentage(result.totalDegree) +
+              '%'
+            "
+          >
             <div
-              class="slip-score"
-              [attr.aria-label]="
-                'المجموع الكلي ' +
-                result.totalDegree +
-                ' من ' +
-                thanaweyaMaxScore +
-                '، النسبة ' +
-                resultPercentage(result.totalDegree) +
-                '%'
-              "
+              class="result-score-ring"
+              [style.--score-pct]="scoreProgress(result.totalDegree)"
             >
-              <div class="slip-score-head">
-                <span class="slip-score-label">المجموع الكلي</span>
-                <span class="slip-score-pct num"
-                  >{{ resultPercentage(result.totalDegree) }}%</span
-                >
-              </div>
-              <div class="slip-score-display">
-                <span class="slip-score-value">{{
+              <div class="result-score-ring-inner">
+                <span class="result-score-value num">{{
                   result.totalDegree
                 }}</span>
-                <span class="slip-score-max"
+                <span class="result-score-max"
                   >/ {{ thanaweyaMaxScore }}</span
                 >
               </div>
-              <div class="slip-scale" aria-hidden="true">
-                <div class="slip-scale-track">
-                  <div
-                    class="slip-scale-fill"
-                    [style.width.%]="scoreProgress(result.totalDegree)"
-                  ></div>
-                </div>
-                <div class="slip-scale-labels">
-                  <span>0</span>
-                  <span>{{ thanaweyaMaxScore }}</span>
-                </div>
-              </div>
             </div>
-
-            <dl class="slip-details">
-              <div class="slip-detail">
-                <dt>حالة الطالب</dt>
-                <dd>{{ result.studentCaseDesc }}</dd>
-              </div>
-              @if (result.track) {
-                <div class="slip-detail">
-                  <dt>الشعبة</dt>
-                  <dd>{{ trackLabel(result.track) }}</dd>
-                </div>
-              }
-            </dl>
-
-            @if (hasTrackRank(result)) {
-              <div class="slip-rank">
-                <div class="slip-rank-head">
-                  <span class="slip-rank-label">الترتيب على الشعبة</span>
-                  @if (result.track) {
-                    <span class="slip-rank-track">{{
-                      trackLabel(result.track)
-                    }}</span>
-                  }
-                </div>
-                <div class="slip-rank-stats">
-                  <div class="slip-rank-stat slip-rank-stat--primary">
-                    <span class="slip-rank-stat-value num">{{
-                      fmt(result.trackRank)
-                    }}</span>
-                    <span class="slip-rank-stat-label">ترتيبك</span>
-                  </div>
-                  <span class="slip-rank-sep" aria-hidden="true">من</span>
-                  <div class="slip-rank-stat">
-                    <span class="slip-rank-stat-value num">{{
-                      fmt(result.trackTotalStudents)
-                    }}</span>
-                    <span class="slip-rank-stat-label">طالب</span>
-                  </div>
-                </div>
-                <a class="slip-rank-link" routerLink="/track-rank"
-                  >تفاصيل الترتيب ←</a
+            <div class="result-score-meta">
+              <div class="result-score-head">
+                <span class="result-score-label">المجموع الكلي</span>
+                <span class="result-score-pct num"
+                  >{{ resultPercentage(result.totalDegree) }}%</span
                 >
               </div>
-            }
-
-            <footer class="slip-footer">
-              <p class="slip-footer-hint">الخطوة التالية</p>
-              <a
-                class="slip-cta"
-                [routerLink]="['/predict']"
-                [queryParams]="predictQueryParams()"
-              >
-                <span>اعرف الكليات المتاحة لمجموعك</span>
-                <span class="slip-cta-arrow" aria-hidden="true">←</span>
-              </a>
-            </footer>
+              <div class="result-score-bar" aria-hidden="true">
+                <div
+                  class="result-score-bar-fill"
+                  [style.width.%]="scoreProgress(result.totalDegree)"
+                ></div>
+              </div>
+            </div>
           </div>
+
+          <div class="result-details">
+            <div class="result-detail">
+              <span class="result-detail-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </span>
+              <div class="result-detail-text">
+                <span class="result-detail-label">حالة الطالب</span>
+                <span class="result-detail-value">{{
+                  result.studentCaseDesc
+                }}</span>
+              </div>
+            </div>
+            @if (result.track) {
+              <div class="result-detail">
+                <span class="result-detail-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </span>
+                <div class="result-detail-text">
+                  <span class="result-detail-label">الشعبة</span>
+                  <span class="result-detail-value">{{
+                    trackLabel(result.track)
+                  }}</span>
+                </div>
+              </div>
+            }
+          </div>
+
+          @if (hasTrackRank(result)) {
+            <div class="result-rank">
+              <div class="result-rank-head">
+                <span class="result-rank-label">الترتيب على الشعبة</span>
+                @if (result.track) {
+                  <span class="result-rank-track">{{
+                    trackLabel(result.track)
+                  }}</span>
+                }
+              </div>
+              <div class="result-rank-stats">
+                <div class="result-rank-stat result-rank-stat--primary">
+                  <span class="result-rank-stat-value num">{{
+                    fmt(result.trackRank)
+                  }}</span>
+                  <span class="result-rank-stat-label">ترتيبك</span>
+                </div>
+                <span class="result-rank-sep" aria-hidden="true">من</span>
+                <div class="result-rank-stat">
+                  <span class="result-rank-stat-value num">{{
+                    fmt(result.trackTotalStudents)
+                  }}</span>
+                  <span class="result-rank-stat-label">طالب</span>
+                </div>
+              </div>
+              <a class="result-rank-link" routerLink="/track-rank"
+                >تفاصيل الترتيب ←</a
+              >
+            </div>
+          }
+
+          <footer class="result-footer">
+            <a
+              class="result-cta"
+              [routerLink]="['/predict']"
+              [queryParams]="predictQueryParams()"
+            >
+              <span>اعرف الكليات المتاحة لمجموعك</span>
+              <span class="result-cta-arrow" aria-hidden="true">←</span>
+            </a>
+          </footer>
         </section>
       }
     </div>
@@ -222,272 +232,270 @@ const THANAWEYA_MAX_SCORE = 320;
         margin-bottom: 1.25rem;
       }
 
-      /* ── Result slip ── */
-      .result-slip {
-        animation: slip-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1);
-      }
-
-      .slip-sheet {
-        position: relative;
-        overflow: hidden;
-        padding: 1.5rem 1.35rem 1.6rem;
-        border-radius: 6px;
-        background: linear-gradient(180deg, #fdfbf7 0%, #f7f3ec 100%);
-        border: 1px solid #cfc8bc;
-        box-shadow:
-          0 28px 56px rgba(15, 23, 42, 0.11),
-          0 4px 12px rgba(15, 23, 42, 0.05),
-          inset 0 1px 0 rgba(255, 255, 255, 0.8);
-      }
-
-      .slip-header {
-        position: relative;
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 1rem;
-        padding-bottom: 1rem;
-      }
-
-      .slip-header-eyebrow {
-        display: block;
-        font-size: 0.68rem;
-        font-weight: 700;
-        color: var(--color-accent);
-        margin-bottom: 0.2rem;
-      }
-
-      .slip-header-title {
-        margin: 0;
-        font-family: var(--font-display);
-        font-size: clamp(1.1rem, 3.5vw, 1.3rem);
-        font-weight: 800;
-        color: var(--color-primary);
-        line-height: 1.35;
-      }
-
-      .slip-header-year {
-        flex-shrink: 0;
-        display: grid;
-        justify-items: center;
-        gap: 0.1rem;
-        padding: 0.5rem 0.85rem;
-        border: 2px solid var(--color-primary);
-        border-radius: 4px;
+      /* ── Result card ── */
+      .result-card {
+        animation: result-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        padding: 1.35rem;
+        border-radius: 20px;
         background: #fff;
+        border: 1px solid rgba(30, 58, 138, 0.08);
+        box-shadow:
+          0 16px 48px rgba(15, 23, 42, 0.08),
+          0 2px 8px rgba(15, 23, 42, 0.04);
       }
 
-      .slip-header-year-label,
-      .slip-header-year-value {
-        font-family: var(--font-display);
-        font-weight: 800;
-        color: var(--color-primary);
-      }
-
-      .slip-header-year-label {
-        font-size: 0.62rem;
-        color: var(--color-text-muted);
-      }
-
-      .slip-header-year-value {
-        font-size: 1.2rem;
-        line-height: 1;
-      }
-
-      .slip-divider {
-        height: 3px;
-        margin-bottom: 1.2rem;
-        border-radius: 1px;
-        background: repeating-linear-gradient(
-          90deg,
-          var(--color-primary) 0,
-          var(--color-primary) 8px,
-          var(--color-accent) 8px,
-          var(--color-accent) 16px
-        );
-      }
-
-      .slip-identity {
-        position: relative;
-        text-align: center;
-        margin-bottom: 1.4rem;
-      }
-
-      .slip-name {
-        margin: 0 0 0.9rem;
-        font-family: var(--font-display);
-        font-size: clamp(1.3rem, 4.5vw, 1.6rem);
-        font-weight: 800;
-        line-height: 1.45;
-        color: #0f172a;
-      }
-
-      .slip-seating {
-        display: inline-grid;
-        gap: 0.2rem;
-        padding: 0.5rem 1.25rem;
-        border: 1px solid #b8b0a4;
-        border-radius: 4px;
-        background: rgba(255, 255, 255, 0.75);
-      }
-
-      .slip-seating-label {
-        font-size: 0.65rem;
-        font-weight: 700;
-        color: var(--color-text-muted);
-      }
-
-      .slip-seating-no {
-        font-family: var(--font-display);
-        font-size: 1.1rem;
-        font-weight: 800;
-        letter-spacing: 0.06em;
-        color: var(--color-primary);
-      }
-
-      .slip-score {
-        position: relative;
-        margin-bottom: 1.25rem;
-        padding: 1.25rem 1.1rem 1.05rem;
-        border-radius: 6px;
-        background: linear-gradient(
-          155deg,
-          #0f172a 0%,
-          #1e3a8a 55%,
-          #1e40af 100%
-        );
-        color: #fff;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-      }
-
-      .slip-score-head {
+      .result-profile {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
-        margin-bottom: 0.6rem;
+        gap: 1rem;
+        margin-bottom: 1.35rem;
+        padding-bottom: 1.25rem;
+        border-bottom: 1px solid #f1f5f9;
       }
 
-      .slip-score-label {
-        font-size: 0.74rem;
-        font-weight: 700;
-        opacity: 0.85;
-      }
-
-      .slip-score-value,
-      .slip-score-max,
-      .slip-score-pct {
+      .result-avatar {
+        flex-shrink: 0;
+        display: grid;
+        place-items: center;
+        width: 3.25rem;
+        height: 3.25rem;
+        border-radius: 14px;
         font-family: var(--font-display);
+        font-size: 1.25rem;
         font-weight: 800;
-      }
-
-      .slip-score-pct {
-        font-size: 0.92rem;
-        color: var(--color-accent-light);
-        padding: 0.2rem 0.55rem;
-        border-radius: 999px;
-        background: rgba(245, 158, 11, 0.15);
-      }
-
-      .slip-score-display {
-        display: flex;
-        align-items: baseline;
-        justify-content: center;
-        gap: 0.4rem;
-        margin-bottom: 1.05rem;
-        line-height: 1;
-      }
-
-      .slip-score-value {
-        font-size: clamp(3.1rem, 13vw, 4rem);
-        letter-spacing: -0.01em;
-      }
-
-      .slip-score-max {
-        font-size: clamp(1rem, 3.5vw, 1.25rem);
-        font-weight: 600;
-        opacity: 0.55;
-      }
-
-      .slip-scale-track {
-        height: 7px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.14);
-        overflow: hidden;
-      }
-
-      .slip-scale-fill {
-        height: 100%;
-        border-radius: inherit;
+        color: var(--color-primary);
         background: linear-gradient(
-          90deg,
-          var(--color-accent-light) 0%,
-          var(--color-accent) 100%
+          135deg,
+          var(--color-surface-alt) 0%,
+          #dbeafe 100%
         );
-        transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+        border: 1px solid rgba(37, 99, 235, 0.12);
       }
 
-      .slip-scale-labels {
+      .result-profile-body {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .result-eyebrow {
         display: flex;
-        justify-content: space-between;
-        margin-top: 0.4rem;
-        font-size: 0.65rem;
-        font-weight: 600;
-        opacity: 0.55;
-      }
-
-      .slip-details {
-        margin: 0 0 1rem;
-        padding: 0;
-        display: grid;
-        gap: 0;
-        border: 1px solid #ddd6cb;
-        border-radius: 4px;
-        overflow: hidden;
-        background: #fff;
-      }
-
-      .slip-detail {
-        display: grid;
-        grid-template-columns: minmax(7rem, 38%) 1fr;
-        gap: 0.75rem;
-        padding: 0.8rem 1rem;
-        border-bottom: 1px solid #f0ece6;
-      }
-
-      .slip-detail:last-child {
-        border-bottom: none;
-      }
-
-      .slip-detail dt,
-      .slip-detail dd {
-        margin: 0;
-        line-height: 1.5;
-      }
-
-      .slip-detail dt {
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin: 0 0 0.35rem;
         font-size: 0.72rem;
         font-weight: 700;
         color: var(--color-text-muted);
       }
 
-      .slip-detail dd {
-        font-size: 0.9rem;
-        font-weight: 700;
+      .result-year-badge {
+        padding: 0.15rem 0.5rem;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 800;
         color: var(--color-primary);
+        background: var(--color-surface-alt);
+      }
+
+      .result-name {
+        margin: 0 0 0.4rem;
+        font-family: var(--font-display);
+        font-size: clamp(1.15rem, 4vw, 1.35rem);
+        font-weight: 800;
+        line-height: 1.45;
+        color: #0f172a;
         overflow-wrap: anywhere;
       }
 
-      .slip-rank {
-        margin-bottom: 1.15rem;
-        padding: 1rem 1.05rem;
-        border-radius: 6px;
-        background: #fff;
-        border: 1px solid #e8dfd0;
-        box-shadow: 0 4px 16px rgba(217, 119, 6, 0.08);
+      .result-seating {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        flex-wrap: wrap;
+        margin: 0;
+        font-size: 0.82rem;
       }
 
-      .slip-rank-head {
+      .result-seating-label {
+        font-weight: 600;
+        color: var(--color-text-muted);
+      }
+
+      .result-seating-no {
+        font-family: var(--font-display);
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        color: var(--color-primary);
+        padding: 0.15rem 0.55rem;
+        border-radius: 6px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+      }
+
+      .result-score {
+        display: flex;
+        align-items: center;
+        gap: 1.15rem;
+        margin-bottom: 1.25rem;
+        padding: 1.15rem 1.1rem;
+        border-radius: 16px;
+        background: linear-gradient(
+          135deg,
+          #f8fafc 0%,
+          var(--color-surface-alt) 100%
+        );
+        border: 1px solid rgba(37, 99, 235, 0.1);
+      }
+
+      .result-score-ring {
+        --score-pct: 0;
+        flex-shrink: 0;
+        display: grid;
+        place-items: center;
+        width: 6.5rem;
+        height: 6.5rem;
+        border-radius: 50%;
+        background: conic-gradient(
+          var(--color-primary-light) calc(var(--score-pct) * 1%),
+          #e2e8f0 calc(var(--score-pct) * 1%)
+        );
+        transition: background 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .result-score-ring-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 5.5rem;
+        height: 5.5rem;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+        line-height: 1.1;
+      }
+
+      .result-score-value {
+        font-family: var(--font-display);
+        font-size: clamp(1.65rem, 6vw, 1.85rem);
+        font-weight: 800;
+        color: var(--color-primary);
+      }
+
+      .result-score-max {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--color-text-muted);
+      }
+
+      .result-score-meta {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .result-score-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-bottom: 0.65rem;
+      }
+
+      .result-score-label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--color-text);
+      }
+
+      .result-score-pct {
+        font-family: var(--font-display);
+        font-size: 0.88rem;
+        font-weight: 800;
+        color: var(--color-accent);
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+        background: rgba(217, 119, 6, 0.1);
+      }
+
+      .result-score-bar {
+        height: 8px;
+        border-radius: 999px;
+        background: #e2e8f0;
+        overflow: hidden;
+      }
+
+      .result-score-bar-fill {
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(
+          90deg,
+          var(--color-primary-light) 0%,
+          var(--color-primary) 100%
+        );
+        transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .result-details {
+        display: grid;
+        gap: 0.65rem;
+        margin-bottom: 1.15rem;
+      }
+
+      .result-detail {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.85rem 0.95rem;
+        border-radius: 12px;
+        background: #fafbfc;
+        border: 1px solid #f1f5f9;
+      }
+
+      .result-detail-icon {
+        flex-shrink: 0;
+        display: grid;
+        place-items: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 8px;
+        color: var(--color-primary-light);
+        background: var(--color-surface-alt);
+      }
+
+      .result-detail-icon svg {
+        width: 1.1rem;
+        height: 1.1rem;
+      }
+
+      .result-detail-text {
+        display: grid;
+        gap: 0.15rem;
+        min-width: 0;
+      }
+
+      .result-detail-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: var(--color-text-muted);
+      }
+
+      .result-detail-value {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: var(--color-primary);
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+      }
+
+      .result-rank {
+        margin-bottom: 1.15rem;
+        padding: 1rem 1.05rem;
+        border-radius: 14px;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+      }
+
+      .result-rank-head {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -496,23 +504,23 @@ const THANAWEYA_MAX_SCORE = 320;
         margin-bottom: 0.85rem;
       }
 
-      .slip-rank-label {
+      .result-rank-label {
         font-size: 0.72rem;
         font-weight: 700;
         color: var(--color-text-muted);
       }
 
-      .slip-rank-track {
+      .result-rank-track {
         font-size: 0.72rem;
         font-weight: 700;
         color: #92400e;
         padding: 0.2rem 0.55rem;
         border-radius: 999px;
-        background: #fffbeb;
+        background: #fff;
         border: 1px solid #fde68a;
       }
 
-      .slip-rank-stats {
+      .result-rank-stats {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -520,19 +528,19 @@ const THANAWEYA_MAX_SCORE = 320;
         margin-bottom: 0.85rem;
       }
 
-      .slip-rank-stat {
+      .result-rank-stat {
         display: grid;
         gap: 0.1rem;
         text-align: center;
         min-width: 0;
       }
 
-      .slip-rank-stat--primary .slip-rank-stat-value {
+      .result-rank-stat--primary .result-rank-stat-value {
         color: var(--color-primary);
         font-size: clamp(1.75rem, 6vw, 2.25rem);
       }
 
-      .slip-rank-stat-value {
+      .result-rank-stat-value {
         font-family: var(--font-display);
         font-size: clamp(1.35rem, 4.5vw, 1.65rem);
         font-weight: 800;
@@ -540,20 +548,20 @@ const THANAWEYA_MAX_SCORE = 320;
         color: #78350f;
       }
 
-      .slip-rank-stat-label {
+      .result-rank-stat-label {
         font-size: 0.68rem;
         font-weight: 700;
         color: var(--color-text-muted);
       }
 
-      .slip-rank-sep {
+      .result-rank-sep {
         font-size: 0.85rem;
         font-weight: 700;
         color: #a8a29e;
         flex-shrink: 0;
       }
 
-      .slip-rank-link {
+      .result-rank-link {
         display: block;
         text-align: center;
         font-size: 0.82rem;
@@ -561,31 +569,22 @@ const THANAWEYA_MAX_SCORE = 320;
         color: var(--color-primary-light);
       }
 
-      .slip-rank-link:hover {
+      .result-rank-link:hover {
         color: var(--color-primary);
       }
 
-      .slip-footer {
-        padding-top: 1.15rem;
-        border-top: 1px dashed #cfc8bc;
+      .result-footer {
+        padding-top: 0.25rem;
       }
 
-      .slip-footer-hint {
-        margin: 0 0 0.65rem;
-        font-size: 0.68rem;
-        font-weight: 700;
-        color: var(--color-text-muted);
-        text-align: center;
-      }
-
-      .slip-cta {
+      .result-cta {
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 0.55rem;
         width: 100%;
         padding: 0.95rem 1.15rem;
-        border-radius: 6px;
+        border-radius: 12px;
         font-weight: 700;
         font-size: 0.95rem;
         color: #fff;
@@ -596,26 +595,26 @@ const THANAWEYA_MAX_SCORE = 320;
           transform 0.2s ease;
       }
 
-      .slip-cta:hover {
+      .result-cta:hover {
         background: var(--color-primary);
         transform: translateY(-1px);
         box-shadow: 0 8px 24px rgba(37, 99, 235, 0.28);
       }
 
-      .slip-cta-arrow {
+      .result-cta-arrow {
         font-size: 1.1rem;
         color: var(--color-accent-light);
         transition: transform 0.2s ease;
       }
 
-      .slip-cta:hover .slip-cta-arrow {
+      .result-cta:hover .result-cta-arrow {
         transform: translateX(-3px);
       }
 
-      @keyframes slip-enter {
+      @keyframes result-enter {
         from {
           opacity: 0;
-          transform: translateY(18px);
+          transform: translateY(14px);
         }
         to {
           opacity: 1;
@@ -628,44 +627,43 @@ const THANAWEYA_MAX_SCORE = 320;
           padding-bottom: 2rem;
         }
 
-        .slip-sheet {
-          padding: 1.15rem 1rem 1.3rem;
+        .result-card {
+          padding: 1.1rem;
         }
 
-        .slip-header {
+        .result-profile {
+          align-items: flex-start;
+        }
+
+        .result-score {
           flex-direction: column;
-          align-items: stretch;
+          text-align: center;
         }
 
-        .slip-header-year {
-          justify-self: start;
-          width: fit-content;
+        .result-score-meta {
+          width: 100%;
         }
 
-        .slip-detail {
-          grid-template-columns: 1fr;
-          gap: 0.25rem;
-        }
-
-        .slip-rank-stats {
+        .result-rank-stats {
           gap: 0.55rem;
         }
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .result-slip {
+        .result-card {
           animation: none;
         }
 
-        .slip-scale-fill {
+        .result-score-ring,
+        .result-score-bar-fill {
           transition: none;
         }
 
-        .slip-cta:hover {
+        .result-cta:hover {
           transform: none;
         }
 
-        .slip-cta:hover .slip-cta-arrow {
+        .result-cta:hover .result-cta-arrow {
           transform: none;
         }
       }
@@ -701,6 +699,11 @@ export class ThanaweyaResultComponent {
 
   trackLabel(track: string): string {
     return this.trackLabels[track] ?? track;
+  }
+
+  studentInitial(name: string): string {
+    const trimmed = name.trim();
+    return trimmed ? trimmed.charAt(0) : '؟';
   }
 
   onSeatingInput(event: Event): void {
