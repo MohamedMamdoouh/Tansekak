@@ -26,9 +26,9 @@ The following deviations apply to the MVP implementation:
 
 ## 1.1 Purpose
 
-**Tansekak** is a web application that helps Egyptian Thanaweya Amma students predict which public universities and faculties they are eligible for based on their total score and the previous year's official admission cutoffs.
+**Tansekak** is a web application that helps Egyptian Thanaweya Amma students predict which public universities and faculties they are eligible for based on their total score and the official 2026 admission cutoffs.
 
-The system does **NOT** predict future admission results. It only compares the student's score against the previous year's official admission data.
+The system compares the student's score against the current year's (2026) official admission data.
 
 The application is designed to be simple, fast, accurate, and updated every year after the official admission results are announced.
 
@@ -513,7 +513,7 @@ Represents one official admission cutoff.
 
 Example:
 
-2025
+2026
 
 Cairo University / جامعة القاهرة
 
@@ -1360,7 +1360,7 @@ Response
 
 {
 "appName": "tansekak",
-"currentYear": 2025,
+"currentYear": 2026,
 "maximumScore": 320,
 "nearThreshold": 0.99,
 "tracks": [

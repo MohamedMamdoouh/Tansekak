@@ -34,7 +34,7 @@ public static class CutoffSeedLoader
 
     public static string ResolveCutoffsFile(string dataPath)
     {
-        var defaultFile = Path.Combine(dataPath, "AdmissionCutoffs2025.json");
+        var defaultFile = Path.Combine(dataPath, "AdmissionCutoffs2026.json");
         if (File.Exists(defaultFile))
             return defaultFile;
 

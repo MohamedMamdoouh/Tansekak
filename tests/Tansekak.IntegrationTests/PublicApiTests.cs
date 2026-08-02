@@ -34,7 +34,7 @@ public class PublicApiTests : IClassFixture<TansekakWebApplicationFactory>
         var json = await response.Content.ReadFromJsonAsync<ApiEnvelope<ConfigData>>();
         Assert.NotNull(json);
         Assert.True(json!.Success);
-        Assert.Equal(2025, json.Data!.CurrentYear);
+        Assert.Equal(2026, json.Data!.CurrentYear);
     }
 
     [Fact]
@@ -255,7 +255,7 @@ public class PublicApiTests : IClassFixture<TansekakWebApplicationFactory>
         Assert.Equal("محمد أحمد", json.Data.ArabicName);
         Assert.Equal(295.5m, json.Data.TotalDegree);
         Assert.Equal("ناجح - علمي رياضة", json.Data.StudentCaseDesc);
-        Assert.Equal(2025, json.Data.Year);
+        Assert.Equal(2026, json.Data.Year);
         Assert.Equal("Mathematics", json.Data.Track);
     }
 

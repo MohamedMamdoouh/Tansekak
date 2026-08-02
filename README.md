@@ -1,6 +1,6 @@
 # Tansekak
 
-Tansekak is an admission eligibility checker for Egyptian Thanaweya Amma (high school) graduates. Students enter their academic track and total score; the app compares those values against official cutoff scores from the previous admission cycle and shows which university faculties they are likely eligible for.
+Tansekak is an admission eligibility checker for Egyptian Thanaweya Amma (high school) graduates. Students enter their academic track and total score; the app compares those values against official 2026 cutoff scores and shows which university faculties they are likely eligible for.
 
 Results are **indicative only** — final placement is decided by Egypt's official coordination system.
 
@@ -81,7 +81,7 @@ The Angular SPA lives in `client/`. In production, the API serves the built fron
 ```
 Tansekak/
 ├── client/                    # Angular 19 frontend
-├── SeededData/                # Initial JSON seed (catalog + 2025 cutoffs)
+├── SeededData/                # Initial JSON seed (catalog + 2026 cutoffs)
 ├── src/
 │   ├── Tansekak.Api/
 │   ├── Tansekak.Application/
@@ -315,8 +315,8 @@ Seed files in [`SeededData/`](SeededData/):
 | `Universities.json` | University catalog |
 | `Faculties.json` | Faculty catalog |
 | `UniversityFaculties.json` | University–faculty links |
-| `AdmissionYears.json` | Admission years (2025 seeded as current, max score 320) |
-| `AdmissionCutoffs2025.json` | Cutoff scores for 2025 |
+| `AdmissionYears.json` | Admission years (2026 seeded as current, max score 320) |
+| `AdmissionCutoffs2026.json` | Cutoff scores for 2026 |
 
 Seeding runs once when `AdmissionCutoffs` is empty. If partial data exists, business tables are cleared and re-seeded.
 

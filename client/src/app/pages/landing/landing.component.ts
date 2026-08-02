@@ -121,7 +121,7 @@ import { RouterLink } from '@angular/router';
             <div>
               <strong>بيانات حدود القبول محدثة</strong>
               <p class="text-muted" style="margin: 0.25rem 0 0">
-                بنعتمد على حدود القبول الرسمية لآخر سنة تنسيق.
+                بنعتمد على حدود القبول الرسمية لسنة 2026.
               </p>
             </div>
           </li>
