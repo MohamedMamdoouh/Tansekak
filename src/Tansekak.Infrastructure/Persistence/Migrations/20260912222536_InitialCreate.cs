@@ -84,7 +84,7 @@ namespace Tansekak.Infrastructure.Persistence.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false),
                     NameAr = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    AllowedTracks = table.Column<string>(type: "jsonb", nullable: false)
+                    AllowedTracks = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {

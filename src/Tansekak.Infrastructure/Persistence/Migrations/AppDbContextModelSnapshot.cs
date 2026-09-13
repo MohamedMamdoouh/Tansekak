@@ -251,8 +251,7 @@ namespace Tansekak.Infrastructure.Persistence.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("AllowedTracks")
-                        .IsRequired()
-                        .HasColumnType("jsonb");
+                        .IsRequired();
 
                     b.Property<string>("NameAr")
                         .IsRequired()

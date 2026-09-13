@@ -21,7 +21,6 @@ public class FacultyConfiguration : IEntityTypeConfiguration<Faculty>
                 new ValueComparer<List<AcademicTrack>>(
                     (a, b) => a!.SequenceEqual(b!),
                     v => v.Aggregate(0, (hash, track) => HashCode.Combine(hash, track)),
-                    v => v.ToList()))
-            .HasColumnType("jsonb");
+                    v => v.ToList()));
     }
 }
