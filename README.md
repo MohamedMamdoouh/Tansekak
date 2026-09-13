@@ -133,6 +133,8 @@ npm start
 
 ## Production deploy (MonsterASP + Cloudflare R2)
 
+**Setup guides:** [docs/PRODUCTION_SETUP.md](docs/PRODUCTION_SETUP.md) (step-by-step checklist) · [docs/production.env.example](docs/production.env.example) (environment variable template)
+
 Stack:
 
 | Layer    | Provider    | Role                                      |
@@ -176,10 +178,12 @@ cd client
 npm ci
 npm run build -- --configuration production
 
-# API (copy frontend output to wwwroot for single-host deploy)
-dotnet publish src/Tansekak.Api/Tansekak.Api.csproj -c Release -o ./publish
+# API — self-contained win-x86 for MonsterASP IIS (or use the MonsterASP publish profile)
+dotnet publish src/Tansekak.Api/Tansekak.Api.csproj -c Release -o ./publish --runtime win-x86 --self-contained true
 Copy-Item -Path client/dist/client/browser/* -Destination publish/wwwroot -Recurse -Force
 ```
+
+Alternatively, from Visual Studio: right-click **Tansekak.Api** → **Publish** → **MonsterASP** profile, then copy the frontend into `publish/wwwroot`.
 
 Publish `./publish` to your MonsterASP website using the WebDeploy profile.
 
@@ -411,8 +415,8 @@ cd client
 npm ci
 npm run build -- --configuration production
 
-# API (copy frontend output to wwwroot for single-host deploy)
-dotnet publish src/Tansekak.Api/Tansekak.Api.csproj -c Release -o ./publish
+# API — self-contained win-x86 for MonsterASP IIS
+dotnet publish src/Tansekak.Api/Tansekak.Api.csproj -c Release -o ./publish --runtime win-x86 --self-contained true
 Copy-Item -Path client/dist/client/browser/* -Destination publish/wwwroot -Recurse -Force
 ```
 

@@ -91,7 +91,7 @@ export function importErrorMessage(
   if (status >= 500) {
     return (
       response?.message ??
-      'حدث خطأ في الخادم اثناء الاستيراد. راجع سجل Render ثم حاول مرة اخرى.'
+      'حدث خطأ في الخادم اثناء الاستيراد. راجع سجل MonsterASP ثم حاول مرة اخرى.'
     );
   }
 

@@ -5,7 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Tansekak.Application;
+using Tansekak.Infrastructure.Configuration;
 using Tansekak.Application.Common;
 using Tansekak.Application.Interfaces;
 using Tansekak.Infrastructure.Identity;
@@ -83,6 +85,13 @@ public static class DependencyInjection
     public static async Task SeedDatabaseAsync(this IServiceProvider services)
     {
         using var scope = services.CreateScope();
+        var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        var environment = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>()
+            .CreateLogger("Tansekak.Startup");
+
+        ProductionConfigurationValidator.Validate(config, environment, logger);
+
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         if (db.Database.IsRelational())
             await db.Database.MigrateAsync();
