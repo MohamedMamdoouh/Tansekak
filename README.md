@@ -151,8 +151,8 @@ Stack:
 ### 1. Neon (database)
 
 1. Create a project at [neon.tech](https://neon.tech).
-2. Copy the **pooled** connection string (Npgsql format, SSL enabled).
-3. Set it as `ConnectionStrings__DefaultConnection` on Render (or use `DATABASE_URL`).
+2. Copy the **pooled** connection string (Npgsql keyword format or `postgresql://` URI).
+3. Set it as `ConnectionStrings__DefaultConnection` on Render (or use `DATABASE_URL`). URI values are converted automatically.
 
 ### 2. Render (web service)
 

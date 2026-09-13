@@ -18,7 +18,7 @@ Example format:
 Host=ep-xxx.region.aws.neon.tech;Database=neondb;Username=...;Password=...;SSL Mode=Require
 ```
 
-Alternatively, set `DATABASE_URL` (`postgres://...`) on Render — the app parses it automatically.
+Neon’s `postgresql://...` URI also works on either `ConnectionStrings__DefaultConnection` or `DATABASE_URL` — the app converts it to Npgsql keyword format.
 
 ---
 
@@ -121,6 +121,7 @@ Deploy is handled by Render auto-deploy on push to `main` (configured in [render
 | Symptom | Likely cause |
 | ------- | -------------- |
 | App fails to start | Missing or invalid env vars — check Render deploy logs |
+| `Couldn't set postgresql://...sslmode` | URI was passed to Npgsql unparsed — redeploy with the current resolver, or paste the Neon **Npgsql** connection string instead |
 | `localhost` connection error | `ConnectionStrings__DefaultConnection` not set or still pointing locally |
 | Admin login fails | Wrong `AdminSeed__*` values; user already created on first boot with different password |
 | Large import returns 503 | R2 env vars missing or incomplete |
