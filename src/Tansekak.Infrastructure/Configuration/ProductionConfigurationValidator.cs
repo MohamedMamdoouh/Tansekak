@@ -22,20 +22,20 @@ public static class ProductionConfigurationValidator
 
     private static void ValidateConnectionString(IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        var connectionString = DatabaseConnectionResolver.Resolve(configuration);
 
         if (string.IsNullOrWhiteSpace(connectionString))
         {
             throw new InvalidOperationException(
                 "ConnectionStrings:DefaultConnection must be configured in Production. " +
-                "Set ConnectionStrings__DefaultConnection in MonsterASP environment variables.");
+                "Set ConnectionStrings__DefaultConnection or DATABASE_URL in Render environment variables.");
         }
 
         if (ContainsLocalhost(connectionString))
         {
             throw new InvalidOperationException(
                 "ConnectionStrings:DefaultConnection must not point to localhost in Production. " +
-                "Use the MonsterASP MSSQL connection string from the control panel.");
+                "Use the Neon Postgres connection string from the Neon dashboard.");
         }
     }
 
@@ -48,21 +48,21 @@ public static class ProductionConfigurationValidator
         {
             throw new InvalidOperationException(
                 "AdminSeed:Email and AdminSeed:Password must be configured in Production. " +
-                "Set AdminSeed__Email and AdminSeed__Password in MonsterASP environment variables.");
+                "Set AdminSeed__Email and AdminSeed__Password in Render environment variables.");
         }
 
         if (string.Equals(email, DevAdminEmail, StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException(
                 "AdminSeed:Email must not use the development default in Production. " +
-                "Set a unique AdminSeed__Email in MonsterASP environment variables.");
+                "Set a unique AdminSeed__Email in Render environment variables.");
         }
 
         if (password == DevAdminPassword)
         {
             throw new InvalidOperationException(
                 "AdminSeed:Password must not use the development default in Production. " +
-                "Set a strong AdminSeed__Password in MonsterASP environment variables.");
+                "Set a strong AdminSeed__Password in Render environment variables.");
         }
     }
 
@@ -75,7 +75,7 @@ public static class ProductionConfigurationValidator
             logger.LogWarning(
                 "R2 storage is not configured. Excel imports over 20 MB will return HTTP 503. " +
                 "Set R2__AccountId, R2__AccessKeyId, R2__SecretAccessKey, and R2__BucketName " +
-                "in MonsterASP environment variables to enable large file imports.");
+                "in Render environment variables to enable large file imports.");
         }
     }
 

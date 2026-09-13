@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+**/node_modules/
+publish/
+publish-test/
+.git/
+.github/
+.cursor/
+*.md
+!SeededData/
+client/dist/

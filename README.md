@@ -58,12 +58,12 @@ Override these in production via `AdminSeed:Email` and `AdminSeed:Password`.
 
 | Layer            | Technology                                                  |
 | ---------------- | ----------------------------------------------------------- |
-| Backend          | ASP.NET Core 10, EF Core, SQL Server, ASP.NET Core Identity |
+| Backend          | ASP.NET Core 10, EF Core, PostgreSQL, ASP.NET Core Identity |
 | Frontend         | Angular 19 (standalone components, RTL UI)                  |
 | Validation       | FluentValidation                                            |
 | Excel import     | ClosedXML                                                   |
 | Tests            | xUnit (unit + integration)                                  |
-| Deployment       | GitHub Actions → MonsterASP.NET                             |
+| Deployment       | GitHub Actions (CI) → Render (Docker)                       |
 
 ## Architecture
 
@@ -98,16 +98,21 @@ Tansekak/
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [Node.js 20+](https://nodejs.org/)
-- SQL Server 2022+ (local install or SQL Server Express)
+- PostgreSQL 16+ (local install, or a [Neon](https://neon.tech) dev database)
 
 **Production**
 
-- [MonsterASP.NET](https://www.monsterasp.net/) account (website + MSSQL database)
+- [Neon](https://neon.tech) Postgres database
+- [Render](https://render.com) web service
 - [Cloudflare R2](https://developers.cloudflare.com/r2/) bucket for large Excel imports (>20 MB)
 
 ## Quick start (local)
 
-### 1. API
+### 1. Database
+
+Ensure PostgreSQL is running and update the connection string in `src/Tansekak.Api/appsettings.Development.json` if needed (default: `localhost:5432`, database `Tansekak`).
+
+### 2. API
 
 ```powershell
 cd src/Tansekak.Api
@@ -118,7 +123,7 @@ dotnet run
 - OpenAPI (Development only): `http://localhost:5080/openapi/v1.json`
 - On startup: applies EF migrations and seeds the database from embedded `SeededData/` JSON if empty
 
-### 2. Frontend
+### 3. Frontend
 
 In a second terminal:
 
@@ -131,61 +136,35 @@ npm start
 - URL: `http://localhost:4200`
 - API requests are proxied to `http://localhost:5080` via `client/proxy.conf.json`
 
-## Production deploy (MonsterASP + Cloudflare R2)
+## Production deploy (Neon + Render + Cloudflare R2)
 
 **Setup guides:** [docs/PRODUCTION_SETUP.md](docs/PRODUCTION_SETUP.md) (step-by-step checklist) · [docs/production.env.example](docs/production.env.example) (environment variable template)
 
 Stack:
 
-| Layer    | Provider    | Role                                      |
-| -------- | ----------- | ----------------------------------------- |
-| App + SPA | MonsterASP | Single IIS site (API + Angular in `wwwroot`) |
-| Database | MonsterASP | Managed MSSQL 2019/2022/2025              |
-| Storage  | Cloudflare  | R2 bucket for large Excel imports (>20 MB) |
+| Layer     | Provider   | Role                                         |
+| --------- | ---------- | -------------------------------------------- |
+| App + SPA | Render     | Docker web service (API + Angular in `wwwroot`) |
+| Database  | Neon       | Managed PostgreSQL                           |
+| Storage   | Cloudflare | R2 bucket for large Excel imports (>20 MB)   |
 
-### 1. MonsterASP (website + database)
+### 1. Neon (database)
 
-1. Create a **Website** in the [MonsterASP control panel](https://www.monsterasp.net/).
-2. Create an **MSSQL database**: Control Panel → **Databases** → **Add database** → choose **MSSQL**.
-3. Copy the MSSQL connection string from the control panel.
-4. Enable **Let's Encrypt HTTPS** on the website.
-5. Activate **WebDeploy** and download the `.publishSettings` profile (for Visual Studio or GitHub Actions).
+1. Create a project at [neon.tech](https://neon.tech).
+2. Copy the **pooled** connection string (Npgsql format, SSL enabled).
+3. Set it as `ConnectionStrings__DefaultConnection` on Render (or use `DATABASE_URL`).
 
-Set environment variables under **Websites → Manage website → Scripting → Environment Variables**:
+### 2. Render (web service)
 
-| Variable                               | Value                              |
-| -------------------------------------- | ---------------------------------- |
-| `ConnectionStrings__DefaultConnection` | MonsterASP MSSQL connection string |
-| `ASPNETCORE_ENVIRONMENT`               | `Production`                       |
-| `AdminSeed__Email`                     | Admin login email                  |
-| `AdminSeed__Password`                  | Strong admin password              |
-| `R2__AccountId`                        | Cloudflare account ID              |
-| `R2__AccessKeyId`                      | R2 S3 API access key               |
-| `R2__SecretAccessKey`                  | R2 S3 API secret                   |
-| `R2__BucketName`                       | `tansekak-imports`                 |
+1. Connect your GitHub repo to [Render](https://render.com).
+2. Deploy from [render.yaml](render.yaml) (Blueprint) or create a Docker web service manually.
+3. Set secret environment variables (see [production.env.example](docs/production.env.example)).
+
+Render builds the Docker image (Angular + .NET monolith) and auto-deploys on push to `main`. GitHub Actions runs CI only (build + test).
 
 No `Frontend:Origin` CORS setting is needed — the SPA and API share the same origin.
 
-**Plan note:** Prefer a paid MonsterASP plan for always-on hosting. Free tier app pool idle timeout can interrupt large imports.
-
-### 2. Publish and deploy
-
-Build and publish manually, then deploy via **Visual Studio WebDeploy** (import the `.publishSettings` profile from the MonsterASP control panel):
-
-```powershell
-# Frontend
-cd client
-npm ci
-npm run build -- --configuration production
-
-# API — self-contained win-x86 for MonsterASP IIS (or use the MonsterASP publish profile)
-dotnet publish src/Tansekak.Api/Tansekak.Api.csproj -c Release -o ./publish --runtime win-x86 --self-contained true
-Copy-Item -Path client/dist/client/browser/* -Destination publish/wwwroot -Recurse -Force
-```
-
-Alternatively, from Visual Studio: right-click **Tansekak.Api** → **Publish** → **MonsterASP** profile, then copy the frontend into `publish/wwwroot`.
-
-Publish `./publish` to your MonsterASP website using the WebDeploy profile.
+**Plan note:** Prefer Render **Starter** plan for always-on hosting. Free tier spin-down can interrupt large imports.
 
 ### 3. Verify deployment
 
@@ -204,10 +183,10 @@ See [Cloudflare R2 (large imports)](#cloudflare-r2-large-imports) below. R2 is r
 `src/Tansekak.Api/appsettings.json`:
 
 ```
-Server=localhost,1433;Database=Tansekak;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
+Host=localhost;Port=5432;Database=Tansekak;Username=postgres;Password=postgres
 ```
 
-Production (MonsterASP) overrides via `ConnectionStrings__DefaultConnection`.
+Production (Neon) overrides via `ConnectionStrings__DefaultConnection` or `DATABASE_URL` on Render.
 
 ### App settings
 
@@ -258,7 +237,7 @@ Large uploads send a cross-origin **PUT** from the browser to `*.r2.cloudflarest
 [
   {
     "AllowedOrigins": [
-      "https://<your-monsterasp-domain>",
+      "https://<your-render-domain>.onrender.com",
       "http://localhost:4200"
     ],
     "AllowedMethods": ["PUT"],
@@ -269,7 +248,7 @@ Large uploads send a cross-origin **PUT** from the browser to `*.r2.cloudflarest
 ]
 ```
 
-Replace `<your-monsterasp-domain>` with your MonsterASP site URL (e.g. `https://yoursite.monsterasp.net`). Keep `http://localhost:4200` when testing large imports via `npm start` (the PUT does not go through the API proxy).
+Replace `<your-render-domain>` with your Render service URL (e.g. `https://tansekak.onrender.com`). Keep `http://localhost:4200` when testing large imports via `npm start` (the PUT does not go through the API proxy).
 
 Optional: add a lifecycle rule to delete objects under prefix `imports/` after 1 day to clean up orphaned uploads.
 
@@ -410,13 +389,18 @@ Large imports run asynchronously; poll `GET /api/admin/import-jobs/{jobId}` unti
 ## Building for production manually
 
 ```powershell
-# Frontend
+docker build -t tansekak .
+docker run -p 8080:8080 -e ConnectionStrings__DefaultConnection="..." tansekak
+```
+
+Or build locally without Docker:
+
+```powershell
 cd client
 npm ci
 npm run build -- --configuration production
 
-# API — self-contained win-x86 for MonsterASP IIS
-dotnet publish src/Tansekak.Api/Tansekak.Api.csproj -c Release -o ./publish --runtime win-x86 --self-contained true
+dotnet publish src/Tansekak.Api/Tansekak.Api.csproj -c Release -o ./publish
 Copy-Item -Path client/dist/client/browser/* -Destination publish/wwwroot -Recurse -Force
 ```
 

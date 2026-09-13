@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Tansekak.Domain.Entities;
 
 namespace Tansekak.Infrastructure.Persistence;
 
@@ -52,9 +53,9 @@ public sealed class EntityIdAllocator(AppDbContext db)
 
             var updated = await db.Database.ExecuteSqlInterpolatedAsync(
                 $"""
-                 UPDATE EntityIdSequences
-                 SET NextId = NextId + {count}
-                 WHERE Name = {sequenceName}
+                 UPDATE "EntityIdSequences"
+                 SET "NextId" = "NextId" + {count}
+                 WHERE "Name" = {sequenceName}
                  """,
                 cancellationToken);
 
@@ -91,10 +92,25 @@ public sealed class EntityIdAllocator(AppDbContext db)
         if (exists)
             return;
 
-        var sql =
-            "IF NOT EXISTS (SELECT 1 FROM EntityIdSequences WHERE Name = {0}) " +
-            $"BEGIN INSERT INTO EntityIdSequences (Name, NextId) SELECT {{0}}, ISNULL(MAX(Id), 0) + 1 FROM [{sequenceName}] END";
-
-        await db.Database.ExecuteSqlRawAsync(sql, [sequenceName], cancellationToken);
+        var maxId = await GetMaxEntityIdAsync(sequenceName, cancellationToken);
+        db.EntityIdSequences.Add(new EntityIdSequence
+        {
+            Name = sequenceName,
+            NextId = maxId + 1
+        });
+        await db.SaveChangesAsync(cancellationToken);
     }
+
+    private async Task<int> GetMaxEntityIdAsync(string sequenceName, CancellationToken cancellationToken) =>
+        sequenceName switch
+        {
+            AdmissionYears => await db.AdmissionYears.MaxAsync(x => (int?)x.Id, cancellationToken) ?? 0,
+            AdmissionCutoffs => await db.AdmissionCutoffs.MaxAsync(x => (int?)x.Id, cancellationToken) ?? 0,
+            Faculties => await db.Faculties.MaxAsync(x => (int?)x.Id, cancellationToken) ?? 0,
+            Governorates => await db.Governorates.MaxAsync(x => (int?)x.Id, cancellationToken) ?? 0,
+            StudentResults => await db.StudentResults.MaxAsync(x => (int?)x.Id, cancellationToken) ?? 0,
+            Universities => await db.Universities.MaxAsync(x => (int?)x.Id, cancellationToken) ?? 0,
+            UniversityFaculties => await db.UniversityFaculties.MaxAsync(x => (int?)x.Id, cancellationToken) ?? 0,
+            _ => throw new ArgumentException($"Unknown sequence name '{sequenceName}'.", nameof(sequenceName))
+        };
 }

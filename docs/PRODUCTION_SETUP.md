@@ -1,26 +1,40 @@
 # Production setup checklist
 
-Use this checklist when deploying Tansekak to **MonsterASP** with **Cloudflare R2** storage.
+Use this checklist when deploying Tansekak to **Render** with **Neon Postgres** and **Cloudflare R2** storage.
 
 See also: [production.env.example](./production.env.example) for all required environment variables.
 
 ---
 
-## 1. MonsterASP (website + database)
+## 1. Neon (PostgreSQL database)
 
-- [ ] Create a **Website** in the [MonsterASP control panel](https://www.monsterasp.net/)
-- [ ] Note your production URL (e.g. `https://yoursite.monsterasp.net`)
-- [ ] Create an **MSSQL database**: Control Panel → **Databases** → **Add database** → **MSSQL**
-- [ ] Copy the MSSQL **connection string** from the control panel
-- [ ] Enable **Let's Encrypt HTTPS** on the website
-- [ ] Activate **WebDeploy** and note credentials from the `.publishSettings` profile
-- [ ] Prefer a **paid plan** if you expect large Excel imports (free tier app pool idle timeout can interrupt jobs)
+- [ ] Create a project at [neon.tech](https://neon.tech)
+- [ ] Copy the **pooled** connection string (Npgsql format, SSL enabled)
+- [ ] Save it for Render as `ConnectionStrings__DefaultConnection`
+
+Example format:
+
+```
+Host=ep-xxx.region.aws.neon.tech;Database=neondb;Username=...;Password=...;SSL Mode=Require
+```
+
+Alternatively, set `DATABASE_URL` (`postgres://...`) on Render — the app parses it automatically.
+
+---
+
+## 2. Render (web service)
+
+- [ ] Connect your GitHub repo to [Render](https://render.com)
+- [ ] Create a **Web Service** from [render.yaml](../render.yaml) (Blueprint) or the Dashboard
+- [ ] Set secret environment variables (see [production.env.example](./production.env.example))
+- [ ] Confirm deploy succeeds and health check passes at `/health`
+- [ ] Prefer the **Starter plan** if large Excel imports must not be interrupted by free-tier spin-down
 
 ### Environment variables
 
-Websites → Manage website → Scripting → **Environment Variables**:
+Render Dashboard → your service → **Environment**:
 
-- [ ] `ConnectionStrings__DefaultConnection` — MonsterASP MSSQL connection string
+- [ ] `ConnectionStrings__DefaultConnection` — Neon pooled connection string
 - [ ] `ASPNETCORE_ENVIRONMENT` — `Production`
 - [ ] `AdminSeed__Email` — unique admin email (not `admin@tansekak.local`)
 - [ ] `AdminSeed__Password` — strong password (not `Admin@12345`)
@@ -29,11 +43,13 @@ Websites → Manage website → Scripting → **Environment Variables**:
 - [ ] `R2__SecretAccessKey` — R2 S3 API secret
 - [ ] `R2__BucketName` — e.g. `tansekak-imports`
 
-Do **not** set `Frontend__Origin` — SPA and API are same-origin on MonsterASP.
+Do **not** set `Frontend__Origin` — SPA and API are same-origin on Render.
+
+On first boot: EF migrations run, reference data seeds, admin user is created.
 
 ---
 
-## 2. Cloudflare R2 (large imports > 20 MB)
+## 3. Cloudflare R2 (large imports > 20 MB)
 
 - [ ] [Cloudflare Dashboard](https://dash.cloudflare.com) → **R2 Object Storage** → Create bucket `tansekak-imports`
 - [ ] Copy **Account ID** → `R2__AccountId`
@@ -47,7 +63,10 @@ R2 → bucket → Settings → **CORS policy**:
 ```json
 [
   {
-    "AllowedOrigins": ["https://<your-monsterasp-domain>"],
+    "AllowedOrigins": [
+      "https://<your-render-domain>.onrender.com",
+      "http://localhost:4200"
+    ],
     "AllowedMethods": ["PUT"],
     "AllowedHeaders": ["Content-Type"],
     "ExposeHeaders": ["ETag"],
@@ -56,34 +75,33 @@ R2 → bucket → Settings → **CORS policy**:
 ]
 ```
 
-- [ ] Replace `<your-monsterasp-domain>` with your live MonsterASP URL (exact match, including `https://`)
+- [ ] Replace `<your-render-domain>` with your Render service URL (exact match, including `https://`)
+- [ ] Keep `http://localhost:4200` when testing large imports via `npm start`
 - [ ] Optional: lifecycle rule to delete objects under `imports/` after 1 day
 
 ---
 
-## 3. GitHub Actions deploy secrets
+## 4. GitHub Actions (CI)
 
-GitHub repo → Settings → Secrets and variables → Actions:
+CI runs on every push and pull request to `main`:
 
-- [ ] `WEBSITE_NAME` — from MonsterASP WebDeploy profile
-- [ ] `SERVER_COMPUTER_NAME` — from MonsterASP WebDeploy profile
-- [ ] `SERVER_USERNAME` — from MonsterASP WebDeploy profile
-- [ ] `SERVER_PASSWORD` — from MonsterASP WebDeploy profile
+- Builds Angular frontend
+- Builds and tests .NET backend
 
-CI deploys on push to `main` (skipped on pull requests). You can also trigger manually via **Actions → CI & Deploy → Run workflow**.
+Deploy is handled by Render auto-deploy on push to `main` (configured in [render.yaml](../render.yaml)).
 
 ---
 
-## 4. Deploy
+## 5. Deploy
 
-- [ ] Confirm all MonsterASP env vars and GitHub secrets are set
-- [ ] Push to `main` or run the workflow manually
-- [ ] Watch GitHub Actions for build/test/publish/deploy success
+- [ ] Confirm Neon connection string and all Render env vars are set
+- [ ] Push to `main` or trigger a manual deploy in Render
+- [ ] Watch Render deploy logs for build success
 - [ ] On first boot: EF migrations run, reference data seeds, admin user is created
 
 ---
 
-## 5. Post-deploy verification
+## 6. Post-deploy verification
 
 | Check | URL / action | Expected |
 | ----- | ------------ | -------- |
@@ -102,9 +120,9 @@ CI deploys on push to `main` (skipped on pull requests). You can also trigger ma
 
 | Symptom | Likely cause |
 | ------- | -------------- |
-| App fails to start | Missing or invalid env vars — check MonsterASP application logs |
+| App fails to start | Missing or invalid env vars — check Render deploy logs |
 | `localhost` connection error | `ConnectionStrings__DefaultConnection` not set or still pointing locally |
 | Admin login fails | Wrong `AdminSeed__*` values; user already created on first boot with different password |
 | Large import returns 503 | R2 env vars missing or incomplete |
-| Large import CORS error | R2 CORS `AllowedOrigins` does not exactly match your MonsterASP domain |
-| Import job interrupted | Free-tier app pool timeout — upgrade plan or retry |
+| Large import CORS error | R2 CORS `AllowedOrigins` does not exactly match your Render domain |
+| Import job interrupted | Free-tier spin-down — upgrade to Starter plan or retry |

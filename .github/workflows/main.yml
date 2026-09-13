@@ -1,4 +1,4 @@
-name: CI & Deploy
+name: CI
 
 on:
   push:
@@ -17,9 +17,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-test-deploy:
-    name: Build, test, and deploy
-    runs-on: windows-latest
+  build-test:
+    name: Build and test
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out repository
@@ -37,10 +37,6 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      # -------------------------
-      # Frontend
-      # -------------------------
-
       - name: Install frontend dependencies
         working-directory: client
         run: npm ci
@@ -48,10 +44,6 @@ jobs:
       - name: Build frontend
         working-directory: client
         run: npm run build -- --configuration production
-
-      # -------------------------
-      # Backend
-      # -------------------------
 
       - name: Restore backend
         run: dotnet restore Tansekak.sln
@@ -61,54 +53,3 @@ jobs:
 
       - name: Run tests
         run: dotnet test Tansekak.sln --configuration Release --no-build
-
-      # -------------------------
-      # Publish
-      # -------------------------
-
-      - name: Restore API for deployment
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        run: >
-          dotnet restore src/Tansekak.Api/Tansekak.Api.csproj
-          --runtime win-x86
-
-      - name: Publish API
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        run: >
-          dotnet publish src/Tansekak.Api/Tansekak.Api.csproj
-          --configuration Release
-          --no-restore
-          --output "${{ github.workspace }}\publish"
-          --runtime win-x86
-          --self-contained true
-
-      # -------------------------
-      # Angular → ASP.NET wwwroot
-      # -------------------------
-
-      - name: Copy frontend to wwwroot
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path publish\wwwroot | Out-Null
-
-          Copy-Item `
-            -Path client\dist\client\browser\* `
-            -Destination publish\wwwroot `
-            -Recurse `
-            -Force
-
-      # -------------------------
-      # Deploy to MonsterASP
-      # -------------------------
-
-      - name: Deploy to MonsterASP.NET via Web Deploy
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        uses: rasmusbuchholdt/simply-web-deploy@2.2.0
-        with:
-          website-name: ${{ secrets.WEBSITE_NAME }}
-          server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
-          server-username: ${{ secrets.SERVER_USERNAME }}
-          server-password: ${{ secrets.SERVER_PASSWORD }}
-          source-path: '\publish\'
-          target-delete: true
