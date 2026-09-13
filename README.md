@@ -52,7 +52,7 @@ Admin access is not linked from the public site. Sign in directly at `/admin/log
 - Email: `admin@tansekak.local`
 - Password: `Admin@12345`
 
-Override these in production via `AdminSeed:Email` and `AdminSeed:Password` (or Docker env vars).
+Override these in production via `AdminSeed:Email` and `AdminSeed:Password`.
 
 ## Tech stack
 
@@ -63,7 +63,7 @@ Override these in production via `AdminSeed:Email` and `AdminSeed:Password` (or 
 | Validation       | FluentValidation                                            |
 | Excel import     | ClosedXML                                                   |
 | Tests            | xUnit (unit + integration)                                  |
-| Containerization | Docker, Docker Compose                                      |
+| Deployment       | GitHub Actions → MonsterASP.NET                             |
 
 ## Architecture
 
@@ -89,9 +89,6 @@ Tansekak/
 │   ├── Tansekak.Application/
 │   ├── Tansekak.Domain/
 │   └── Tansekak.Infrastructure/
-├── Dockerfile
-├── docker-compose.yml
-├── .env.example
 └── Tansekak.sln
 ```
 
@@ -101,11 +98,7 @@ Tansekak/
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [Node.js 20+](https://nodejs.org/)
-- SQL Server 2022+ (local install, Docker Compose, or SQL Server Express)
-
-**Docker**
-
-- Docker Desktop (or Docker Engine + Compose)
+- SQL Server 2022+ (local install or SQL Server Express)
 
 **Production**
 
@@ -137,42 +130,6 @@ npm start
 
 - URL: `http://localhost:4200`
 - API requests are proxied to `http://localhost:5080` via `client/proxy.conf.json`
-
-## Docker deployment
-
-Copy `.env.example` to `.env` and set strong values:
-
-```powershell
-copy .env.example .env
-```
-
-Required variables:
-
-| Variable              | Description                                  |
-| --------------------- | -------------------------------------------- |
-| `MSSQL_SA_PASSWORD`   | SQL Server SA password (must meet complexity rules) |
-| `ADMIN_PASSWORD`      | Admin user password seeded on first run      |
-| `ADMIN_EMAIL`         | Optional; defaults to `admin@tansekak.local` |
-
-Optional — required only for Excel imports **larger than 20 MB** (see [Cloudflare R2](#cloudflare-r2-large-imports)):
-
-| Variable              | Description                                  |
-| --------------------- | -------------------------------------------- |
-| `R2__AccountId`       | Cloudflare account ID                        |
-| `R2__AccessKeyId`     | R2 API token access key                      |
-| `R2__SecretAccessKey` | R2 API token secret                          |
-| `R2__BucketName`      | R2 bucket name (default: `tansekak-imports`) |
-
-Start the stack:
-
-```powershell
-docker compose up --build
-```
-
-- App: `http://localhost:8080` (API + static frontend)
-- SQL Server runs as a separate service with a persistent volume (`tansekak-db`)
-- Seed JSON is copied into the publish output at `SeedData/`
-- Set `PORT=8080` for Docker; IIS/MonsterASP does not use this variable
 
 ## Production deploy (MonsterASP + Cloudflare R2)
 
@@ -246,7 +203,7 @@ See [Cloudflare R2 (large imports)](#cloudflare-r2-large-imports) below. R2 is r
 Server=localhost,1433;Database=Tansekak;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
 ```
 
-Local Docker Compose and production (MonsterASP) override via `ConnectionStrings__DefaultConnection`.
+Production (MonsterASP) overrides via `ConnectionStrings__DefaultConnection`.
 
 ### App settings
 
@@ -458,8 +415,6 @@ npm run build -- --configuration production
 dotnet publish src/Tansekak.Api/Tansekak.Api.csproj -c Release -o ./publish
 Copy-Item -Path client/dist/client/browser/* -Destination publish/wwwroot -Recurse -Force
 ```
-
-The Dockerfile still works for local Docker testing: it builds the Angular app, publishes the API (copying `SeededData/` JSON), and copies `dist/client/browser` to `wwwroot`.
 
 ## Disclaimer
 
