@@ -2,7 +2,7 @@
 
 **Vibe coded project** — built iteratively with AI-assisted development.
 
-Tansekak (تنسيقك) is an admission eligibility checker for Egyptian Thanaweya Amma (high school) graduates. Students enter their academic track and total score; the app compares those values against official cutoff scores for the current admission year and shows which university faculties they are likely eligible for.
+Tansekak is an admission eligibility checker for Egyptian Thanaweya Amma (high school) graduates. Students enter their academic track and total score; the app compares those values against official cutoff scores for the current admission year and shows which university faculties they are likely eligible for.
 
 Students can also look up official Thanaweya results by seating number and see their track rank among peers.
 
@@ -12,15 +12,15 @@ Results are **indicative only** — final placement is decided by Egypt's offici
 
 ### Public
 
-| Feature                 | Route               | Description                                                                 |
-| ----------------------- | ------------------- | --------------------------------------------------------------------------- |
-| Landing page            | `/`                 | Overview and entry points to prediction and result lookup                    |
-| College prediction      | `/predict`          | Select track, enter total score, submit for eligibility check               |
-| Prediction results      | `/results`          | Paginated list of eligible faculties, client-side search, load-more          |
-| Thanaweya result lookup | `/thanaweya-result` | Look up a student's official result by seating number                       |
-| Track rank              | `/track-rank`       | Seating lookup with track rank, percentile, and position among peers        |
-| Coordination guide      | `/guide`            | FAQ about the admission coordination process                                |
-| Developer profile       | `/designer`         | Site credits and developer information                                      |
+| Feature                 | Route               | Description                                                          |
+| ----------------------- | ------------------- | -------------------------------------------------------------------- |
+| Landing page            | `/`                 | Overview and entry points to prediction and result lookup            |
+| College prediction      | `/predict`          | Select track, enter total score, submit for eligibility check        |
+| Prediction results      | `/results`          | Paginated list of eligible faculties, client-side search, load-more  |
+| Thanaweya result lookup | `/thanaweya-result` | Look up a student's official result by seating number                |
+| Track rank              | `/track-rank`       | Seating lookup with track rank, percentile, and position among peers |
+| Coordination guide      | `/guide`            | FAQ about the admission coordination process                         |
+| Developer profile       | `/designer`         | Site credits and developer information                               |
 
 **Prediction behavior**
 
@@ -58,6 +58,8 @@ Admin access is not linked from the public site. Sign in directly at `/admin/log
 | Import cutoffs         | `/admin/import`         | Import cutoffs from Markdown (`.md`) for one track at a time; replaces existing cutoffs for that year + track |
 | Import student results | `/admin/import-results` | Import Thanaweya results from Excel (`.xlsx`) for a selected admission year                                   |
 
+Import pages show a progress overlay during upload and processing. Leaving the page is blocked until the import finishes or you confirm navigation away.
+
 **Default admin credentials (development only)**
 
 - Email: `admin@tansekak.local`
@@ -72,16 +74,16 @@ Production requires unique credentials via `AdminSeed__Email` and `AdminSeed__Pa
 
 ## Tech stack
 
-| Layer            | Technology                                                  |
-| ---------------- | ----------------------------------------------------------- |
-| Backend          | ASP.NET Core 10, EF Core, PostgreSQL (Npgsql), Identity     |
-| Frontend         | Angular 19 (standalone components, RTL UI)                  |
-| Validation       | FluentValidation                                            |
-| Excel import     | ClosedXML                                                   |
-| Large file storage | Cloudflare R2 (S3-compatible presigned uploads)           |
-| Tests            | xUnit (unit tests in `tests/`)                              |
-| CI               | GitHub Actions (build + test)                               |
-| Deployment       | Docker → Render web service                                 |
+| Layer              | Technology                                              |
+| ------------------ | ------------------------------------------------------- |
+| Backend            | ASP.NET Core 10, EF Core, PostgreSQL (Npgsql), Identity |
+| Frontend           | Angular 19 (standalone components, RTL UI)              |
+| Validation         | FluentValidation                                        |
+| Excel import       | ClosedXML                                               |
+| Large file storage | Cloudflare R2 (S3-compatible presigned uploads)         |
+| Tests              | xUnit (unit tests in `tests/`)                          |
+| CI                 | GitHub Actions (build + test)                           |
+| Deployment         | Docker → Render web service                             |
 
 ## Architecture
 
@@ -107,9 +109,9 @@ Tansekak/
 ├── client/                    # Angular 19 frontend
 ├── SeededData/                # JSON catalog seed (copied to output as SeedData/)
 ├── docs/
-│   ├── PRODUCTION_SETUP.md    # Deploy checklist
-│   └── production.env.example # Environment variable template
-├── render.yaml                # Render Blueprint
+│   ├── PRD.md                 # Original product requirements
+│   └── PRODUCTION_SETUP.md    # Deploy checklist and env vars
+├── .github/workflows/main.yml # CI (build + test)
 ├── Dockerfile                 # Multi-stage build (Node + .NET)
 ├── tests/
 │   ├── Tansekak.Application.Tests/
@@ -179,21 +181,21 @@ Predictions return no results until cutoffs are imported for the current year.
 
 ## Production deploy (Neon + Render + Cloudflare R2)
 
-**Setup guides:** [docs/PRODUCTION_SETUP.md](docs/PRODUCTION_SETUP.md) (step-by-step checklist) · [docs/production.env.example](docs/production.env.example) (environment variable template) · [render.yaml](render.yaml) (Render Blueprint)
+**Setup guide:** [docs/PRODUCTION_SETUP.md](docs/PRODUCTION_SETUP.md) (step-by-step checklist and environment variables)
 
 Stack:
 
-| Layer     | Provider   | Role                                         |
-| --------- | ---------- | -------------------------------------------- |
+| Layer     | Provider   | Role                                            |
+| --------- | ---------- | ----------------------------------------------- |
 | App + SPA | Render     | Docker web service (API + Angular in `wwwroot`) |
-| Database  | Neon       | Managed PostgreSQL                           |
-| Storage   | Cloudflare | R2 bucket for large Excel imports (>20 MB)   |
+| Database  | Neon       | Managed PostgreSQL                              |
+| Storage   | Cloudflare | R2 bucket for large Excel imports (>20 MB)      |
 
 ### Quick deploy steps
 
 1. Create a Neon project and copy the pooled connection string
-2. Connect the GitHub repo to Render and deploy from [render.yaml](render.yaml)
-3. Set secret env vars (see [production.env.example](docs/production.env.example))
+2. Connect the GitHub repo to Render and create a Docker web service from `./Dockerfile`
+3. Set secret env vars (see [Environment variables](docs/PRODUCTION_SETUP.md#environment-variables) in the setup guide)
 4. After first boot, import cutoffs for all three tracks via admin
 5. Verify `/health`, SPA routes, admin login, and prediction
 
@@ -213,7 +215,12 @@ Local default is in `src/Tansekak.Api/appsettings.Development.json`:
 Host=localhost;Port=5432;Database=Tansekak;Username=postgres;Password=postgres
 ```
 
-Base `appsettings.json` has an empty `DefaultConnection`. Production overrides via `ConnectionStrings__DefaultConnection` or `DATABASE_URL` on Render.
+Base `appsettings.json` has an empty `DefaultConnection`. Production accepts either:
+
+- `ConnectionStrings__DefaultConnection` — Npgsql keyword format
+- `DATABASE_URL` — Neon-style `postgresql://...` URI (converted automatically with `SslMode=Require`)
+
+`DatabaseConnectionResolver` picks the first configured value and normalizes PostgreSQL URIs to Npgsql keyword form.
 
 ### App settings
 
@@ -229,6 +236,22 @@ Base `appsettings.json` has an empty `DefaultConnection`. Production overrides v
 | `R2:BucketName`      | R2 bucket for temporary import files (default: `tansekak-imports`)        |
 
 Environment variables use `__` as the nested separator (e.g. `R2__AccountId`).
+
+### Production environment variables
+
+| Variable | Required | Notes |
+| -------- | -------- | ----- |
+| `ConnectionStrings__DefaultConnection` | Yes | Neon pooled connection string (or use `DATABASE_URL`) |
+| `AdminSeed__Email` | Yes | Unique email (not `admin@tansekak.local`) |
+| `AdminSeed__Password` | Yes | Strong password (not `Admin@12345`) |
+| `R2__AccountId` | For large imports | Cloudflare account ID |
+| `R2__AccessKeyId` | For large imports | R2 S3 API access key |
+| `R2__SecretAccessKey` | For large imports | R2 S3 API secret |
+| `R2__BucketName` | Optional | Default: `tansekak-imports` |
+
+On startup in non-Development environments, the app validates the connection string and admin seed credentials before running migrations. Missing R2 credentials log a warning only.
+
+Do **not** set `Frontend__Origin` in production — the SPA and API share the same origin.
 
 ### Cloudflare R2 (large imports)
 
@@ -247,10 +270,10 @@ See [docs/PRODUCTION_SETUP.md](docs/PRODUCTION_SETUP.md) for bucket setup, API t
 
 ### Environment behavior
 
-| Environment | Notes                                                                      |
-| ----------- | -------------------------------------------------------------------------- |
+| Environment | Notes                                                                                    |
+| ----------- | ---------------------------------------------------------------------------------------- |
 | Development | OpenAPI at `/openapi/v1.json`, CORS for `http://localhost:4200`, relaxed cookie security |
-| Production  | HSTS, secure cookies, production config validation, frontend served from `wwwroot/` |
+| Production  | HSTS, secure cookies, production config validation, frontend served from `wwwroot/`      |
 
 ## Database
 
@@ -270,12 +293,12 @@ See [docs/PRODUCTION_SETUP.md](docs/PRODUCTION_SETUP.md) for bucket setup, API t
 
 JSON files in [SeededData/](SeededData/) are copied to the API output directory as `SeedData/` and read from disk at startup:
 
-| File                       | Content                    |
-| -------------------------- | -------------------------- |
-| `Governorates.json`        | Governorate catalog        |
-| `Universities.json`        | University catalog         |
-| `Faculties.json`           | Faculty catalog            |
-| `UniversityFaculties.json` | University–faculty links   |
+| File                       | Content                  |
+| -------------------------- | ------------------------ |
+| `Governorates.json`        | Governorate catalog      |
+| `Universities.json`        | University catalog       |
+| `Faculties.json`           | Faculty catalog          |
+| `UniversityFaculties.json` | University–faculty links |
 
 **Seeding runs exactly once** when `Governorates` has zero rows. After that, the database is the sole source of truth managed through admin APIs.
 
@@ -380,10 +403,10 @@ Authentication is **cookie-based** ASP.NET Core Identity (not JWT). Admin endpoi
 
 **Upload paths**
 
-| File size | Path                                                                                                  |
-| --------- | ----------------------------------------------------------------------------------------------------- |
-| ≤20 MB    | Direct `POST /import-results` (multipart upload to API, synchronous)                                  |
-| >20 MB    | Presigned R2 upload + async job — requires [Cloudflare R2](#cloudflare-r2-large-imports) configured   |
+| File size | Path                                                                                                |
+| --------- | --------------------------------------------------------------------------------------------------- |
+| ≤20 MB    | Direct `POST /import-results` (multipart upload to API, synchronous)                                |
+| >20 MB    | Presigned R2 upload + async job — requires [Cloudflare R2](#cloudflare-r2-large-imports) configured |
 
 Large imports run asynchronously; poll `GET /api/admin/import-jobs/{jobId}` until complete.
 
@@ -415,16 +438,15 @@ Copy-Item -Path client/dist/client/browser/* -Destination publish/wwwroot -Recur
 dotnet test Tansekak.sln --configuration Release
 ```
 
-Unit tests cover Application helpers (track inference, matching rules) and Infrastructure services (admission year publish, import jobs, connection string resolution). There are no integration or end-to-end test projects yet.
+Unit tests cover Application helpers (track inference, matching rules, results query utils) and Infrastructure services (admission year publish, import jobs, database connection resolution). There are no integration or end-to-end test projects yet.
 
 ## Documentation
 
-| Document | Purpose |
-| -------- | ------- |
-| [README.md](README.md) | Primary developer and operator guide (this file) |
-| [docs/PRODUCTION_SETUP.md](docs/PRODUCTION_SETUP.md) | Production deploy checklist |
-| [docs/production.env.example](docs/production.env.example) | Environment variable template |
-| [PRD.md](PRD.md) | Original product requirements (historical; see amendment section) |
+| Document                                             | Purpose                                                           |
+| ---------------------------------------------------- | ----------------------------------------------------------------- |
+| [README.md](README.md)                               | Primary developer and operator guide (this file)                  |
+| [docs/PRODUCTION_SETUP.md](docs/PRODUCTION_SETUP.md) | Production deploy checklist, env vars, and troubleshooting        |
+| [docs/PRD.md](docs/PRD.md)                           | Original product requirements (historical; see amendment section) |
 
 ## Disclaimer
 

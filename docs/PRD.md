@@ -2,12 +2,13 @@
 
 **Product Name:** Tansekak
 **Version:** 1.0
-**Status:** Superseded by implementation  
+**Status:** Superseded by
+
 **Language:** English
 
 ---
 
-## Amendment
+## Amendment (As-built — current stage)
 
 The shipped product diverges from the original PRD in the following ways. This section reflects the codebase as of the current release.
 
@@ -24,7 +25,7 @@ The shipped product diverges from the original PRD in the following ways. This s
 - **Pagination:** Frontend uses `pageSize: 20` with unlimited load-more. API default is 10; max 100 per page.
 - **Thanaweya lookup:** Added post-MVP — `/thanaweya-result` and `/track-rank` routes with seating number lookup and track rank.
 - **Guide and designer pages:** `/guide` (static FAQ) and `/designer` (developer profile) added.
-- **Branding:** UI displays **Tansekak** in Arabic; API returns `appName: "tansekak"`.
+- **Branding:** UI displays **تنسيقك** in Arabic; API returns `appName: "tansekak"`.
 
 ### Admin features
 
@@ -50,6 +51,10 @@ The shipped product diverges from the original PRD in the following ways. This s
 ### Authentication
 
 - Cookie-based ASP.NET Core Identity (not JWT). Single `Administrator` role.
+
+### Documentation referenced in §32 but not created
+
+- `docs/PROJECT_SPEC.md`, `docs/API.md`, `docs/DATABASE.md` — consolidated into README.md instead.
 
 ---
 

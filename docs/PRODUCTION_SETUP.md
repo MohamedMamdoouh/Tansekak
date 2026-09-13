@@ -36,20 +36,14 @@ Neon's `postgresql://...` URI also works on either `ConnectionStrings__DefaultCo
 
 ## 2. Render (web service)
 
-### Option A — Blueprint (recommended)
-
 - [ ] Connect your GitHub repo to [Render](https://render.com)
-- [ ] Create a **Blueprint** from [render.yaml](../render.yaml) at the repo root
-- [ ] Set secret environment variables in the Render Dashboard (see [production.env.example](./production.env.example))
-- [ ] Confirm deploy succeeds and health check passes at `/health`
-
-### Option B — Manual Docker web service
-
-- [ ] Create a **Web Service** → **Deploy an existing image from a registry** or **Build from Dockerfile**
+- [ ] Create a **Web Service** → **Build from Dockerfile**
 - [ ] Dockerfile path: `./Dockerfile`
 - [ ] Docker context: repository root
 - [ ] Health check path: `/health`
 - [ ] Prefer the **Starter plan** if large Excel imports must not be interrupted by free-tier spin-down
+- [ ] Set secret environment variables in the Render Dashboard (see [production.env.example](./production.env.example))
+- [ ] Confirm deploy succeeds and health check passes at `/health`
 
 ### Environment variables
 
@@ -131,7 +125,7 @@ CI runs on every push and pull request to `main` (`.github/workflows/main.yml`):
 - Builds Angular frontend (production configuration)
 - Builds and runs .NET unit tests on `Tansekak.sln`
 
-CI does **not** build the Docker image or deploy. Deploy is handled by Render auto-deploy on push to `main` (when using the Blueprint or manual auto-deploy).
+CI does **not** build the Docker image or deploy. Deploy is handled by Render auto-deploy on push to `main`.
 
 ---
 
