@@ -2,7 +2,19 @@
 
 Use this checklist when deploying Tansekak to **Render** with **Neon Postgres** and **Cloudflare R2** storage.
 
-See also: [production.env.example](./production.env.example) for all required environment variables.
+See also: [production.env.example](./production.env.example) for all environment variables.
+
+---
+
+## Architecture
+
+| Layer     | Provider   | Role                                              |
+| --------- | ---------- | ------------------------------------------------- |
+| App + SPA | Render     | Docker web service (API + Angular in `wwwroot`)   |
+| Database  | Neon       | Managed PostgreSQL                                |
+| Storage   | Cloudflare | R2 bucket for large Excel imports (>20 MB)        |
+
+The app is a **monolith**: one container serves both `/api/*` and the Angular SPA. No CORS configuration is needed on Render.
 
 ---
 
@@ -18,34 +30,65 @@ Example format:
 Host=ep-xxx.region.aws.neon.tech;Database=neondb;Username=...;Password=...;SSL Mode=Require
 ```
 
-Neon’s `postgresql://...` URI also works on either `ConnectionStrings__DefaultConnection` or `DATABASE_URL` — the app converts it to Npgsql keyword format.
+Neon's `postgresql://...` URI also works on either `ConnectionStrings__DefaultConnection` or `DATABASE_URL` — the app converts it to Npgsql keyword format with `SslMode=Require`.
 
 ---
 
 ## 2. Render (web service)
 
+### Option A — Blueprint (recommended)
+
 - [ ] Connect your GitHub repo to [Render](https://render.com)
-- [ ] Create a **Web Service** from [render.yaml](../render.yaml) (Blueprint) or the Dashboard
-- [ ] Set secret environment variables (see [production.env.example](./production.env.example))
+- [ ] Create a **Blueprint** from [render.yaml](../render.yaml) at the repo root
+- [ ] Set secret environment variables in the Render Dashboard (see [production.env.example](./production.env.example))
 - [ ] Confirm deploy succeeds and health check passes at `/health`
+
+### Option B — Manual Docker web service
+
+- [ ] Create a **Web Service** → **Deploy an existing image from a registry** or **Build from Dockerfile**
+- [ ] Dockerfile path: `./Dockerfile`
+- [ ] Docker context: repository root
+- [ ] Health check path: `/health`
 - [ ] Prefer the **Starter plan** if large Excel imports must not be interrupted by free-tier spin-down
 
 ### Environment variables
 
 Render Dashboard → your service → **Environment**:
 
-- [ ] `ConnectionStrings__DefaultConnection` — Neon pooled connection string
-- [ ] `ASPNETCORE_ENVIRONMENT` — `Production`
-- [ ] `AdminSeed__Email` — unique admin email (not `admin@tansekak.local`)
-- [ ] `AdminSeed__Password` — strong password (not `Admin@12345`)
-- [ ] `R2__AccountId` — Cloudflare account ID
-- [ ] `R2__AccessKeyId` — R2 S3 API access key
-- [ ] `R2__SecretAccessKey` — R2 S3 API secret
-- [ ] `R2__BucketName` — e.g. `tansekak-imports`
+| Variable | Required | Notes |
+| -------- | -------- | ----- |
+| `ConnectionStrings__DefaultConnection` | Yes | Neon pooled connection string |
+| `AdminSeed__Email` | Yes | Unique email (not `admin@tansekak.local`) |
+| `AdminSeed__Password` | Yes | Strong password (not `Admin@12345`) |
+| `R2__AccountId` | For large imports | Cloudflare account ID |
+| `R2__AccessKeyId` | For large imports | R2 S3 API access key |
+| `R2__SecretAccessKey` | For large imports | R2 S3 API secret |
+| `R2__BucketName` | Optional | Default: `tansekak-imports` |
+| `ASPNETCORE_ENVIRONMENT` | Optional | Already `Production` in Dockerfile |
 
 Do **not** set `Frontend__Origin` — SPA and API are same-origin on Render.
 
-On first boot: EF migrations run, reference data seeds, admin user is created.
+`PORT` is set automatically by Render. The app binds to `0.0.0.0:$PORT` (default `8080`).
+
+### Production startup validation
+
+On first boot (and every restart), the app validates configuration **before** migrations:
+
+- Connection string must be set and must **not** contain `localhost` or `127.0.0.1`
+- `AdminSeed__Email` and `AdminSeed__Password` must be set
+- Dev defaults (`admin@tansekak.local`, `Admin@12345`) are rejected
+- Missing R2 credentials log a **warning** only (startup succeeds; large imports return HTTP 503)
+
+If validation fails, check Render deploy logs for the exact error message.
+
+### First boot sequence
+
+1. EF Core migrations run automatically
+2. Reference catalog seeds from `SeededData/` JSON (governorates, universities, faculties, links)
+3. Bootstrap admission year is created (current UTC calendar year, max score 320, marked current)
+4. Admin user is created from `AdminSeed__*` if no admin exists
+
+**Important:** Cutoffs are **not** seeded. After first deploy, sign in to admin and import cutoff Markdown files for each track before public prediction works.
 
 ---
 
@@ -83,12 +126,12 @@ R2 → bucket → Settings → **CORS policy**:
 
 ## 4. GitHub Actions (CI)
 
-CI runs on every push and pull request to `main`:
+CI runs on every push and pull request to `main` (`.github/workflows/main.yml`):
 
-- Builds Angular frontend
-- Builds and tests .NET backend
+- Builds Angular frontend (production configuration)
+- Builds and runs .NET unit tests on `Tansekak.sln`
 
-Deploy is handled by Render auto-deploy on push to `main` (configured in [render.yaml](../render.yaml)).
+CI does **not** build the Docker image or deploy. Deploy is handled by Render auto-deploy on push to `main` (when using the Blueprint or manual auto-deploy).
 
 ---
 
@@ -97,7 +140,7 @@ Deploy is handled by Render auto-deploy on push to `main` (configured in [render
 - [ ] Confirm Neon connection string and all Render env vars are set
 - [ ] Push to `main` or trigger a manual deploy in Render
 - [ ] Watch Render deploy logs for build success
-- [ ] On first boot: EF migrations run, reference data seeds, admin user is created
+- [ ] Sign in to admin and import cutoff data for all three tracks
 
 ---
 
@@ -109,8 +152,8 @@ Deploy is handled by Render auto-deploy on push to `main` (configured in [render
 | SPA routes | `https://<domain>/predict` | Angular app loads |
 | Admin login | `https://<domain>/admin/login` | Login page loads |
 | Auth | Sign in with `AdminSeed__*` credentials | Cookie auth over HTTPS |
-| Config API | `GET https://<domain>/api/config` | JSON app config |
-| Predict | Submit prediction form | `POST /api/admission/predict` succeeds |
+| Config API | `GET https://<domain>/api/config` | JSON with current year, max score, tracks |
+| Predict | Submit prediction form (after cutoff import) | `POST /api/admission/predict` returns results |
 | Small import | Upload Excel ≤ 20 MB in admin | Direct upload succeeds |
 | Large import | Upload Excel > 20 MB in admin | Presigned URL flow completes |
 
@@ -120,10 +163,13 @@ Deploy is handled by Render auto-deploy on push to `main` (configured in [render
 
 | Symptom | Likely cause |
 | ------- | -------------- |
-| App fails to start | Missing or invalid env vars — check Render deploy logs |
-| `Couldn't set postgresql://...sslmode` | URI was passed to Npgsql unparsed — redeploy with the current resolver, or paste the Neon **Npgsql** connection string instead |
-| `localhost` connection error | `ConnectionStrings__DefaultConnection` not set or still pointing locally |
+| App fails to start on deploy | Missing env vars, localhost connection string, or dev admin credentials — check Render deploy logs |
+| `ConnectionStrings:DefaultConnection must be configured` | `ConnectionStrings__DefaultConnection` not set on Render |
+| `localhost` connection error | Connection string still points locally or not set |
+| `AdminSeed:Email must not use the development default` | Still using `admin@tansekak.local` |
 | Admin login fails | Wrong `AdminSeed__*` values; user already created on first boot with different password |
+| Predict returns empty / service unavailable | No cutoffs imported yet, or no current admission year |
 | Large import returns 503 | R2 env vars missing or incomplete |
 | Large import CORS error | R2 CORS `AllowedOrigins` does not exactly match your Render domain |
 | Import job interrupted | Free-tier spin-down — upgrade to Starter plan or retry |
+| OpenAPI not available | `/openapi/v1.json` is Development-only; production has no Swagger UI |

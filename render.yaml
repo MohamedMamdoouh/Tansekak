@@ -1,0 +1,29 @@
+# Render Blueprint for Tansekak
+# Database: provision Neon Postgres separately and paste the connection string below.
+# See docs/PRODUCTION_SETUP.md for the full checklist.
+
+services:
+  - type: web
+    name: tansekak
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__DefaultConnection
+        sync: false
+      - key: AdminSeed__Email
+        sync: false
+      - key: AdminSeed__Password
+        sync: false
+      - key: R2__AccountId
+        sync: false
+      - key: R2__AccessKeyId
+        sync: false
+      - key: R2__SecretAccessKey
+        sync: false
+      - key: R2__BucketName
+        value: tansekak-imports

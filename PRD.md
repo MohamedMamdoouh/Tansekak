@@ -1,24 +1,63 @@
 # Tansekak
 
+> **Documentation status:** This PRD is the **original approved specification (v1.0)** and is kept for historical reference. For the current as-built system, use **[README.md](README.md)** and **[docs/PRODUCTION_SETUP.md](docs/PRODUCTION_SETUP.md)**. Where this document conflicts with the codebase, the README and code take precedence.
+
 ## Product Requirements Document (PRD)
 
 **Product Name:** Tansekak
 **Version:** 1.0
-**Status:** Approved
+**Status:** Superseded by implementation (see amendments below)
 **Language:** English
 
 ---
 
-## Amendment (Implementation v1.0)
+## Amendment (As-built — current stage)
 
-The following deviations apply to the MVP implementation:
+The shipped product diverges from the original PRD in the following ways. This section reflects the codebase as of the current release.
 
-- **University scope:** Includes Public Universities and Institutes (not public-only).
-- **University entity:** Adds `Type` enum (`Public = 1`, `Institute = 2`).
+### Architecture and stack
+
+- **Database:** PostgreSQL (Npgsql) — not SQL Server. Dev and prod both use PostgreSQL; SQLite is test-only.
+- **Deployment:** Docker monolith on Render; Neon Postgres; Cloudflare R2 for large imports.
+- **Architecture:** Clean Architecture with anemic domain entities, service interfaces + DTOs (not CQRS/MediatR), no repository layer.
+- **IDs:** Manual integer allocation via `EntityIdAllocator` / `EntityIdSequences` table.
+
+### Public features
+
+- **Result categories:** Returns **eligible colleges only** (`score >= cutoff`). No "Near" or "Not Available" tiers; no `nearThreshold` in config.
+- **Pagination:** Frontend uses `pageSize: 20` with unlimited load-more. API default is 10; max 100 per page.
+- **Thanaweya lookup:** Added post-MVP — `/thanaweya-result` and `/track-rank` routes with seating number lookup and track rank.
+- **Guide and designer pages:** `/guide` (static FAQ) and `/designer` (developer profile) added.
+- **Branding:** UI displays **تنسيقك** in Arabic; API returns `appName: "tansekak"`.
+
+### Admin features
+
+- **Admin UI:** Dashboard, cutoff CRUD, cutoff Markdown import, student Excel import only.
+- **API-only catalog management:** Governorates, universities, faculties, university-faculties, and admission years are managed via API (no admin UI pages).
+- **No activate/deactivate:** Create and edit only for catalog entities. Only admission cutoffs may be deleted.
+- **Publish current year:** `POST /api/admin/admission-years/{id}/publish` (not PATCH).
+
+### Data model
+
+- **University scope:** Includes Public Universities and Institutes.
+- **University entity:** `Type` enum (`Public = 1`, `Institute = 2`).
+- **Faculty entity:** `AllowedTracks` (list of academic tracks) — used to filter prediction results.
 - **Removed fields:** `NameEn`, `Slug`, and `IsActive` are not used. Entities store `NameAr` only.
-- **Admin operations:** No activate/deactivate. Create and edit only for governorates, universities, faculties, university-faculties, and admission years. Only admission cutoffs may be deleted.
-- **Import matching:** University and faculty matched by `NameAr` only.
-- **Pagination:** First request returns 10 results; Load More adds 10 more (20 max). Default `pageSize = 10`.
+- **Added entities:** `StudentResult`, `ImportJob`, `EntityIdSequence`.
+
+### Import and seeding
+
+- **Cutoff import:** Markdown (`.md`) only — not Excel/CSV. One track per upload; replaces year+track cutoffs.
+- **Student import:** Excel (`.xlsx`) with columns `seating_no`, `arabic_name`, `total_degree`, `student_case_desc`. Direct upload ≤20 MB; R2 presigned flow for larger files with async job polling.
+- **Seeding:** Catalog JSON only (governorates, universities, faculties, university-faculty links). Runs once when database is empty. Creates bootstrap admission year (current UTC year, max score 320). **Cutoffs are not seeded** — must be imported via admin.
+
+### Authentication
+
+- Cookie-based ASP.NET Core Identity (not JWT). Single `Administrator` role.
+
+### Documentation referenced in §32 but not created
+
+- `docs/PROJECT_SPEC.md`, `docs/API.md`, `docs/DATABASE.md` — consolidated into README.md instead.
 
 ---
 
