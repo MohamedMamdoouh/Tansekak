@@ -67,13 +67,13 @@ jobs:
       # -------------------------
 
       - name: Restore API for deployment
-        if: github.event_name != 'pull_request'
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         run: >
           dotnet restore src/Tansekak.Api/Tansekak.Api.csproj
           --runtime win-x86
 
       - name: Publish API
-        if: github.event_name != 'pull_request'
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         run: >
           dotnet publish src/Tansekak.Api/Tansekak.Api.csproj
           --configuration Release
@@ -87,7 +87,7 @@ jobs:
       # -------------------------
 
       - name: Copy frontend to wwwroot
-        if: github.event_name != 'pull_request'
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path publish\wwwroot | Out-Null
@@ -103,7 +103,7 @@ jobs:
       # -------------------------
 
       - name: Deploy to MonsterASP.NET via Web Deploy
-        if: github.event_name != 'pull_request'
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: rasmusbuchholdt/simply-web-deploy@2.2.0
         with:
           website-name: ${{ secrets.WEBSITE_NAME }}
@@ -111,3 +111,4 @@ jobs:
           server-username: ${{ secrets.SERVER_USERNAME }}
           server-password: ${{ secrets.SERVER_PASSWORD }}
           source-path: '\publish\'
+          target-delete: true
