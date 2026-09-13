@@ -2,48 +2,15 @@ import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../../../auth.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-admin-login',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  template: `
-    <div class="container">
-      <div class="card login">
-        <h1>لوحة الإدارة — تسجيل الدخول</h1>
-        <form [formGroup]="form" (ngSubmit)="submit()">
-          <div class="form-group">
-            <label>البريد الإلكتروني</label>
-            <input
-              formControlName="email"
-              type="email"
-              autocomplete="username"
-            />
-          </div>
-          <div class="form-group">
-            <label>كلمة المرور</label>
-            <input
-              formControlName="password"
-              type="password"
-              autocomplete="current-password"
-            />
-          </div>
-          @if (error) {
-            <div class="error">{{ error }}</div>
-          }
-          <button
-            class="btn btn-primary"
-            type="submit"
-            [disabled]="form.invalid || loading"
-          >
-            دخول
-          </button>
-        </form>
-      </div>
-    </div>
-  `,
-  styles: ['.login { max-width: 420px; margin: 0 auto; } .login .btn-primary { width: 100%; }'],
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.scss',
+  
 })
 export class AdminLoginComponent {
   private fb = inject(FormBuilder);

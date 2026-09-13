@@ -1,0 +1,40 @@
+
+    <header class="header">
+      <div class="container header-inner">
+        <a routerLink="/" class="brand">تنسيقك</a>
+        <nav>
+          <a
+            routerLink="/"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            >الرئيسية</a
+          >
+          <a routerLink="/predict" routerLinkActive="active">اعرف كليتك</a>
+          <a routerLink="/thanaweya-result" routerLinkActive="active"
+            >نتيجة الثانوية</a
+          >
+          <a routerLink="/track-rank" routerLinkActive="active">ترتيب الشعبة</a>
+          <a routerLink="/guide" routerLinkActive="active">افهم التنسيق</a>
+          <a routerLink="/designer" routerLinkActive="active">المطور</a>
+          @if (auth.isAdmin()) {
+            <a routerLink="/admin" routerLinkActive="active">لوحة التحكم</a>
+            <button type="button" class="nav-btn" (click)="auth.logoutAndRedirect(true)">
+              خروج
+            </button>
+          }
+        </nav>
+      </div>
+    </header>
+    <main>
+      <router-outlet />
+    </main>
+    <footer class="footer">
+      <div class="container footer-inner">
+        <p class="footer-tagline">تنسيقك — بوابتك لتوقع كليتك المثالية</p>
+        <p class="footer-credit">
+          تم تصميم الموقع بواسطة {{ profile.name }}
+        </p>
+        <app-social-links [links]="profile.socialLinks" size="sm" />
+      </div>
+    </footer>
+  

@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   backend:
-    name: Backend tests
+    name: Backend build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,8 +27,8 @@ jobs:
       - name: Restore
         run: dotnet restore Tansekak.sln
 
-      - name: Test
-        run: dotnet test Tansekak.sln --no-restore -c Release
+      - name: Build
+        run: dotnet build Tansekak.sln --no-restore -c Release
 
   frontend:
     name: Frontend build

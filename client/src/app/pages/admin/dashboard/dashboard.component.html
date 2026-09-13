@@ -1,0 +1,117 @@
+
+    <div class="container dashboard">
+      @if (loading) {
+        <div class="loading-grid" aria-busy="true" aria-label="جاري التحميل">
+          @for (i of [1, 2, 3, 4]; track i) {
+            <div class="skeleton-card"></div>
+          }
+        </div>
+      } @else if (loadError) {
+        <div class="error-panel card">
+          <h1>تعذر تحميل النظرة العامة</h1>
+          <p>{{ loadError }}</p>
+          <button type="button" class="btn btn-primary" (click)="load()">
+            إعادة المحاولة
+          </button>
+        </div>
+      } @else if (data) {
+        <section class="hero-band" aria-labelledby="dashboard-title">
+          <div class="hero-copy">
+            <h1 id="dashboard-title">نظرة عامة على بيانات القبول</h1>
+          </div>
+
+          @if (data.currentYear) {
+            <div class="year-anchor" aria-label="سنة القبول الحالية">
+              <span class="year-anchor-label">سنة القبول النشطة</span>
+              <span class="year-anchor-value">{{ data.currentYear }}</span>
+            </div>
+          } @else {
+            <div class="year-anchor year-anchor--empty">
+              <span class="year-anchor-label">لا توجد سنة قبول نشطة</span>
+              <span class="year-anchor-meta"
+                >راجع بيانات السنوات قبل الاستيراد</span
+              >
+            </div>
+          }
+        </section>
+
+        <section class="stats-grid" aria-label="إحصائيات النظام">
+          @for (stat of statCards; track stat.key) {
+            <article class="stat-card card">
+              <span class="stat-value">{{ data[stat.key] | number }}</span>
+              <h3 class="stat-label">{{ stat.label }}</h3>
+            </article>
+          }
+        </section>
+
+        <section class="actions-section" aria-label="إجراءات سريعة">
+          <h2 class="actions-title">ماذا تريد أن تفعل؟</h2>
+          <div class="actions-grid">
+            <a routerLink="/admin/cutoffs" class="action-card card">
+              <div class="action-icon" aria-hidden="true">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M9 7h6M9 12h6M9 17h4M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h3>إدارة حدود القبول</h3>
+                <p>إضافة، تعديل، أو حذف سجل حد أدنى لكلية وشعبة.</p>
+              </div>
+              <span class="action-arrow" aria-hidden="true">←</span>
+            </a>
+
+            <a routerLink="/admin/import" class="action-card card">
+              <div class="action-icon action-icon--accent" aria-hidden="true">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M12 3v12M7 8l5-5 5 5M5 21h14" />
+                </svg>
+              </div>
+              <div>
+                <h3>استيراد حدود القبول</h3>
+                <p>رفع ملف Markdown لشعبة واحدة واستبدال حدود السنة الحالية.</p>
+              </div>
+              <span class="action-arrow" aria-hidden="true">←</span>
+            </a>
+
+            <a routerLink="/admin/import-results" class="action-card card">
+              <div class="action-icon action-icon--accent" aria-hidden="true">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M12 3v12M7 8l5-5 5 5M5 21h14" />
+                </svg>
+              </div>
+              <div>
+                <h3>استيراد نتائج الثانوية</h3>
+                <p>
+                  رفع ملف Excel بنتائج الطلاب واستبدال بيانات السنة المختارة.
+                </p>
+              </div>
+              <span class="action-arrow" aria-hidden="true">←</span>
+            </a>
+          </div>
+        </section>
+      }
+    </div>
+  

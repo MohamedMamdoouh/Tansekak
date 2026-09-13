@@ -1,0 +1,21 @@
+
+    <div class="container">
+      <section class="page-section designer-page">
+        <div class="designer-profile">
+          <img
+            class="designer-photo"
+            [src]="profile.photoSrc"
+            [alt]="'صورة ' + profile.name"
+            width="200"
+            height="200"
+          />
+          <div class="designer-heading">
+            <h1 class="section-title">{{ profile.name }}</h1>
+            <p class="designer-title">{{ profile.title }}</p>
+          </div>
+          <p class="designer-bio">{{ profile.bio }}</p>
+          <app-social-links [links]="profile.socialLinks" />
+        </div>
+      </section>
+    </div>
+  

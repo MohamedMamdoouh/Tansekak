@@ -1,0 +1,201 @@
+
+    <div class="container thanaweya-page">
+      <nav class="breadcrumb" aria-label="مسار التنقل">
+        <a routerLink="/">الرئيسية</a>
+        <span class="breadcrumb-sep">/</span>
+        <span>نتيجة الثانوية</span>
+      </nav>
+
+      <section class="lookup-stage" [class.lookup-stage--compact]="result">
+        <div class="lookup-stage-copy">
+          <h1 class="lookup-title">نتيجة الثانوية برقم الجلوس</h1>
+          @if (!result) {
+            <p class="lookup-lead">
+              اكتب رقم جلوسك وشوف نتيجتك — وبعدها اعرف الكليات المتاحة لمجموعك.
+            </p>
+          }
+        </div>
+
+        <form class="lookup-form" [formGroup]="form" (ngSubmit)="submit()">
+          <label for="seatingNo" class="lookup-label">رقم الجلوس</label>
+          <div class="lookup-input-wrap">
+            <input
+              id="seatingNo"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              formControlName="seatingNo"
+              placeholder="1234567"
+              autocomplete="off"
+              (input)="onSeatingInput($event)"
+            />
+          </div>
+          @if (
+            form.get('seatingNo')?.invalid && form.get('seatingNo')?.touched
+          ) {
+            @if (form.get('seatingNo')?.errors?.['required']) {
+              <small class="field-error">يرجى إدخال رقم الجلوس</small>
+            } @else if (form.get('seatingNo')?.errors?.['digitsOnly']) {
+              <small class="field-error"
+                >رقم الجلوس يجب أن يحتوي على أرقام فقط</small
+              >
+            }
+          }
+
+          @if (error) {
+            <div class="lookup-notice" role="status">{{ error }}</div>
+          }
+
+          <button
+            class="btn btn-primary btn-lg lookup-submit"
+            type="submit"
+            [disabled]="loading"
+          >
+            @if (loading) {
+              <span class="lookup-spinner" aria-hidden="true"></span>
+              جاري البحث...
+            } @else {
+              اعرض النتيجة
+            }
+          </button>
+        </form>
+      </section>
+
+      @if (result) {
+        <section class="result-card" aria-label="نتيجة الطالب">
+          <div class="result-profile">
+            <div class="result-avatar" aria-hidden="true">
+              {{ studentInitial(result.arabicName) }}
+            </div>
+            <div class="result-profile-body">
+              <p class="result-eyebrow">
+                الثانوية العامة
+                <span class="result-year-badge num">{{ result.year }}</span>
+              </p>
+              <h2 class="result-name">{{ result.arabicName }}</h2>
+              <p class="result-seating">
+                <span class="result-seating-label">رقم الجلوس</span>
+                <span class="result-seating-no num">{{
+                  result.seatingNo
+                }}</span>
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="result-score"
+            [attr.aria-label]="
+              'المجموع الكلي ' +
+              result.totalDegree +
+              ' من ' +
+              thanaweyaMaxScore +
+              '، النسبة ' +
+              resultPercentage(result.totalDegree) +
+              '%'
+            "
+          >
+            <div
+              class="result-score-ring"
+              [style.--score-pct]="scoreProgress(result.totalDegree)"
+            >
+              <div class="result-score-ring-inner">
+                <span class="result-score-value num">{{
+                  result.totalDegree
+                }}</span>
+                <span class="result-score-max"
+                  >/ {{ thanaweyaMaxScore }}</span
+                >
+              </div>
+            </div>
+            <div class="result-score-meta">
+              <div class="result-score-head">
+                <span class="result-score-label">المجموع الكلي</span>
+                <span class="result-score-pct num"
+                  >{{ resultPercentage(result.totalDegree) }}%</span
+                >
+              </div>
+              <div class="result-score-bar" aria-hidden="true">
+                <div
+                  class="result-score-bar-fill"
+                  [style.width.%]="scoreProgress(result.totalDegree)"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="result-details">
+            <div class="result-detail">
+              <span class="result-detail-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </span>
+              <div class="result-detail-text">
+                <span class="result-detail-label">حالة الطالب</span>
+                <span class="result-detail-value">{{
+                  result.studentCaseDesc
+                }}</span>
+              </div>
+            </div>
+            @if (result.track) {
+              <div class="result-detail">
+                <span class="result-detail-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </span>
+                <div class="result-detail-text">
+                  <span class="result-detail-label">الشعبة</span>
+                  <span class="result-detail-value">{{
+                    trackLabel(result.track)
+                  }}</span>
+                </div>
+              </div>
+            }
+          </div>
+
+          @if (hasTrackRank(result)) {
+            <div class="result-rank">
+              <div class="result-rank-head">
+                <span class="result-rank-label">الترتيب على الشعبة</span>
+                @if (result.track) {
+                  <span class="result-rank-track">{{
+                    trackLabel(result.track)
+                  }}</span>
+                }
+              </div>
+              <div class="result-rank-stats">
+                <div class="result-rank-stat result-rank-stat--primary">
+                  <span class="result-rank-stat-value num">{{
+                    fmt(result.trackRank)
+                  }}</span>
+                  <span class="result-rank-stat-label">ترتيبك</span>
+                </div>
+                <span class="result-rank-sep" aria-hidden="true">من</span>
+                <div class="result-rank-stat">
+                  <span class="result-rank-stat-value num">{{
+                    fmt(result.trackTotalStudents)
+                  }}</span>
+                  <span class="result-rank-stat-label">طالب</span>
+                </div>
+              </div>
+              <a class="result-rank-link" routerLink="/track-rank"
+                >تفاصيل الترتيب ←</a
+              >
+            </div>
+          }
+
+          <footer class="result-footer">
+            <a
+              class="result-cta"
+              [routerLink]="['/predict']"
+              [queryParams]="predictQueryParams()"
+            >
+              <span>اعرف الكليات المتاحة لمجموعك</span>
+              <span class="result-cta-arrow" aria-hidden="true">←</span>
+            </a>
+          </footer>
+        </section>
+      }
+    </div>
+  

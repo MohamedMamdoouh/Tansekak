@@ -1,3 +1,5 @@
+export const DEFAULT_MAXIMUM_SCORE = 320;
+
 export interface AuthUser {
   email: string;
   role: string;
@@ -91,6 +93,22 @@ export interface ImportResult {
   }[];
 }
 
+export interface ImportJob {
+  id: string;
+  status: 'queued' | 'running' | 'completed' | 'failed';
+  importedCount?: number | null;
+  message?: string | null;
+  createdAtUtc: string;
+  completedAtUtc?: string | null;
+}
+
+export interface UploadUrlResponse {
+  uploadUrl: string;
+  objectKey: string;
+}
+
+export const DIRECT_STUDENT_IMPORT_LIMIT_BYTES = 20 * 1024 * 1024;
+
 export interface StudentResult {
   seatingNo: string;
   arabicName: string;
@@ -100,13 +118,6 @@ export interface StudentResult {
   track?: string | null;
   trackRank?: number | null;
   trackTotalStudents?: number | null;
-}
-
-export interface CutoffResyncResult {
-  success: boolean;
-  message: string;
-  deletedCount: number;
-  insertedCount: number;
 }
 
 export const TRACK_LABELS: Record<string, string> = {

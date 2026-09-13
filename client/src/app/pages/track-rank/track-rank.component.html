@@ -1,0 +1,166 @@
+
+    <div class="container track-rank-page">
+      <nav class="breadcrumb" aria-label="مسار التنقل">
+        <a routerLink="/">الرئيسية</a>
+        <span class="breadcrumb-sep">/</span>
+        <span>ترتيب الشعبة</span>
+      </nav>
+
+      <section class="lookup-stage" [class.lookup-stage--compact]="result">
+        <div class="lookup-stage-copy">
+          <h1 class="lookup-title">ترتيبك على الشعبة</h1>
+          @if (!result) {
+            <p class="lookup-lead">
+              اكتب رقم جلوسك واعرف ترتيبك بين طلاب شعبتك في نفس سنة النتيجة.
+            </p>
+          }
+        </div>
+
+        <form class="lookup-form" [formGroup]="form" (ngSubmit)="submit()">
+          <label for="seatingNo" class="lookup-label">رقم الجلوس</label>
+          <div class="lookup-input-wrap">
+            <input
+              id="seatingNo"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              formControlName="seatingNo"
+              placeholder="1234567"
+              autocomplete="off"
+              (input)="onSeatingInput($event)"
+            />
+          </div>
+          @if (
+            form.get('seatingNo')?.invalid && form.get('seatingNo')?.touched
+          ) {
+            @if (form.get('seatingNo')?.errors?.['required']) {
+              <small class="field-error">يرجى إدخال رقم الجلوس</small>
+            } @else if (form.get('seatingNo')?.errors?.['digitsOnly']) {
+              <small class="field-error"
+                >رقم الجلوس يجب أن يحتوي على أرقام فقط</small
+              >
+            }
+          }
+
+          @if (error) {
+            <div class="lookup-notice" role="status">{{ error }}</div>
+          }
+
+          <button
+            class="btn btn-primary btn-lg lookup-submit"
+            type="submit"
+            [disabled]="loading"
+          >
+            @if (loading) {
+              <span class="lookup-spinner" aria-hidden="true"></span>
+              جاري البحث...
+            } @else {
+              اعرض الترتيب
+            }
+          </button>
+        </form>
+      </section>
+
+      @if (result) {
+        <section class="rank-card" aria-label="ترتيب الطالب على الشعبة">
+          <header class="rank-header">
+            <div class="rank-header-top">
+              @if (result.track) {
+                <span class="rank-track-badge">{{
+                  trackLabel(result.track)
+                }}</span>
+              }
+              <span class="rank-year">{{ result.year }}</span>
+            </div>
+            <h2 class="rank-student-name">{{ result.arabicName }}</h2>
+            <p class="rank-seating">
+              <span class="rank-seating-label">رقم الجلوس</span>
+              <span class="rank-seating-no">{{
+                result.seatingNo
+              }}</span>
+            </p>
+          </header>
+
+          <div class="rank-body">
+            @if (hasRank(result)) {
+              <div class="rank-spotlight">
+                <p class="rank-spotlight-label">ترتيبك</p>
+                <p
+                  class="rank-spotlight-value num"
+                  [attr.aria-label]="rankAriaLabel(result)"
+                >
+                  {{ fmt(result.trackRank) }}
+                </p>
+                <p class="rank-spotlight-of">
+                  من
+                  <strong class="num">{{
+                    fmt(result.trackTotalStudents)
+                  }}</strong>
+                  طالب
+                </p>
+
+                <div class="rank-stand" aria-hidden="true">
+                  <div class="rank-stand-track">
+                    <div
+                      class="rank-stand-marker"
+                      [style.inset-inline-start.%]="rankPositionPercent(result)"
+                    ></div>
+                  </div>
+                  <div class="rank-stand-labels">
+                    <span>الأوائل</span>
+                    <span>منتصف القائمة</span>
+                    <span>آخر القائمة</span>
+                  </div>
+                </div>
+
+                <p class="rank-percentile">
+                  أفضل
+                  <strong class="num">{{ rankPercentile(result) }}</strong>
+                  % من طلاب الشعبة
+                </p>
+              </div>
+            } @else {
+              <div class="rank-unavailable">
+                <p class="rank-unavailable-title">تعذر تحديد الترتيب</p>
+                <p class="rank-unavailable-text">
+                  لم نتمكن من تحديد شعبتك من بيانات النتيجة. راجع حالة الطالب في
+                  صفحة النتيجة الكاملة.
+                </p>
+              </div>
+            }
+
+            <div class="rank-meta">
+              <article class="rank-meta-item">
+                <span class="rank-meta-label">المجموع الكلي</span>
+                <span class="rank-meta-value"
+                  >{{ result.totalDegree
+                  }}<span class="rank-meta-denom"
+                    >/{{ thanaweyaMaxScore }}</span
+                  ></span
+                >
+              </article>
+              <article class="rank-meta-item">
+                <span class="rank-meta-label">النسبة المئوية</span>
+                <span class="rank-meta-value num"
+                  >{{ scorePercentage(result.totalDegree) }}%</span
+                >
+              </article>
+            </div>
+
+            <div class="rank-actions">
+              <a class="btn btn-secondary" routerLink="/thanaweya-result">
+                عرض النتيجة الكاملة
+              </a>
+              <a
+                class="btn btn-primary"
+                [routerLink]="['/predict']"
+                [queryParams]="predictQueryParams()"
+              >
+                اعرف كليتك
+              </a>
+            </div>
+          </div>
+        </section>
+      }
+    </div>
+  

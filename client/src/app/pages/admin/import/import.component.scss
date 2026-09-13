@@ -1,0 +1,35 @@
+
+      h1 {
+        margin-top: 0;
+      }
+      .note {
+        background: #eff6ff;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        margin: 1rem 0;
+      }
+      .hint {
+        color: #6b7280;
+        font-size: 0.9rem;
+      }
+      .success {
+        color: #059669;
+      }
+      table {
+        width: 100%;
+        margin-top: 1rem;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 0.5rem;
+        text-align: right;
+        border-bottom: 1px solid #eef2f7;
+      }
+
+      @media (max-width: 640px) {
+        .btn-primary {
+          width: 100%;
+        }
+      }
+    

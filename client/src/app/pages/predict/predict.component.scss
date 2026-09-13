@@ -1,0 +1,11 @@
+
+      .predict-card {
+        max-width: 640px;
+        margin: 0 auto;
+      }
+      @media (max-width: 640px) {
+        .predict-card .btn-primary {
+          width: 100%;
+        }
+      }
+    

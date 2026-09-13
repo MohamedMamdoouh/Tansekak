@@ -1,121 +1,95 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, NgZone, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ApiService } from '../../../api.service';
-import { AdmissionYear } from '../../../models';
-
-const IMPORT_UNAVAILABLE_MESSAGE = 'خدمة الاستيراد غير متاحة حاليا.';
+import { ApiService, ImportUploadError } from '../../../services/api.service';
+import {
+  extractImportResult,
+  importErrorMessage,
+} from '../../../utils/import-error.util';
+import { ImportUploadService } from '../../../services/import-upload.service';
+import { AdmissionYearStore } from '../../../services/admission-year.store';
+import { AdmissionYear, ImportResult } from '../../../models';
 
 @Component({
   selector: 'app-admin-import-results',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  template: `
-    <div class="container">
-      <h1>استيراد نتائج الثانوية</h1>
-      <div class="service-unavailable" role="status">
-        {{ importUnavailableMessage }}
-      </div>
-      <div class="card">
-        <form [formGroup]="form" (ngSubmit)="upload()">
-          <div class="form-group">
-            <label>سنة القبول</label>
-            <select formControlName="yearId" [disabled]="true">
-              <option [ngValue]="null">اختر السنة</option>
-              @for (y of years; track y.id) {
-                <option [ngValue]="y.id">{{ y.year }}</option>
-              }
-            </select>
-          </div>
-
-          <p class="note">
-            هذا الاستيراد <strong>يستبدل</strong> كل نتائج الطلاب للسنة
-            المختارة.
-          </p>
-
-          <p class="hint">
-            صيغة الملف: Excel (.xlsx). الأعمدة المطلوبة:
-            <code
-              >seating_no | arabic_name | total_degree | student_case_desc</code
-            >
-          </p>
-
-          <div class="form-group">
-            <label>ملف Excel (.xlsx)</label>
-            <input type="file" [disabled]="true" accept=".xlsx" />
-          </div>
-
-          <button class="btn btn-primary" type="submit" [disabled]="true">
-            استيراد
-          </button>
-        </form>
-      </div>
-    </div>
-  `,
-  styles: [
-    `
-      h1 {
-        margin-top: 0;
-      }
-      .service-unavailable {
-        background: #fef3c7;
-        border: 1px solid #f59e0b;
-        color: #92400e;
-        padding: 0.85rem 1rem;
-        border-radius: 0.5rem;
-        margin-bottom: 1rem;
-        line-height: 1.65;
-      }
-      .note {
-        background: #eff6ff;
-        padding: 0.75rem 1rem;
-        border-radius: 0.5rem;
-        margin: 1rem 0;
-      }
-      .hint {
-        color: #6b7280;
-        font-size: 0.9rem;
-        word-break: break-word;
-      }
-
-      .hint code {
-        display: block;
-        margin-top: 0.35rem;
-        font-size: 0.82rem;
-        line-height: 1.6;
-      }
-
-      @media (max-width: 640px) {
-        .btn-primary {
-          width: 100%;
-        }
-      }
-    `,
-  ],
+  templateUrl: './import-results.component.html',
+  styleUrl: './import-results.component.scss',
 })
-export class AdminImportResultsComponent implements OnInit {
+export class AdminImportResultsComponent {
   private api = inject(ApiService);
   private fb = inject(FormBuilder);
+  private importUpload = inject(ImportUploadService);
+  private admissionYears = inject(AdmissionYearStore);
+  private ngZone = inject(NgZone);
+  private destroyRef = inject(DestroyRef);
 
-  readonly importUnavailableMessage = IMPORT_UNAVAILABLE_MESSAGE;
-  years: AdmissionYear[] = [];
+  currentYear?: AdmissionYear;
+  file: File | null = null;
+  fileTouched = false;
+  uploading = false;
+  message = '';
+  result: ImportResult | null = null;
 
-  form = this.fb.group({
-    yearId: [
-      { value: null as number | null, disabled: true },
-      Validators.required,
-    ],
-  });
+  form = this.fb.group({});
 
-  ngOnInit(): void {
-    this.api.getAdmissionYears().subscribe((y) => {
-      this.years = y;
-      const current = y.find((x) => x.isCurrent) ?? y[0];
-      if (current) this.form.patchValue({ yearId: current.id });
-    });
+  constructor() {
+    this.admissionYears
+      .loadCurrentYear()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((year) => {
+        this.currentYear = year;
+      });
+  }
+
+  onFile(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.file = input.files?.[0] ?? null;
+    this.fileTouched = true;
   }
 
   upload(): void {
-    // Service disabled — upload controls are inactive.
+    this.form.markAllAsTouched();
+    this.fileTouched = true;
+    const yearId = this.currentYear?.id;
+    if (!this.file || !yearId) return;
+
+    this.uploading = true;
+    this.message = '';
+    this.result = null;
+
+    const signal = this.importUpload.begin();
+
+    void this.api
+      .importStudentResultsWithProgress(
+        yearId,
+        this.file,
+        ({ percent, phase }) => this.importUpload.updateProgress(percent, phase),
+        signal,
+      )
+      .then((res) => {
+        this.ngZone.run(() => {
+          this.result = res;
+          this.message = res.message;
+          this.uploading = false;
+          this.importUpload.finish();
+        });
+      })
+      .catch((err: ImportUploadError) => {
+        this.ngZone.run(() => {
+          this.uploading = false;
+          this.importUpload.finish();
+
+          if (err.aborted) {
+            this.message = 'تم إلغاء الاستيراد.';
+            return;
+          }
+
+          this.result = extractImportResult(err.error);
+          this.message = importErrorMessage(err.status, err.error);
+        });
+      });
   }
 }

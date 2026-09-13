@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -5,11 +6,15 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Tansekak.Application;
+using Tansekak.Application.Common;
 using Tansekak.Application.Interfaces;
 using Tansekak.Infrastructure.Identity;
+using Tansekak.Infrastructure.Import;
+using Tansekak.Infrastructure.Options;
 using Tansekak.Infrastructure.Persistence;
 using Tansekak.Infrastructure.Seeding;
 using Tansekak.Infrastructure.Services;
+using Tansekak.Infrastructure.Storage;
 
 namespace Tansekak.Infrastructure;
 
@@ -21,23 +26,28 @@ public static class DependencyInjection
         IHostEnvironment environment)
     {
         services.AddDbContext<AppDbContext>(options =>
-        {
-            if (environment.IsEnvironment("Testing"))
-                options.UseInMemoryDatabase("TansekakIntegrationTests");
-            else
-                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
-        });
+            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+
+        services.AddScoped<EntityIdAllocator>();
+
+        services.AddDataProtection()
+            .PersistKeysToDbContext<AppDbContext>();
+
+        services.Configure<R2Options>(configuration.GetSection(R2Options.SectionName));
 
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
                 options.Password.RequiredLength = 8;
                 options.Password.RequireNonAlphanumeric = false;
                 options.Password.RequireUppercase = false;
+                options.Lockout.AllowedForNewUsers = true;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
             })
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
 
-        if (!environment.IsDevelopment() && !environment.IsEnvironment("Testing"))
+        if (!environment.IsDevelopment())
         {
             services.ConfigureApplicationCookie(options =>
             {
@@ -46,7 +56,9 @@ public static class DependencyInjection
             });
         }
 
-        services.AddScoped<FacultyAllowedTracksSynchronizer>();
+        services.AddSingleton<ISeedDataSource, SeedFileSystemReader>();
+        services.AddScoped<EntityIdAllocator>();
+        services.AddScoped<CurrentAdmissionYearProvider>();
         services.AddScoped<IDataSeeder, JsonSeedService>();
         services.AddScoped<IConfigService, ConfigService>();
         services.AddScoped<IAdmissionPredictionService, AdmissionPredictionService>();
@@ -57,9 +69,13 @@ public static class DependencyInjection
         services.AddScoped<IAdmissionYearService, AdmissionYearService>();
         services.AddScoped<IAdmissionCutoffService, AdmissionCutoffService>();
         services.AddScoped<IImportService, ImportService>();
-        services.AddScoped<ICutoffResyncService, CutoffResyncService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IStudentResultService, StudentResultService>();
+        services.AddScoped<IStudentResultImportService, StudentResultImportService>();
+        services.AddScoped<IImportJobService, ImportJobService>();
+        services.AddSingleton<IR2Storage, R2StorageService>();
+        services.AddSingleton<ImportJobQueue>();
+        services.AddHostedService<ImportJobBackgroundService>();
 
         return services;
     }
@@ -85,19 +101,45 @@ public static class DependencyInjection
         var userManager = sp.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();
 
-        const string role = "Administrator";
+        const string role = Roles.Administrator;
         if (!await roleManager.RoleExistsAsync(role))
             await roleManager.CreateAsync(new IdentityRole(role));
 
-        var email = config["AdminSeed:Email"] ?? "admin@tansekak.local";
-        var password = config["AdminSeed:Password"] ?? "Admin@12345";
+        var environment = sp.GetRequiredService<IHostEnvironment>();
+        var email = config["AdminSeed:Email"];
+        var password = config["AdminSeed:Password"];
+
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+        {
+            if (!environment.IsDevelopment())
+            {
+                throw new InvalidOperationException(
+                    "AdminSeed:Email and AdminSeed:Password must be configured outside Development.");
+            }
+
+            email = string.IsNullOrWhiteSpace(email) ? "admin@tansekak.local" : email;
+            password = string.IsNullOrWhiteSpace(password) ? "Admin@12345" : password;
+        }
 
         var user = await userManager.FindByEmailAsync(email);
         if (user is null)
         {
-            user = new ApplicationUser { UserName = email, Email = email, EmailConfirmed = true };
+            user = new ApplicationUser
+            {
+                UserName = email,
+                Email = email,
+                EmailConfirmed = true,
+                LockoutEnabled = true
+            };
             await userManager.CreateAsync(user, password);
             await userManager.AddToRoleAsync(user, role);
+            return;
+        }
+
+        if (!user.LockoutEnabled)
+        {
+            user.LockoutEnabled = true;
+            await userManager.UpdateAsync(user);
         }
     }
 }

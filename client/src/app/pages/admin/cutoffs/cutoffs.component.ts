@@ -1,15 +1,22 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
-import { ApiService } from '../../../api.service';
+import { SESSION_EXPIRED_MESSAGE } from '../../../constants/auth-messages';
+import { ApiService } from '../../../services/api.service';
+import { AdmissionYearStore } from '../../../services/admission-year.store';
 import {
   AdmissionCutoff,
   AdmissionYear,
-  TRACK_LABELS,
   TRACK_OPTIONS,
   UniversityFaculty,
 } from '../../../models';
+import {
+  ADMIN_CUTOFFS_PAGE_SIZE,
+  SEARCH_DEBOUNCE_MS,
+} from '../../../constants/pagination.constants';
+import { getTrackLabel } from '../../../utils/track-label.util';
 
 interface DeleteTarget {
   id: number;
@@ -23,455 +30,14 @@ interface DeleteTarget {
   selector: 'app-admin-cutoffs',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule],
-  template: `
-    <div class="container">
-      <h1>حدود القبول</h1>
-      @if (currentYear) {
-        <p class="year-label">
-          سنة القبول الحالية: <strong>{{ currentYear.year }}</strong>
-        </p>
-      }
-
-      <div class="card form-card">
-        <h2 class="form-title">{{ editId ? 'تعديل سجل' : 'إضافة سجل' }}</h2>
-        <form [formGroup]="form" (ngSubmit)="save()">
-          <div class="form-grid">
-            <div class="form-group">
-              <label>الجامعة / المعهد</label>
-              <input
-                type="text"
-                formControlName="universityName"
-                placeholder="مثال: جامعة القاهرة"
-              />
-              @if (
-                form.get('universityName')?.invalid &&
-                form.get('universityName')?.touched
-              ) {
-                <small class="field-error">يرجى إدخال اسم الجامعة/المعهد</small>
-              }
-            </div>
-
-            <div class="form-group">
-              <label>الكلية</label>
-              <input
-                type="text"
-                formControlName="facultyName"
-                placeholder="مثال: التجارة"
-              />
-              @if (
-                form.get('facultyName')?.invalid &&
-                form.get('facultyName')?.touched
-              ) {
-                <small class="field-error">يرجى إدخال اسم الكلية</small>
-              }
-            </div>
-
-            <div class="form-group">
-              <label>الشعبة</label>
-              <select formControlName="track">
-                @for (t of trackOptions; track t.value) {
-                  <option [value]="t.value">{{ t.label }}</option>
-                }
-              </select>
-              @if (form.get('track')?.invalid && form.get('track')?.touched) {
-                <small class="field-error">يرجى اختيار الشعبة</small>
-              }
-            </div>
-
-            <div class="form-group">
-              <label>الحد الأدنى للقبول</label>
-              <input
-                type="number"
-                inputmode="decimal"
-                step="0.01"
-                min="0"
-                formControlName="cutoffScore"
-                placeholder="مثال: 286"
-                [attr.max]="currentYear?.maximumScore ?? 320"
-              />
-              @if (currentYear) {
-                <small>الحد الأقصى: {{ currentYear.maximumScore }}</small>
-              }
-              @if (
-                form.get('cutoffScore')?.invalid &&
-                form.get('cutoffScore')?.touched
-              ) {
-                @if (form.get('cutoffScore')?.errors?.['required']) {
-                  <small class="field-error"
-                    >يرجى إدخال الحد الأدنى للقبول</small
-                  >
-                } @else if (form.get('cutoffScore')?.errors?.['min']) {
-                  <small class="field-error"
-                    >الحد الأدنى يجب أن يكون أكبر من صفر</small
-                  >
-                } @else if (form.get('cutoffScore')?.errors?.['max']) {
-                  <small class="field-error"
-                    >الحد الأدنى لا يجب أن يتجاوز ({{
-                      currentYear?.maximumScore
-                    }})</small
-                  >
-                }
-              }
-            </div>
-          </div>
-
-          @if (formError) {
-            <p class="form-error">{{ formError }}</p>
-          }
-
-          <div class="actions">
-            @if (editId) {
-              <button
-                type="button"
-                class="btn btn-secondary"
-                (click)="cancelEdit()"
-              >
-                إلغاء
-              </button>
-            }
-            <button class="btn btn-primary" type="submit" [disabled]="saving">
-              {{ saving ? 'جاري الحفظ...' : editId ? 'تحديث' : 'إضافة' }}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div class="card table-card">
-        <input
-          class="search"
-          [(ngModel)]="search"
-          (ngModelChange)="onSearchChange()"
-          placeholder="ابحث باسم الجامعة أو الكلية"
-        />
-        <div class="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>الجامعة / المعهد</th>
-                <th>الكلية</th>
-                <th>الشعبة</th>
-                <th>الحد الأدنى للقبول</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (item of items; track item.id) {
-                <tr>
-                  <td>{{ item.universityName }}</td>
-                  <td>{{ item.facultyName }}</td>
-                  <td>{{ trackLabel(item.track) }}</td>
-                  <td>{{ item.cutoffScore }}</td>
-                  <td class="row-actions">
-                    <button
-                      type="button"
-                      class="btn btn-secondary btn-sm"
-                      (click)="edit(item)"
-                    >
-                      تعديل
-                    </button>
-                    <button
-                      type="button"
-                      class="btn btn-danger btn-sm"
-                      (click)="openDeleteDialog(item)"
-                    >
-                      حذف
-                    </button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-
-        @if (loadError) {
-          <p class="form-error">{{ loadError }}</p>
-        }
-        @if (items.length === 0 && !loading && !loadError) {
-          <p class="empty">لا توجد سجلات.</p>
-        }
-        @if (loading) {
-          <p class="empty">جاري التحميل...</p>
-        }
-
-        <div class="pagination">
-          <button
-            type="button"
-            class="btn btn-secondary btn-sm"
-            [disabled]="page <= 1"
-            (click)="goToPage(page - 1)"
-          >
-            السابق
-          </button>
-          <span class="page-info">صفحة {{ page }} من {{ totalPages }}</span>
-          <button
-            type="button"
-            class="btn btn-secondary btn-sm"
-            [disabled]="page >= totalPages"
-            (click)="goToPage(page + 1)"
-          >
-            التالي
-          </button>
-        </div>
-      </div>
-    </div>
-
-    @if (deleteTarget) {
-      <div class="dialog-backdrop" (click)="closeDeleteDialog()">
-        <div
-          class="dialog"
-          (click)="$event.stopPropagation()"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div class="dialog-icon">🗑️</div>
-          <h3>تأكيد الحذف</h3>
-          <p class="dialog-lead">
-            هل أنت متأكد من حذف هذا السجل؟ لا يمكن التراجع عن هذا الإجراء.
-          </p>
-          <div class="dialog-card">
-            <div>
-              <strong>{{ deleteTarget.facultyName }}</strong>
-            </div>
-            <div class="dialog-muted">{{ deleteTarget.universityName }}</div>
-            <div class="dialog-tags">
-              <span>{{ trackLabel(deleteTarget.track) }}</span>
-              <span>الحد الأدنى للقبول: {{ deleteTarget.cutoffScore }}</span>
-            </div>
-          </div>
-          <div class="dialog-actions">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              (click)="closeDeleteDialog()"
-            >
-              إلغاء
-            </button>
-            <button
-              type="button"
-              class="btn btn-danger"
-              [disabled]="deleting"
-              (click)="confirmDelete()"
-            >
-              {{ deleting ? 'جاري الحذف...' : 'نعم، احذف' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    }
-  `,
-  styles: [
-    `
-      h1 {
-        margin-top: 0;
-      }
-      .form-title {
-        margin: 0 0 1rem;
-        font-size: 1.1rem;
-      }
-      .year-label {
-        color: #6b7280;
-      }
-      .form-card {
-        margin-bottom: 1.5rem;
-      }
-      .form-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 1rem;
-      }
-      .field-error,
-      .form-error {
-        color: #dc2626;
-        display: block;
-        margin-top: 0.25rem;
-      }
-      .form-error {
-        margin-top: 0.75rem;
-      }
-      .actions {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 1rem;
-      }
-      .search {
-        width: 100%;
-        margin-bottom: 1rem;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      th,
-      td {
-        padding: 0.75rem;
-        text-align: right;
-        border-bottom: 1px solid #eef2f7;
-      }
-      th {
-        background: #f9fafb;
-        font-weight: 600;
-      }
-      .row-actions {
-        display: flex;
-        gap: 0.5rem;
-        white-space: nowrap;
-      }
-      .btn-sm {
-        padding: 0.35rem 0.75rem;
-        font-size: 0.875rem;
-      }
-      .empty {
-        color: #6b7280;
-        text-align: center;
-        padding: 1rem;
-      }
-      .pagination {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        margin-top: 1.25rem;
-        flex-wrap: wrap;
-      }
-      .page-info {
-        color: #6b7280;
-        font-size: 0.95rem;
-      }
-
-      .dialog-backdrop {
-        position: fixed;
-        inset: 0;
-        background: rgba(15, 23, 42, 0.55);
-        backdrop-filter: blur(4px);
-        display: grid;
-        place-items: center;
-        z-index: 1000;
-        padding: 1rem;
-        animation: fadeIn 0.2s ease;
-      }
-      .dialog {
-        width: min(420px, 100%);
-        background: #fff;
-        border-radius: 20px;
-        padding: 1.75rem;
-        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
-        text-align: center;
-        animation: slideUp 0.25s ease;
-      }
-      .dialog-icon {
-        width: 64px;
-        height: 64px;
-        margin: 0 auto 1rem;
-        border-radius: 50%;
-        background: #fee2e2;
-        display: grid;
-        place-items: center;
-        font-size: 1.75rem;
-      }
-      .dialog h3 {
-        margin: 0 0 0.5rem;
-        font-size: 1.35rem;
-      }
-      .dialog-lead {
-        color: #6b7280;
-        margin: 0 0 1.25rem;
-        line-height: 1.6;
-      }
-      .dialog-card {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 1rem;
-        margin-bottom: 1.25rem;
-        text-align: right;
-      }
-      .dialog-muted {
-        color: #64748b;
-        margin-top: 0.25rem;
-      }
-      .dialog-tags {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-        margin-top: 0.75rem;
-      }
-      .dialog-tags span {
-        background: #e0e7ff;
-        color: #3730a3;
-        padding: 0.25rem 0.65rem;
-        border-radius: 999px;
-        font-size: 0.85rem;
-      }
-      .dialog-actions {
-        display: flex;
-        gap: 0.75rem;
-        justify-content: center;
-      }
-      .dialog-actions .btn {
-        min-width: 120px;
-      }
-
-      @media (max-width: 640px) {
-        .form-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .actions {
-          flex-direction: column;
-        }
-
-        .actions .btn {
-          width: 100%;
-        }
-
-        .row-actions {
-          flex-direction: column;
-        }
-
-        .pagination {
-          flex-direction: column;
-          align-items: stretch;
-          text-align: center;
-        }
-
-        .pagination .btn {
-          width: 100%;
-        }
-
-        .dialog-actions {
-          flex-direction: column;
-        }
-
-        .dialog-actions .btn {
-          width: 100%;
-          min-width: 0;
-        }
-      }
-
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-        }
-        to {
-          opacity: 1;
-        }
-      }
-      @keyframes slideUp {
-        from {
-          opacity: 0;
-          transform: translateY(16px) scale(0.98);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-        }
-      }
-    `,
-  ],
+  templateUrl: './cutoffs.component.html',
+  styleUrl: './cutoffs.component.scss',
 })
 export class AdminCutoffsComponent implements OnInit {
   private api = inject(ApiService);
+  private admissionYears = inject(AdmissionYearStore);
   private fb = inject(FormBuilder);
+  private destroyRef = inject(DestroyRef);
 
   items: AdmissionCutoff[] = [];
   universityFaculties: UniversityFaculty[] = [];
@@ -479,7 +45,7 @@ export class AdminCutoffsComponent implements OnInit {
   currentYearId = 0;
   search = '';
   page = 1;
-  pageSize = 10;
+  pageSize = ADMIN_CUTOFFS_PAGE_SIZE;
   totalCount = 0;
   loading = false;
   loadError = '';
@@ -509,14 +75,15 @@ export class AdminCutoffsComponent implements OnInit {
     this.api
       .getUniversityFaculties()
       .subscribe((uf) => (this.universityFaculties = uf));
-    this.api.getAdmissionYears().subscribe((years) => {
-      this.currentYear = years.find((y) => y.isCurrent) ?? years[0];
-      this.currentYearId = this.currentYear?.id ?? 0;
-      if (this.currentYear) {
-        this.updateCutoffScoreValidators(this.currentYear.maximumScore);
-      }
-      this.load();
-    });
+    this.admissionYears
+      .loadCurrentYear()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((year) => {
+        this.currentYear = year;
+        this.currentYearId = year.id;
+        this.updateCutoffScoreValidators(year.maximumScore);
+        this.load();
+      });
   }
 
   load(): void {
@@ -538,7 +105,7 @@ export class AdminCutoffsComponent implements OnInit {
           this.totalCount = 0;
           this.loadError =
             err.status === 401
-              ? 'انتهت الجلسة. سجل الدخول مرة أخرى.'
+              ? SESSION_EXPIRED_MESSAGE
               : (err.error?.message ?? 'تعذر تحميل السجلات.');
         },
       });
@@ -549,7 +116,7 @@ export class AdminCutoffsComponent implements OnInit {
     this.searchTimer = setTimeout(() => {
       this.page = 1;
       this.load();
-    }, 300);
+    }, SEARCH_DEBOUNCE_MS);
   }
 
   goToPage(nextPage: number): void {
@@ -559,7 +126,7 @@ export class AdminCutoffsComponent implements OnInit {
   }
 
   trackLabel(track: string): string {
-    return TRACK_LABELS[track] ?? track;
+    return getTrackLabel(track);
   }
 
   edit(item: AdmissionCutoff): void {

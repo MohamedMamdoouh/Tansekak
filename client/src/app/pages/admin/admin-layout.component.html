@@ -1,0 +1,38 @@
+
+    <header class="admin-header">
+      <div class="container header-inner">
+        <a routerLink="/admin" class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span class="brand-text">
+            <span class="brand-title">لوحة الإدارة</span>
+          </span>
+        </a>
+
+        <nav class="admin-nav" aria-label="قائمة الإدارة">
+          <a
+            routerLink="/admin"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }"
+            >نظرة عامة</a
+          >
+          <a routerLink="/admin/cutoffs" routerLinkActive="active"
+            >حدود القبول</a
+          >
+          <a routerLink="/admin/import" routerLinkActive="active"
+            >استيراد حدود القبول</a
+          >
+          <a routerLink="/admin/import-results" routerLinkActive="active"
+            >استيراد نتائج الثانوية</a
+          >
+        </nav>
+
+        <button type="button" class="logout-btn" (click)="logout()">
+          تسجيل الخروج
+        </button>
+      </div>
+    </header>
+    <main class="admin-main">
+      <router-outlet />
+    </main>
+    <app-import-upload-overlay />
+  

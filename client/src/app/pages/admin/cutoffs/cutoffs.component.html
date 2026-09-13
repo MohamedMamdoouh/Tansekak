@@ -1,0 +1,236 @@
+
+    <div class="container">
+      <h1>حدود القبول</h1>
+      @if (currentYear) {
+        <p class="year-label">
+          سنة القبول الحالية: <strong>{{ currentYear.year }}</strong>
+        </p>
+      }
+
+      <div class="card form-card">
+        <h2 class="form-title">{{ editId ? 'تعديل سجل' : 'إضافة سجل' }}</h2>
+        <form [formGroup]="form" (ngSubmit)="save()">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>الجامعة / المعهد</label>
+              <input
+                type="text"
+                formControlName="universityName"
+                placeholder="مثال: جامعة القاهرة"
+              />
+              @if (
+                form.get('universityName')?.invalid &&
+                form.get('universityName')?.touched
+              ) {
+                <small class="field-error">يرجى إدخال اسم الجامعة/المعهد</small>
+              }
+            </div>
+
+            <div class="form-group">
+              <label>الكلية</label>
+              <input
+                type="text"
+                formControlName="facultyName"
+                placeholder="مثال: التجارة"
+              />
+              @if (
+                form.get('facultyName')?.invalid &&
+                form.get('facultyName')?.touched
+              ) {
+                <small class="field-error">يرجى إدخال اسم الكلية</small>
+              }
+            </div>
+
+            <div class="form-group">
+              <label>الشعبة</label>
+              <select formControlName="track">
+                @for (t of trackOptions; track t.value) {
+                  <option [value]="t.value">{{ t.label }}</option>
+                }
+              </select>
+              @if (form.get('track')?.invalid && form.get('track')?.touched) {
+                <small class="field-error">يرجى اختيار الشعبة</small>
+              }
+            </div>
+
+            <div class="form-group">
+              <label>الحد الأدنى للقبول</label>
+              <input
+                type="number"
+                inputmode="decimal"
+                step="0.01"
+                min="0"
+                formControlName="cutoffScore"
+                placeholder="مثال: 286"
+                [attr.max]="currentYear?.maximumScore ?? 320"
+              />
+              @if (currentYear) {
+                <small>الحد الأقصى: {{ currentYear.maximumScore }}</small>
+              }
+              @if (
+                form.get('cutoffScore')?.invalid &&
+                form.get('cutoffScore')?.touched
+              ) {
+                @if (form.get('cutoffScore')?.errors?.['required']) {
+                  <small class="field-error"
+                    >يرجى إدخال الحد الأدنى للقبول</small
+                  >
+                } @else if (form.get('cutoffScore')?.errors?.['min']) {
+                  <small class="field-error"
+                    >الحد الأدنى يجب أن يكون أكبر من صفر</small
+                  >
+                } @else if (form.get('cutoffScore')?.errors?.['max']) {
+                  <small class="field-error"
+                    >الحد الأدنى لا يجب أن يتجاوز ({{
+                      currentYear?.maximumScore
+                    }})</small
+                  >
+                }
+              }
+            </div>
+          </div>
+
+          @if (formError) {
+            <p class="form-error">{{ formError }}</p>
+          }
+
+          <div class="actions">
+            @if (editId) {
+              <button
+                type="button"
+                class="btn btn-secondary"
+                (click)="cancelEdit()"
+              >
+                إلغاء
+              </button>
+            }
+            <button class="btn btn-primary" type="submit" [disabled]="saving">
+              {{ saving ? 'جاري الحفظ...' : editId ? 'تحديث' : 'إضافة' }}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card table-card">
+        <input
+          class="search"
+          [(ngModel)]="search"
+          (ngModelChange)="onSearchChange()"
+          placeholder="ابحث باسم الجامعة أو الكلية"
+        />
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>الجامعة / المعهد</th>
+                <th>الكلية</th>
+                <th>الشعبة</th>
+                <th>الحد الأدنى للقبول</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of items; track item.id) {
+                <tr>
+                  <td>{{ item.universityName }}</td>
+                  <td>{{ item.facultyName }}</td>
+                  <td>{{ trackLabel(item.track) }}</td>
+                  <td>{{ item.cutoffScore }}</td>
+                  <td class="row-actions">
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm"
+                      (click)="edit(item)"
+                    >
+                      تعديل
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-danger btn-sm"
+                      (click)="openDeleteDialog(item)"
+                    >
+                      حذف
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (loadError) {
+          <p class="form-error">{{ loadError }}</p>
+        }
+        @if (items.length === 0 && !loading && !loadError) {
+          <p class="empty">لا توجد سجلات.</p>
+        }
+        @if (loading) {
+          <p class="empty">جاري التحميل...</p>
+        }
+
+        <div class="pagination">
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm"
+            [disabled]="page <= 1"
+            (click)="goToPage(page - 1)"
+          >
+            السابق
+          </button>
+          <span class="page-info">صفحة {{ page }} من {{ totalPages }}</span>
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm"
+            [disabled]="page >= totalPages"
+            (click)="goToPage(page + 1)"
+          >
+            التالي
+          </button>
+        </div>
+      </div>
+    </div>
+
+    @if (deleteTarget) {
+      <div class="dialog-backdrop" (click)="closeDeleteDialog()">
+        <div
+          class="dialog"
+          (click)="$event.stopPropagation()"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div class="dialog-icon">🗑️</div>
+          <h3>تأكيد الحذف</h3>
+          <p class="dialog-lead">
+            هل أنت متأكد من حذف هذا السجل؟ لا يمكن التراجع عن هذا الإجراء.
+          </p>
+          <div class="dialog-card">
+            <div>
+              <strong>{{ deleteTarget.facultyName }}</strong>
+            </div>
+            <div class="dialog-muted">{{ deleteTarget.universityName }}</div>
+            <div class="dialog-tags">
+              <span>{{ trackLabel(deleteTarget.track) }}</span>
+              <span>الحد الأدنى للقبول: {{ deleteTarget.cutoffScore }}</span>
+            </div>
+          </div>
+          <div class="dialog-actions">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              (click)="closeDeleteDialog()"
+            >
+              إلغاء
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger"
+              [disabled]="deleting"
+              (click)="confirmDelete()"
+            >
+              {{ deleting ? 'جاري الحذف...' : 'نعم، احذف' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  

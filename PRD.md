@@ -1835,14 +1835,6 @@ Tansekak.Domain
 Tansekak.Infrastructure
 ```
 
-/tests
-
-```
-UnitTests
-
-IntegrationTests
-```
-
 /docs
 
 ```

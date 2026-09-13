@@ -1,0 +1,101 @@
+
+    <div class="container">
+      <section class="page-section">
+        <h1 class="section-title">افهم التنسيق</h1>
+        <p class="section-subtitle">
+          خطوات التقديم، الأسئلة الشائعة، ونصايح عملية — من غير تعقيد.
+        </p>
+      </section>
+
+      <section class="page-section">
+        <h2 class="section-title section-title-sm">خطوات التقديم في الكلية</h2>
+        <p class="section-subtitle">
+          بعد ما تظهرلك نتيجة التنسيق الرسمية، اتبع الخطوات دي عشان تكمل
+          تسجيلك في الكلية.
+        </p>
+        <div class="grid grid-3 guide-steps-grid">
+          @for (step of enrollmentSteps; track step.title; let i = $index) {
+            <article class="card step-card">
+              <span class="step-card-num">{{ i + 1 }}</span>
+              <h3>{{ step.title }}</h3>
+              <p>{{ step.description }}</p>
+            </article>
+          }
+        </div>
+        <div class="guide-note">
+          <strong>مهم:</strong> المواعيد والمستندات ممكن تختلف من كلية للتانية.
+          دايما راجع إعلان الكلية على موقع التنسيق الإلكتروني الرسمي أو صفحة
+          الكلية قبل ما تروح.
+        </div>
+      </section>
+
+      <section class="page-section">
+        <h2 class="section-title section-title-sm">قبل ما تسجل رغباتك</h2>
+        <p class="section-subtitle">
+          خطوات سريعة تخليك تدخل التنسيق وانت جاهز ومخطط صح.
+        </p>
+        <div class="grid grid-3 guide-steps-grid">
+          @for (step of preparationSteps; track step.title; let i = $index) {
+            <article class="card step-card">
+              <span class="step-card-num">{{ i + 1 }}</span>
+              <h3>{{ step.title }}</h3>
+              <p>{{ step.description }}</p>
+            </article>
+          }
+        </div>
+        <div class="guide-quick-links">
+          <a routerLink="/thanaweya-result" class="btn btn-secondary"
+            >نتيجة الثانوية</a
+          >
+          <a routerLink="/track-rank" class="btn btn-secondary">ترتيب الشعبة</a>
+          <a routerLink="/predict" class="btn btn-primary">اعرف كليتك</a>
+        </div>
+      </section>
+
+      <section class="page-section">
+        <h2 class="section-title section-title-sm">أسئلة شائعة</h2>
+        <p class="section-subtitle">
+          إجابات لأغلب الأسئلة اللي ممكن تيجي في بال أي طالب ثانوية عامة.
+        </p>
+
+        <div #accordionTop class="guide-accordion">
+          @for (item of paginatedItems; track item.question) {
+            <details class="guide-item">
+              <summary>{{ item.question }}</summary>
+              <div class="guide-answer" [innerHTML]="item.answer"></div>
+            </details>
+          }
+        </div>
+
+        @if (totalPages > 1) {
+          <div class="guide-pagination">
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm"
+              [disabled]="page <= 1"
+              (click)="goToPage(page - 1)"
+            >
+              السابق
+            </button>
+            <span class="page-info">صفحة {{ page }} من {{ totalPages }}</span>
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm"
+              [disabled]="page >= totalPages"
+              (click)="goToPage(page + 1)"
+            >
+              التالي
+            </button>
+          </div>
+        }
+      </section>
+
+      <section class="page-section">
+        <div class="cta-banner">
+          <h2>جاهز؟ جرب دلوقتي</h2>
+          <p>اكتب مجموعك وشوف الكليات المتاحة ليك</p>
+          <a routerLink="/predict" class="btn btn-primary btn-lg">اعرف كليتك</a>
+        </div>
+      </section>
+    </div>
+  

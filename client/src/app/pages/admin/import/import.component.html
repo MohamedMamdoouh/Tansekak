@@ -1,0 +1,81 @@
+
+    <div class="container">
+      <h1>استيراد حدود القبول</h1>
+      <div class="card">
+        <form [formGroup]="form" (ngSubmit)="upload()">
+          @if (currentYear) {
+            <p class="note">
+              سنة القبول الحالية:
+              <strong>{{ currentYear.year }}</strong>
+              (الدرجة العظمى {{ currentYear.maximumScore }})
+            </p>
+          }
+
+          <div class="form-group">
+            <label>الشعبة</label>
+            <select formControlName="track">
+              @for (t of trackOptions; track t.value) {
+                <option [value]="t.value">{{ t.label }}</option>
+              }
+            </select>
+            @if (form.get('track')?.invalid && form.get('track')?.touched) {
+              <small class="field-error">يرجى اختيار الشعبة</small>
+            }
+          </div>
+
+          @if (form.value.track) {
+            <p class="note">
+              هذا الاستيراد خاص بشعبة
+              <strong>{{ trackLabel(form.value.track!) }}</strong> فقط، و<strong
+                >يستبدل</strong
+              >
+              كل حدود القبول الحالية لهذه السنة والشعبة.
+            </p>
+          }
+
+          <p class="hint">
+            صيغة الملف: جدول Markdown بعمودين —
+            <code>الكلية | الحد الأدنى</code>
+          </p>
+
+          <div class="form-group">
+            <label>ملف Markdown (.md)</label>
+            <input type="file" (change)="onFile($event)" accept=".md" />
+            @if (fileTouched && !file) {
+              <small class="field-error">يرجى اختيار ملف Markdown</small>
+            }
+          </div>
+
+          <button class="btn btn-primary" type="submit" [disabled]="uploading || !currentYear">
+            {{ uploading ? 'جاري الاستيراد...' : 'استيراد' }}
+          </button>
+        </form>
+
+        @if (message) {
+          <p [class]="result?.success ? 'success' : 'error'">{{ message }}</p>
+        }
+        @if (result?.errors?.length) {
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>الصف</th>
+                  <th>العمود</th>
+                  <th>الرسالة</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (e of result!.errors!; track $index) {
+                  <tr>
+                    <td>{{ e.rowNumber }}</td>
+                    <td>{{ e.column }}</td>
+                    <td>{{ e.message }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  

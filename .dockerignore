@@ -8,7 +8,6 @@
 **/.vs/
 **/.vscode/
 **/dist/
-tests/
 *.md
 marketing_photo.png
 .env

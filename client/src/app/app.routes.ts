@@ -12,8 +12,8 @@ import { AdminDashboardComponent } from './pages/admin/dashboard/dashboard.compo
 import { AdminCutoffsComponent } from './pages/admin/cutoffs/cutoffs.component';
 import { AdminImportComponent } from './pages/admin/import/import.component';
 import { AdminImportResultsComponent } from './pages/admin/import-results/import-results.component';
-import { adminGuard } from './admin.guard';
-import { importUploadGuard } from './import-upload.guard';
+import { adminGuard } from './guards/admin.guard';
+import { importUploadGuard } from './guards/import-upload.guard';
 
 export const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -32,7 +32,11 @@ export const routes: Routes = [
       { path: '', component: AdminDashboardComponent },
       { path: 'cutoffs', component: AdminCutoffsComponent },
       { path: 'import', component: AdminImportComponent, canDeactivate: [importUploadGuard] },
-      { path: 'import-results', component: AdminImportResultsComponent },
+      {
+        path: 'import-results',
+        component: AdminImportResultsComponent,
+        canDeactivate: [importUploadGuard],
+      },
     ],
   },
   { path: '**', redirectTo: '' }

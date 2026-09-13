@@ -1,0 +1,85 @@
+
+    @if (upload.active()) {
+      <div class="upload-backdrop" aria-hidden="true"></div>
+
+      <section
+        class="upload-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="upload-title"
+        aria-describedby="upload-desc"
+      >
+        <div class="upload-glow" aria-hidden="true"></div>
+
+        <div class="upload-icon-wrap" aria-hidden="true">
+          <div class="upload-icon-ring"></div>
+          <svg class="upload-icon" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M12 16V4m0 0L8 8m4-4 4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+
+        <h2 id="upload-title" class="upload-title">جاري استيراد البيانات</h2>
+        @if (upload.statusLabel()) {
+          <p id="upload-desc" class="upload-desc">
+            {{ upload.statusLabel() }}
+          </p>
+        }
+
+        <div class="upload-progress-track" aria-hidden="true">
+          <div
+            class="upload-progress-fill"
+            [style.width.%]="upload.progress()"
+          ></div>
+          <div class="upload-progress-shine"></div>
+        </div>
+
+        <div class="upload-percent">{{ upload.progress() }}%</div>
+
+        <p class="upload-warning">
+          لا تغلق هذه الصفحة ولا تحدثها حتى ينتهي الاستيراد.
+        </p>
+
+        <button
+          type="button"
+          class="upload-cancel-btn"
+          (click)="askToLeave()"
+        >
+          إلغاء الاستيراد
+        </button>
+      </section>
+    }
+
+    @if (upload.showLeaveDialog()) {
+      <div class="leave-backdrop" (click)="stay()"></div>
+
+      <section
+        class="leave-dialog"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="leave-title"
+        aria-describedby="leave-desc"
+      >
+        <div class="leave-icon-wrap" aria-hidden="true">⚠️</div>
+        <h3 id="leave-title" class="leave-title">إيقاف الاستيراد؟</h3>
+        <p id="leave-desc" class="leave-desc">
+          لو غادرت الصفحة أو حدثتها الآن، سيتوقف رفع الملف ولن تكتمل
+          العملية.
+        </p>
+
+        <div class="leave-actions">
+          <button type="button" class="leave-stay-btn" (click)="stay()">
+            متابعة الاستيراد
+          </button>
+          <button type="button" class="leave-leave-btn" (click)="leave()">
+            إيقاف والمغادرة
+          </button>
+        </div>
+      </section>
+    }
+  

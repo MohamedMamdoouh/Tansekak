@@ -1,0 +1,29 @@
+
+      h1 {
+        margin-top: 0;
+      }
+      .note {
+        background: #eff6ff;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        margin: 1rem 0;
+      }
+      .hint {
+        color: #6b7280;
+        font-size: 0.9rem;
+        word-break: break-word;
+      }
+
+      .hint code {
+        display: block;
+        margin-top: 0.35rem;
+        font-size: 0.82rem;
+        line-height: 1.6;
+      }
+
+      @media (max-width: 640px) {
+        .btn-primary {
+          width: 100%;
+        }
+      }
+    
