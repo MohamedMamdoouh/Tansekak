@@ -64,32 +64,56 @@
           </button>
         </form>
 
-        @for (item of fileResults; track item.track) {
-          <p [class]="item.result?.success ? 'success' : 'error'">
-            {{ item.label }}: {{ item.message }}
-          </p>
-          @if (item.result?.errors?.length) {
-            <div class="table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>الصف</th>
-                    <th>العمود</th>
-                    <th>الرسالة</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (e of item.result!.errors!; track $index) {
-                    <tr>
-                      <td>{{ e.rowNumber }}</td>
-                      <td>{{ e.column }}</td>
-                      <td>{{ e.message }}</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          }
-        }
       </div>
     </div>
+
+    @if (resultDialog) {
+      <div class="dialog-backdrop">
+        <div
+          class="dialog"
+          (click)="$event.stopPropagation()"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            class="dialog-icon"
+            [class.dialog-icon--success]="resultDialog.success"
+            [class.dialog-icon--error]="!resultDialog.success"
+          >
+            {{ resultDialog.success ? '✓' : '!' }}
+          </div>
+          <h3>{{ resultDialog.title }}</h3>
+          <p class="dialog-lead">{{ resultDialog.message }}</p>
+
+          @for (item of resultDialog.results; track item.track) {
+            @if (item.result?.errors?.length) {
+              <div class="dialog-card">
+                <strong>{{ item.label }}</strong>
+                <div class="table-scroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>الصف</th>
+                        <th>العمود</th>
+                        <th>الرسالة</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (e of item.result!.errors!; track $index) {
+                        <tr>
+                          <td>{{ e.rowNumber }}</td>
+                          <td>{{ e.column }}</td>
+                          <td>{{ e.message }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            }
+          }
+
+          <p class="dialog-muted">سيتم إعادة تحميل الصفحة خلال 5 ثوانٍ...</p>
+        </div>
+      </div>
+    }

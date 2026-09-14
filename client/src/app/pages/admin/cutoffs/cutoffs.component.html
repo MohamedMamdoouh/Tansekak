@@ -65,7 +65,9 @@
                 [attr.max]="currentYear?.maximumScore ?? 320"
               />
               @if (currentYear) {
-                <small>الحد الأقصى: {{ currentYear.maximumScore }}</small>
+                <small class="field-hint"
+                  >الحد الأقصى: {{ currentYear.maximumScore }}</small
+                >
               }
               @if (
                 form.get('cutoffScore')?.invalid &&

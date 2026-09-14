@@ -130,6 +130,7 @@
       .admin-main {
         padding: 2rem 0 3rem;
         min-height: calc(100vh - 72px);
+        overflow-x: clip;
       }
 
       @media (max-width: 720px) {

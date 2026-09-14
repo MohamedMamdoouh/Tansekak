@@ -2,6 +2,7 @@ import { Component, DestroyRef, NgZone, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ApiService, ImportUploadError } from '../../../services/api.service';
 import {
@@ -28,6 +29,13 @@ interface CutoffImportFileResult {
   result: ImportResult | null;
 }
 
+interface ImportResultDialog {
+  success: boolean;
+  title: string;
+  message: string;
+  results: CutoffImportFileResult[];
+}
+
 @Component({
   selector: 'app-admin-import',
   standalone: true,
@@ -41,6 +49,8 @@ export class AdminImportComponent {
   private admissionYears = inject(AdmissionYearStore);
   private ngZone = inject(NgZone);
   private destroyRef = inject(DestroyRef);
+  private router = inject(Router);
+  private resultDialogTimer?: ReturnType<typeof setTimeout>;
 
   currentYear?: AdmissionYear;
   apiAvailable: boolean | null = null;
@@ -48,6 +58,7 @@ export class AdminImportComponent {
   uploading = false;
   message = '';
   fileResults: CutoffImportFileResult[] = [];
+  resultDialog: ImportResultDialog | null = null;
 
   slots: CutoffImportSlot[] = [
     { track: 'Science', label: 'ملف الشعبة العلمية', file: null, touched: false },
@@ -55,6 +66,10 @@ export class AdminImportComponent {
   ];
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      clearTimeout(this.resultDialogTimer);
+    });
+
     this.api
       .checkHealth()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -178,7 +193,37 @@ export class AdminImportComponent {
       this.ngZone.run(() => {
         this.uploading = false;
         this.importUpload.finish();
+        if (this.fileResults.length > 0) {
+          this.openResultDialog();
+        }
       });
     }
+  }
+
+  private openResultDialog(): void {
+    const allSuccess = this.fileResults.every((item) => item.result?.success);
+    const message = this.fileResults
+      .map((item) => `${item.label}: ${item.message}`)
+      .join('\n');
+
+    this.resultDialog = {
+      success: allSuccess,
+      title: allSuccess ? 'تم الاستيراد بنجاح' : 'فشل الاستيراد',
+      message,
+      results: [...this.fileResults],
+    };
+
+    clearTimeout(this.resultDialogTimer);
+    this.resultDialogTimer = setTimeout(() => {
+      this.closeResultDialogAndRefresh();
+    }, 5000);
+  }
+
+  closeResultDialogAndRefresh(): void {
+    clearTimeout(this.resultDialogTimer);
+    this.resultDialog = null;
+    void this.router.navigateByUrl('/admin', { skipLocationChange: true }).then(() => {
+      void this.router.navigate(['/admin/import']);
+    });
   }
 }
