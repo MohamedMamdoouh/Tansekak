@@ -2,8 +2,10 @@ using Tansekak.Api;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+// Render sets PORT in production. When unset, launchSettings (local :5080) applies.
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(port))
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 builder.AddApi();
 

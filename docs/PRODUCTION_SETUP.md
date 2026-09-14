@@ -170,4 +170,5 @@ CI does **not** build the Docker image or deploy. Deploy is handled by Render au
 | Large import returns 503 | R2 env vars missing or incomplete |
 | Large import CORS error | R2 CORS `AllowedOrigins` does not exactly match your Render domain |
 | Import job interrupted | Free-tier spin-down — upgrade to Starter plan or retry |
+| Upload shows connection error (تعذر الاتصال بالخادم) | **Local:** API not running on `:5080`, frontend opened from `dist/` instead of `npm start`, or Postgres down. **Production:** Render service spun down or deploy failed — check `/health`. **Large Excel (>20 MB):** R2 PUT blocked by missing R2 config or CORS mismatch |
 | OpenAPI not available | `/openapi/v1.json` is Development-only; production has no Swagger UI |

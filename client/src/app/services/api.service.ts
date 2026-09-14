@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import {
   normalizePagedCutoffs,
   normalizePredictResponse,
@@ -85,6 +85,13 @@ export class ApiService {
     return this.http
       .get<ApiResponse<Dashboard>>('/api/admin/dashboard')
       .pipe(map((r) => r.data));
+  }
+
+  checkHealth(): Observable<boolean> {
+    return this.http.get<{ status: string }>('/health').pipe(
+      map((response) => response.status === 'healthy'),
+      catchError(() => of(false)),
+    );
   }
 
   getUniversityFaculties(search = ''): Observable<UniversityFaculty[]> {
@@ -201,6 +208,7 @@ export class ApiService {
   ): Promise<ImportResult> {
     const form = this.buildCutoffImportFormData(file, track);
     return uploadImportFile(
+      this.http,
       `/api/admin/admission-years/${yearId}/import`,
       form,
       onProgress,
@@ -218,6 +226,7 @@ export class ApiService {
       const form = new FormData();
       form.append('file', file);
       return uploadImportFile(
+        this.http,
         `/api/admin/admission-years/${yearId}/import-results`,
         form,
         onProgress,
@@ -254,12 +263,22 @@ export class ApiService {
       } satisfies ImportUploadError;
     }
 
-    await uploadToPresignedUrl(
-      uploadInfo.data.uploadUrl,
-      file,
-      (percent) => onProgress({ phase: 'uploading', percent }),
-      signal,
-    );
+    try {
+      await uploadToPresignedUrl(
+        uploadInfo.data.uploadUrl,
+        file,
+        (percent) => onProgress({ phase: 'uploading', percent }),
+        signal,
+      );
+    } catch (error) {
+      const uploadError = error as ImportUploadError;
+      throw {
+        status: uploadError.status ?? 0,
+        kind: uploadError.kind ?? 'r2_upload',
+        aborted: uploadError.aborted,
+        error: uploadError.error ?? null,
+      } satisfies ImportUploadError;
+    }
 
     onProgress({ phase: 'processing', percent: 90 });
 

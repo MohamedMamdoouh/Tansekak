@@ -1,12 +1,14 @@
 import { Component, DestroyRef, NgZone, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ApiService, ImportUploadError } from '../../../services/api.service';
 import {
   extractImportResult,
   importErrorMessage,
 } from '../../../utils/import-error.util';
+import { resolveApiError } from '../../../utils/api-error.util';
 import { ImportUploadService } from '../../../services/import-upload.service';
 import { AdmissionYearStore } from '../../../services/admission-year.store';
 import { AdmissionYear, ImportResult } from '../../../models';
@@ -27,6 +29,8 @@ export class AdminImportResultsComponent {
   private destroyRef = inject(DestroyRef);
 
   currentYear?: AdmissionYear;
+  apiAvailable: boolean | null = null;
+  yearLoadError = '';
   file: File | null = null;
   fileTouched = false;
   uploading = false;
@@ -36,11 +40,28 @@ export class AdminImportResultsComponent {
   form = this.fb.group({});
 
   constructor() {
+    this.api
+      .checkHealth()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((ok) => {
+        this.apiAvailable = ok;
+      });
+
     this.admissionYears
       .loadCurrentYear()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((year) => {
-        this.currentYear = year;
+      .subscribe({
+        next: (year) => {
+          this.currentYear = year;
+          this.yearLoadError = '';
+        },
+        error: (err: HttpErrorResponse) => {
+          this.currentYear = undefined;
+          this.yearLoadError = resolveApiError(
+            err,
+            'تعذر تحميل سنة القبول الحالية. انشر سنة من /admin/years ثم أعد المحاولة.',
+          );
+        },
       });
   }
 
@@ -54,7 +75,7 @@ export class AdminImportResultsComponent {
     this.form.markAllAsTouched();
     this.fileTouched = true;
     const yearId = this.currentYear?.id;
-    if (!this.file || !yearId) return;
+    if (!this.file || !yearId || this.apiAvailable === false) return;
 
     this.uploading = true;
     this.message = '';
@@ -88,7 +109,9 @@ export class AdminImportResultsComponent {
           }
 
           this.result = extractImportResult(err.error);
-          this.message = importErrorMessage(err.status, err.error);
+          this.message = importErrorMessage(err.status, err.error, {
+            kind: err.kind,
+          });
         });
       });
   }

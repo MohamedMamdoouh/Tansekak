@@ -2,6 +2,17 @@
     <div class="container">
       <h1>استيراد نتائج الثانوية</h1>
       <div class="card">
+        @if (apiAvailable === false) {
+          <p class="error">
+            الخادم غير متاح. شغّل الـ API على localhost:5080 (dotnet run) مع npm start
+            على :4200، أو تحقق من نشر Render عبر /health.
+          </p>
+        }
+
+        @if (yearLoadError) {
+          <p class="error">{{ yearLoadError }}</p>
+        }
+
         <form [formGroup]="form" (ngSubmit)="upload()">
           @if (currentYear) {
             <p class="note">
@@ -32,7 +43,11 @@
             }
           </div>
 
-          <button class="btn btn-primary" type="submit" [disabled]="uploading || !currentYear">
+          <button
+            class="btn btn-primary"
+            type="submit"
+            [disabled]="uploading || !currentYear || apiAvailable === false"
+          >
             {{ uploading ? 'جاري الاستيراد...' : 'استيراد' }}
           </button>
         </form>

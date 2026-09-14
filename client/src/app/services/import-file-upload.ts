@@ -1,7 +1,14 @@
+import { HttpClient, HttpEventType } from '@angular/common/http';
 import { ApiResponse, ImportResult } from '../models';
 import { normalizeImportResult } from '../utils/import-error.util';
 
 export type ImportUploadPhase = 'uploading' | 'processing';
+
+export type ImportUploadFailureKind =
+  | 'api_unreachable'
+  | 'r2_upload'
+  | 'aborted'
+  | 'http';
 
 export interface ImportUploadProgress {
   phase: ImportUploadPhase;
@@ -11,42 +18,21 @@ export interface ImportUploadProgress {
 export interface ImportUploadError {
   status: number;
   aborted?: boolean;
+  kind?: ImportUploadFailureKind;
   error?: ApiResponse<unknown> | null;
 }
 
 export function uploadImportFile(
+  http: HttpClient,
   url: string,
   formData: FormData,
   onProgress: (progress: ImportUploadProgress) => void,
   signal?: AbortSignal,
 ): Promise<ImportResult> {
-  return uploadWithXhr(url, formData, onProgress, signal, (xhr) => {
-    const body = parseJsonResponse<ImportResult>(xhr);
-    const payload = extractImportPayload(body);
-    if (!payload) {
-      throw { status: xhr.status, error: body } satisfies ImportUploadError;
-    }
-    onProgress({ phase: 'processing', percent: 100 });
-    return normalizeImportResult(payload);
-  });
-}
-
-function uploadWithXhr(
-  url: string,
-  formData: FormData,
-  onProgress: (progress: ImportUploadProgress) => void,
-  signal: AbortSignal | undefined,
-  onSuccess: (xhr: XMLHttpRequest) => ImportResult | Promise<ImportResult>,
-): Promise<ImportResult> {
   return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', url);
-    xhr.withCredentials = true;
-    xhr.responseType = 'json';
-    xhr.timeout = 0;
-
     let processingTimer: ReturnType<typeof setInterval> | null = null;
     let processingPercent = 90;
+    let processingStarted = false;
 
     const stopProcessingTimer = () => {
       if (processingTimer !== null) {
@@ -56,6 +42,8 @@ function uploadWithXhr(
     };
 
     const startProcessingTimer = () => {
+      if (processingStarted) return;
+      processingStarted = true;
       stopProcessingTimer();
       processingPercent = 90;
       onProgress({ phase: 'processing', percent: processingPercent });
@@ -67,76 +55,89 @@ function uploadWithXhr(
       }, 2500);
     };
 
-    const settle = (handler: () => void | Promise<void>) => {
+    const fail = (error: ImportUploadError) => {
       stopProcessingTimer();
-      Promise.resolve()
-        .then(handler)
-        .catch(() => {
-          reject({ status: xhr.status || 0, error: null } satisfies ImportUploadError);
-        });
+      reject(error);
     };
 
-    const abort = () => {
-      stopProcessingTimer();
-      if (xhr.readyState !== XMLHttpRequest.DONE) {
-        xhr.abort();
-      }
-    };
-
-    signal?.addEventListener('abort', abort);
-
-    xhr.upload.addEventListener('progress', (event) => {
-      if (!event.lengthComputable) return;
-      const percent = Math.min(85, Math.round((event.loaded / event.total) * 85));
-      onProgress({ phase: 'uploading', percent: Math.max(percent, 1) });
-    });
-
-    xhr.upload.addEventListener('loadend', startProcessingTimer);
-
-    xhr.addEventListener('load', () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        settle(async () => {
-          try {
-            resolve(await onSuccess(xhr));
-          } catch (error) {
-            reject(error);
+    const subscription = http
+      .post<ApiResponse<ImportResult>>(url, formData, {
+        reportProgress: true,
+        observe: 'events',
+        ...(signal ? { signal } : {}),
+      })
+      .subscribe({
+        next: (event) => {
+          if (event.type === HttpEventType.UploadProgress) {
+            if (event.total) {
+              const percent = Math.min(
+                85,
+                Math.round((event.loaded / event.total) * 85),
+              );
+              onProgress({ phase: 'uploading', percent: Math.max(percent, 1) });
+              if (event.loaded >= event.total) {
+                startProcessingTimer();
+              }
+            }
+            return;
           }
-        });
-        return;
-      }
 
-      settle(() => {
-        reject({
-          status: xhr.status,
-          error: parseJsonResponse<ImportResult>(xhr),
-        } satisfies ImportUploadError);
+          if (event.type === HttpEventType.Response) {
+            stopProcessingTimer();
+            if (event.status >= 200 && event.status < 300) {
+              const payload = extractImportPayload(event.body);
+              if (!payload) {
+                fail({
+                  status: event.status,
+                  error: event.body,
+                  kind: 'http',
+                });
+                return;
+              }
+              onProgress({ phase: 'processing', percent: 100 });
+              resolve(normalizeImportResult(payload));
+              return;
+            }
+
+            fail({
+              status: event.status,
+              error: event.body,
+              kind: 'http',
+            });
+          }
+        },
+        error: (err: {
+          status?: number;
+          error?: ApiResponse<unknown> | null;
+          name?: string;
+        }) => {
+          if (signal?.aborted || err.name === 'AbortError') {
+            fail({ status: 0, aborted: true, kind: 'aborted' });
+            return;
+          }
+
+          const status = err.status ?? 0;
+          fail({
+            status,
+            error: err.error ?? null,
+            kind: status === 0 ? 'api_unreachable' : 'http',
+          });
+        },
       });
-    });
 
-    xhr.addEventListener('error', () => {
-      settle(() => {
-        reject({ status: 0 } satisfies ImportUploadError);
-      });
-    });
-
-    xhr.addEventListener('timeout', () => {
-      settle(() => {
-        reject({ status: 0 } satisfies ImportUploadError);
-      });
-    });
-
-    xhr.addEventListener('abort', () => {
-      settle(() => {
-        reject({ status: 0, aborted: true } satisfies ImportUploadError);
-      });
-    });
-
-    xhr.send(formData);
+    signal?.addEventListener(
+      'abort',
+      () => {
+        subscription.unsubscribe();
+        fail({ status: 0, aborted: true, kind: 'aborted' });
+      },
+      { once: true },
+    );
   });
 }
 
 function extractImportPayload(
-  body: ApiResponse<ImportResult> | null,
+  body: ApiResponse<ImportResult> | null | undefined,
 ): ImportResult | null {
   if (!body) return null;
 
@@ -182,38 +183,33 @@ export function uploadToPresignedUrl(
         resolve();
         return;
       }
-      reject({ status: xhr.status } satisfies ImportUploadError);
+      reject({
+        status: xhr.status,
+        kind: 'r2_upload',
+      } satisfies ImportUploadError);
     });
 
     xhr.addEventListener('error', () => {
       signal?.removeEventListener('abort', abort);
-      reject({ status: 0 } satisfies ImportUploadError);
+      reject({
+        status: 0,
+        kind: 'r2_upload',
+      } satisfies ImportUploadError);
     });
 
     xhr.addEventListener('timeout', () => {
       signal?.removeEventListener('abort', abort);
-      reject({ status: 0 } satisfies ImportUploadError);
+      reject({
+        status: 0,
+        kind: 'r2_upload',
+      } satisfies ImportUploadError);
     });
 
     xhr.addEventListener('abort', () => {
       signal?.removeEventListener('abort', abort);
-      reject({ status: 0, aborted: true } satisfies ImportUploadError);
+      reject({ status: 0, aborted: true, kind: 'aborted' } satisfies ImportUploadError);
     });
 
     xhr.send(file);
   });
-}
-
-function parseJsonResponse<T>(xhr: XMLHttpRequest): ApiResponse<T> | null {
-  if (xhr.response && typeof xhr.response === 'object') {
-    return xhr.response as ApiResponse<T>;
-  }
-
-  if (!xhr.responseText) return null;
-
-  try {
-    return JSON.parse(xhr.responseText) as ApiResponse<T>;
-  } catch {
-    return null;
-  }
 }
