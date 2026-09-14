@@ -19,6 +19,7 @@ public static class ArabicErrorCatalog
         [ApiErrorCodes.CutoffDuplicate] = "يوجد بالفعل حد قبول لهذه الكلية والشعبة في السنة المحددة.",
         [ApiErrorCodes.AdmissionYearNotFound] = "سنة القبول غير موجودة.",
         [ApiErrorCodes.AdmissionYearDuplicate] = "هذه السنة موجودة بالفعل.",
+        [ApiErrorCodes.AdmissionYearLimitReached] = "يوجد سنة قبول بالفعل. احذفها أولاً لإضافة سنة جديدة.",
         [ApiErrorCodes.UniversityFacultyNotFound] = "كلية الجامعة غير موجودة.",
         [ApiErrorCodes.StudentResultNotFound] = "لم يتم العثور على نتيجة لهذا الرقم.",
         [ApiErrorCodes.FileRequired] = "الملف مطلوب.",

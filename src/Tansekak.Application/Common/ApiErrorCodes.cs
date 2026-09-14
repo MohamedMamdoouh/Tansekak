@@ -17,6 +17,7 @@ public static class ApiErrorCodes
     public const string CutoffDuplicate = "CUTOFF_DUPLICATE";
     public const string AdmissionYearNotFound = "ADMISSION_YEAR_NOT_FOUND";
     public const string AdmissionYearDuplicate = "ADMISSION_YEAR_DUPLICATE";
+    public const string AdmissionYearLimitReached = "ADMISSION_YEAR_LIMIT_REACHED";
     public const string UniversityFacultyNotFound = "UNIVERSITY_FACULTY_NOT_FOUND";
     public const string StudentResultNotFound = "STUDENT_RESULT_NOT_FOUND";
     public const string FileRequired = "FILE_REQUIRED";
@@ -68,6 +69,7 @@ public static class ApiErrorCodes
         CutoffDuplicate,
         AdmissionYearNotFound,
         AdmissionYearDuplicate,
+        AdmissionYearLimitReached,
         UniversityFacultyNotFound,
         StudentResultNotFound,
         FileRequired,

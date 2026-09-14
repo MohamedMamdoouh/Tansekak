@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using Tansekak.Application.Common;
 using Tansekak.Application.DTOs;
+using Tansekak.Application.Interfaces;
 using Tansekak.Domain.Entities;
+using Tansekak.Domain.Enums;
 using Tansekak.Infrastructure.Persistence;
 using Tansekak.Infrastructure.Services;
 
@@ -10,46 +13,36 @@ namespace Tansekak.Infrastructure.Tests;
 public class AdmissionYearServiceTests
 {
     [Fact]
-    public async Task PublishAsync_sets_only_one_current_year()
+    public async Task CreateAsync_rejects_when_any_year_exists()
     {
         var (db, connection) = TestDbFactory.Create();
         await using (connection)
         await using (db)
         {
-            db.AdmissionYears.AddRange(
-                new AdmissionYear { Id = 1, Year = 2025, MaximumScore = 320, IsCurrent = true },
-                new AdmissionYear { Id = 2, Year = 2026, MaximumScore = 320, IsCurrent = false });
+            db.AdmissionYears.Add(new AdmissionYear { Id = 1, Year = 2026, MaximumScore = 320, IsCurrent = true });
             await db.SaveChangesAsync();
 
-            var service = new AdmissionYearService(db, new EntityIdAllocator(db));
-            var published = await service.PublishAsync(2);
-            Assert.True(published);
+            var service = CreateService(db);
+            var ex = await Assert.ThrowsAsync<ValidationException>(
+                () => service.CreateAsync(new CreateAdmissionYearDto(2027, 320)));
 
-            var currentYears = await db.AdmissionYears.Where(x => x.IsCurrent).ToListAsync();
-            Assert.Single(currentYears);
-            Assert.Equal(2, currentYears[0].Id);
+            Assert.Equal(ApiErrorCodes.AdmissionYearLimitReached, ex.ErrorCode);
         }
     }
 
     [Fact]
-    public async Task PublishAsync_keeps_current_when_republishing_same_year()
+    public async Task CreateAsync_sets_is_current_true()
     {
         var (db, connection) = TestDbFactory.Create();
         await using (connection)
         await using (db)
         {
-            db.AdmissionYears.AddRange(
-                new AdmissionYear { Id = 1, Year = 2025, MaximumScore = 320, IsCurrent = true },
-                new AdmissionYear { Id = 2, Year = 2026, MaximumScore = 320, IsCurrent = false });
-            await db.SaveChangesAsync();
+            var service = CreateService(db);
+            var created = await service.CreateAsync(new CreateAdmissionYearDto(2026, 320));
 
-            var service = new AdmissionYearService(db, new EntityIdAllocator(db));
-            var published = await service.PublishAsync(1);
-            Assert.True(published);
-
-            var currentYears = await db.AdmissionYears.AsNoTracking().Where(x => x.IsCurrent).ToListAsync();
-            Assert.Single(currentYears);
-            Assert.Equal(1, currentYears[0].Id);
+            Assert.True(created.IsCurrent);
+            var stored = await db.AdmissionYears.SingleAsync();
+            Assert.True(stored.IsCurrent);
         }
     }
 
@@ -63,11 +56,11 @@ public class AdmissionYearServiceTests
             db.AdmissionYears.Add(new AdmissionYear { Id = 1, Year = 2026, MaximumScore = 320, IsCurrent = true });
             await db.SaveChangesAsync();
 
-            var service = new AdmissionYearService(db, new EntityIdAllocator(db));
+            var service = CreateService(db);
             var ex = await Assert.ThrowsAsync<ValidationException>(
                 () => service.CreateAsync(new CreateAdmissionYearDto(2026, 320)));
 
-            Assert.Equal(ApiErrorCodes.AdmissionYearDuplicate, ex.ErrorCode);
+            Assert.Equal(ApiErrorCodes.AdmissionYearLimitReached, ex.ErrorCode);
         }
     }
 
@@ -78,16 +71,114 @@ public class AdmissionYearServiceTests
         await using (connection)
         await using (db)
         {
-            db.AdmissionYears.AddRange(
-                new AdmissionYear { Id = 1, Year = 2025, MaximumScore = 320, IsCurrent = true },
-                new AdmissionYear { Id = 2, Year = 2026, MaximumScore = 320, IsCurrent = false });
+            db.AdmissionYears.Add(new AdmissionYear { Id = 1, Year = 2026, MaximumScore = 320, IsCurrent = true });
             await db.SaveChangesAsync();
 
-            var service = new AdmissionYearService(db, new EntityIdAllocator(db));
-            var ex = await Assert.ThrowsAsync<ValidationException>(
-                () => service.UpdateAsync(2, new UpdateAdmissionYearDto(2025, 320)));
+            var service = CreateService(db);
+            var updated = await service.UpdateAsync(1, new UpdateAdmissionYearDto(2027, 320));
 
-            Assert.Equal(ApiErrorCodes.AdmissionYearDuplicate, ex.ErrorCode);
+            Assert.NotNull(updated);
+            Assert.Equal(2027, updated.Year);
         }
+    }
+
+    [Fact]
+    public async Task DeleteAsync_cascades_cutoffs_results_and_jobs()
+    {
+        var (db, connection) = TestDbFactory.Create();
+        await using (connection)
+        await using (db)
+        {
+            db.Governorates.Add(new Governorate { Id = 1, NameAr = "القاهرة" });
+            db.Universities.Add(new University
+            {
+                Id = 1,
+                NameAr = "جامعة القاهرة",
+                GovernorateId = 1,
+                Type = UniversityType.Public
+            });
+            db.Faculties.Add(new Faculty
+            {
+                Id = 1,
+                NameAr = "طب",
+                AllowedTracks = [AcademicTrack.Science]
+            });
+            db.UniversityFaculties.Add(new UniversityFaculty
+            {
+                Id = 1,
+                UniversityId = 1,
+                FacultyId = 1
+            });
+            db.AdmissionYears.Add(new AdmissionYear { Id = 1, Year = 2026, MaximumScore = 320, IsCurrent = true });
+            db.AdmissionCutoffs.Add(new AdmissionCutoff
+            {
+                Id = 1,
+                AdmissionYearId = 1,
+                UniversityFacultyId = 1,
+                Track = AcademicTrack.Science,
+                CutoffScore = 350
+            });
+            db.StudentResults.Add(new StudentResult
+            {
+                Id = 1,
+                AdmissionYearId = 1,
+                SeatingNo = "12345",
+                ArabicName = "طالب",
+                TotalDegree = 380,
+                StudentCaseDesc = "ناجح"
+            });
+            db.ImportJobs.Add(new ImportJob
+            {
+                Id = Guid.NewGuid(),
+                AdmissionYearId = 1,
+                Status = ImportJobStatus.Completed,
+                ObjectKey = "imports/1/test.xlsx",
+                CreatedAtUtc = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+
+            var service = CreateService(db);
+            var deleted = await service.DeleteAsync(1);
+
+            Assert.True(deleted);
+            Assert.Empty(await db.AdmissionYears.ToListAsync());
+            Assert.Empty(await db.AdmissionCutoffs.ToListAsync());
+            Assert.Empty(await db.StudentResults.ToListAsync());
+            Assert.Empty(await db.ImportJobs.ToListAsync());
+        }
+    }
+
+    [Fact]
+    public async Task DeleteAsync_returns_false_when_not_found()
+    {
+        var (db, connection) = TestDbFactory.Create();
+        await using (connection)
+        await using (db)
+        {
+            var service = CreateService(db);
+            var deleted = await service.DeleteAsync(99);
+
+            Assert.False(deleted);
+        }
+    }
+
+    private static AdmissionYearService CreateService(AppDbContext db) =>
+        new(db, new EntityIdAllocator(db), new FakeR2Storage(), NullLogger<AdmissionYearService>.Instance);
+
+    private sealed class FakeR2Storage : IR2Storage
+    {
+        public bool IsConfigured => true;
+
+        public Task<(string UploadUrl, string ObjectKey)> CreatePresignedUploadAsync(
+            int yearId,
+            string fileName,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(("https://example.com", "imports/1/test.xlsx"));
+
+        public Task<Stream> OpenReadAsync(string objectKey, CancellationToken cancellationToken = default) =>
+            Task.FromResult<Stream>(new MemoryStream());
+
+        public Task DeleteAsync(string objectKey, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
     }
 }

@@ -2,75 +2,79 @@
     <div class="container">
       <h1>سنوات القبول</h1>
       <p class="year-label">
-        تفعيل سنة يجعلها السنة الحالية للتنبؤ والنتائج واستيراد البيانات.
+        يُسمح بسنة قبول واحدة فقط. لإضافة سنة جديدة، احذف السنة الحالية أولاً.
       </p>
 
-      <div class="card form-card">
-        <h2 class="form-title">{{ editId ? 'تعديل سنة' : 'إضافة سنة' }}</h2>
-        <form [formGroup]="form" (ngSubmit)="save()">
-          <div class="form-grid">
-            <div class="form-group">
-              <label>السنة</label>
-              <input
-                type="number"
-                inputmode="numeric"
-                formControlName="year"
-                placeholder="مثال: 2027"
-                min="2000"
-                max="2100"
-              />
-              @if (form.get('year')?.invalid && form.get('year')?.touched) {
-                <small class="field-error">يرجى إدخال سنة بين 2000 و 2100</small>
-              }
+      @if (showAddForm) {
+        <div class="card form-card">
+          <h2 class="form-title">{{ editId ? 'تعديل سنة' : 'إضافة سنة' }}</h2>
+          <form [formGroup]="form" (ngSubmit)="save()">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>السنة</label>
+                <input
+                  type="number"
+                  inputmode="numeric"
+                  formControlName="year"
+                  placeholder="مثال: 2027"
+                  min="2000"
+                  max="2100"
+                />
+                @if (form.get('year')?.invalid && form.get('year')?.touched) {
+                  <small class="field-error">يرجى إدخال سنة بين 2000 و 2100</small>
+                }
+              </div>
+
+              <div class="form-group">
+                <label>الحد الأقصى للمجموع</label>
+                <input
+                  type="number"
+                  inputmode="decimal"
+                  step="0.01"
+                  min="0.01"
+                  max="1000"
+                  formControlName="maximumScore"
+                  [placeholder]="'مثال: ' + defaultMaximumScore"
+                />
+                @if (
+                  form.get('maximumScore')?.invalid &&
+                  form.get('maximumScore')?.touched
+                ) {
+                  <small class="field-error"
+                    >يرجى إدخال حد أقصى أكبر من صفر ولا يتجاوز 1000</small
+                  >
+                }
+              </div>
             </div>
 
-            <div class="form-group">
-              <label>الحد الأقصى للمجموع</label>
-              <input
-                type="number"
-                inputmode="decimal"
-                step="0.01"
-                min="0.01"
-                max="1000"
-                formControlName="maximumScore"
-                [placeholder]="'مثال: ' + defaultMaximumScore"
-              />
-              @if (
-                form.get('maximumScore')?.invalid &&
-                form.get('maximumScore')?.touched
-              ) {
-                <small class="field-error"
-                  >يرجى إدخال حد أقصى أكبر من صفر ولا يتجاوز 1000</small
-                >
-              }
-            </div>
-          </div>
-
-          @if (formError) {
-            <p class="form-error">{{ formError }}</p>
-          }
-
-          <div class="actions">
-            <button
-              type="submit"
-              class="btn btn-primary"
-              [disabled]="saving"
-            >
-              {{ saving ? 'جاري الحفظ...' : editId ? 'حفظ' : 'إضافة' }}
-            </button>
-            @if (editId) {
-              <button
-                type="button"
-                class="btn btn-secondary"
-                [disabled]="saving"
-                (click)="cancelEdit()"
-              >
-                إلغاء
-              </button>
+            @if (formError) {
+              <p class="form-error">{{ formError }}</p>
             }
-          </div>
-        </form>
-      </div>
+
+            <div class="actions">
+              <button
+                type="submit"
+                class="btn btn-primary"
+                [disabled]="saving"
+              >
+                {{ saving ? 'جاري الحفظ...' : editId ? 'حفظ' : 'إضافة' }}
+              </button>
+              @if (editId) {
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  [disabled]="saving"
+                  (click)="cancelEdit()"
+                >
+                  إلغاء
+                </button>
+              }
+            </div>
+          </form>
+        </div>
+      } @else if (items.length > 0) {
+        <p class="info-note">لإضافة سنة جديدة، احذف السنة الحالية أولاً.</p>
+      }
 
       <div class="card">
         <div class="table-wrap">
@@ -79,7 +83,6 @@
               <tr>
                 <th>السنة</th>
                 <th>الحد الأقصى للمجموع</th>
-                <th>الحالة</th>
                 <th></th>
               </tr>
             </thead>
@@ -88,13 +91,6 @@
                 <tr>
                   <td>{{ item.year }}</td>
                   <td>{{ item.maximumScore }}</td>
-                  <td>
-                    @if (item.isCurrent) {
-                      <span class="current-badge">الحالية</span>
-                    } @else {
-                      <span class="muted">غير مفعّلة</span>
-                    }
-                  </td>
                   <td class="row-actions">
                     <button
                       type="button"
@@ -103,15 +99,13 @@
                     >
                       تعديل
                     </button>
-                    @if (!item.isCurrent) {
-                      <button
-                        type="button"
-                        class="btn btn-primary btn-sm"
-                        (click)="openPublishDialog(item)"
-                      >
-                        تفعيل
-                      </button>
-                    }
+                    <button
+                      type="button"
+                      class="btn btn-danger btn-sm"
+                      (click)="openDeleteDialog(item)"
+                    >
+                      حذف
+                    </button>
                   </td>
                 </tr>
               }
@@ -123,7 +117,7 @@
           <p class="form-error">{{ loadError }}</p>
         }
         @if (items.length === 0 && !loading && !loadError) {
-          <p class="empty">لا توجد سنوات قبول. أضف سنة ثم فعّلها.</p>
+          <p class="empty">لا توجد سنة قبول. أضف سنة للبدء.</p>
         }
         @if (loading) {
           <p class="empty">جاري التحميل...</p>
@@ -131,43 +125,43 @@
       </div>
     </div>
 
-    @if (publishTarget) {
-      <div class="dialog-backdrop" (click)="closePublishDialog()">
+    @if (deleteTarget) {
+      <div class="dialog-backdrop" (click)="closeDeleteDialog()">
         <div
           class="dialog"
           (click)="$event.stopPropagation()"
           role="dialog"
           aria-modal="true"
         >
-          <div class="dialog-icon dialog-icon--publish">✓</div>
-          <h3>تفعيل سنة القبول</h3>
+          <div class="dialog-icon dialog-icon--delete">!</div>
+          <h3>حذف سنة القبول</h3>
           <p class="dialog-lead">
-            تفعيل سنة {{ publishTarget.year }} سيجعلها السنة الحالية للتنبؤ
-            والنتائج فورًا.
+            حذف سنة {{ deleteTarget.year }} سيحذف نهائياً حدود القبول ونتائج
+            الطلاب وسجل الاستيراد المرتبطة بها.
           </p>
           <div class="dialog-card">
             <div>
-              <strong>{{ publishTarget.year }}</strong>
+              <strong>{{ deleteTarget.year }}</strong>
             </div>
             <div class="dialog-muted">
-              الحد الأقصى للمجموع: {{ publishTarget.maximumScore }}
+              الحد الأقصى للمجموع: {{ deleteTarget.maximumScore }}
             </div>
           </div>
           <div class="dialog-actions">
             <button
               type="button"
               class="btn btn-secondary"
-              (click)="closePublishDialog()"
+              (click)="closeDeleteDialog()"
             >
               إلغاء
             </button>
             <button
               type="button"
-              class="btn btn-primary"
-              [disabled]="publishing"
-              (click)="confirmPublish()"
+              class="btn btn-danger"
+              [disabled]="deleting"
+              (click)="confirmDelete()"
             >
-              {{ publishing ? 'جاري التفعيل...' : 'نعم، فعّل' }}
+              {{ deleting ? 'جاري الحذف...' : 'نعم، احذف' }}
             </button>
           </div>
         </div>

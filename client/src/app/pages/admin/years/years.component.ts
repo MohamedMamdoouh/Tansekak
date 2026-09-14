@@ -25,10 +25,10 @@ export class AdminYearsComponent implements OnInit {
   loading = false;
   loadError = '';
   saving = false;
-  publishing = false;
+  deleting = false;
   formError = '';
   editId: number | null = null;
-  publishTarget: AdmissionYear | null = null;
+  deleteTarget: AdmissionYear | null = null;
   readonly defaultMaximumScore = DEFAULT_MAXIMUM_SCORE;
 
   form = this.fb.group({
@@ -44,6 +44,10 @@ export class AdminYearsComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+  }
+
+  get showAddForm(): boolean {
+    return this.items.length === 0 || this.editId !== null;
   }
 
   load(): void {
@@ -109,30 +113,33 @@ export class AdminYearsComponent implements OnInit {
     });
   }
 
-  openPublishDialog(item: AdmissionYear): void {
-    this.publishTarget = item;
+  openDeleteDialog(item: AdmissionYear): void {
+    this.deleteTarget = item;
   }
 
-  closePublishDialog(): void {
-    if (this.publishing) return;
-    this.publishTarget = null;
+  closeDeleteDialog(): void {
+    if (this.deleting) return;
+    this.deleteTarget = null;
   }
 
-  confirmPublish(): void {
-    if (!this.publishTarget) return;
-    this.publishing = true;
+  confirmDelete(): void {
+    if (!this.deleteTarget) return;
+    this.deleting = true;
     this.api
-      .publishAdmissionYear(this.publishTarget.id)
+      .deleteAdmissionYear(this.deleteTarget.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          this.publishing = false;
-          this.publishTarget = null;
+          this.deleting = false;
+          this.deleteTarget = null;
+          if (this.editId !== null) {
+            this.cancelEdit();
+          }
           this.load();
         },
         error: (err: HttpErrorResponse) => {
-          this.publishing = false;
-          this.formError = resolveApiError(err, 'تعذر تفعيل السنة.');
+          this.deleting = false;
+          this.formError = resolveApiError(err, 'تعذر حذف السنة.');
         },
       });
   }

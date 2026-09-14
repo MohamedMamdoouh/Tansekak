@@ -9,7 +9,7 @@ public interface IAdmissionYearService
     Task<AdmissionYearDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<AdmissionYearDto> CreateAsync(CreateAdmissionYearDto dto, CancellationToken cancellationToken = default);
     Task<AdmissionYearDto?> UpdateAsync(int id, UpdateAdmissionYearDto dto, CancellationToken cancellationToken = default);
-    Task<bool> PublishAsync(int id, CancellationToken cancellationToken = default);
+    Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default);
 }
 
 public interface IAdmissionCutoffService

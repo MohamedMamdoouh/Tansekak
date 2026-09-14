@@ -157,9 +157,9 @@ There is **no delete** on governorates, universities, faculties, university–fa
 | `GET` | `/api/admin/admission-years` | — | `[{ id, year, maximumScore, isCurrent }]` newest year first |
 | `GET` | `/api/admin/admission-years/current` | — | Current year, or `404` `NOT_FOUND` if none published |
 | `GET` | `/api/admin/admission-years/{id}` | — | Single year |
-| `POST` | `/api/admin/admission-years` | `{ year, maximumScore }` | Created with `isCurrent: false`. Duplicate year → `400` `ADMISSION_YEAR_DUPLICATE`. Year must be 2000–2100; `maximumScore` > 0 and ≤ 1000 |
+| `POST` | `/api/admin/admission-years` | `{ year, maximumScore }` | Created with `isCurrent: true`. Only one year may exist — if any year is already stored → `400` `ADMISSION_YEAR_LIMIT_REACHED`. Year must be 2000–2100; `maximumScore` > 0 and ≤ 1000 |
 | `PUT` | `/api/admin/admission-years/{id}` | `{ year, maximumScore }` | Does not change `isCurrent` |
-| `POST` | `/api/admin/admission-years/{id}/publish` | — | Marks this year current and clears the flag on others. Missing id → `404` |
+| `DELETE` | `/api/admin/admission-years/{id}` | — | Deletes the year and cascades cutoffs, student results, and import jobs for that year (best-effort R2 cleanup). Missing id → `404` |
 | `GET` | `/api/admin/admission-cutoffs` | `yearId`, `search`, `track`, `page`, `pageSize` | Paged `{ items, totalCount, page, pageSize }`. `page` default `1`, `pageSize` default `10`, max `100`. `search` matches university or faculty Arabic name. `track` uses the same bucket as predict |
 | `GET` | `/api/admin/admission-cutoffs/{id}` | — | `{ id, admissionYearId, universityFacultyId, track, cutoffScore, universityName?, facultyName? }` |
 | `POST` | `/api/admin/admission-cutoffs` | `{ admissionYearId, universityFacultyId, track, cutoffScore }` | Duplicate year+faculty+track bucket → `CUTOFF_DUPLICATE`. Faculty must allow the track |

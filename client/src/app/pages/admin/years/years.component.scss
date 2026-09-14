@@ -68,14 +68,22 @@
       .muted {
         color: #6b7280;
       }
-      .current-badge {
-        display: inline-block;
-        background: #dbeafe;
-        color: #1e40af;
-        padding: 0.25rem 0.7rem;
-        border-radius: 999px;
-        font-size: 0.85rem;
-        font-weight: 700;
+      .info-note {
+        color: #475569;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 0.875rem 1rem;
+        margin-bottom: 1.5rem;
+      }
+      .btn-danger {
+        background: #dc2626;
+        color: #fff;
+        border: 1px solid #dc2626;
+      }
+      .btn-danger:hover:not(:disabled) {
+        background: #b91c1c;
+        border-color: #b91c1c;
       }
 
       .dialog-backdrop {
@@ -108,6 +116,11 @@
         display: grid;
         place-items: center;
         font-size: 1.75rem;
+      }
+      .dialog-icon--delete {
+        background: #fee2e2;
+        color: #dc2626;
+        font-weight: 700;
       }
       .dialog h3 {
         margin: 0 0 0.5rem;

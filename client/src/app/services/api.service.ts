@@ -129,12 +129,9 @@ export class ApiService {
       .pipe(map((r) => r.data));
   }
 
-  publishAdmissionYear(id: number): Observable<void> {
+  deleteAdmissionYear(id: number): Observable<void> {
     return this.http
-      .post<ApiResponse<unknown>>(
-        `/api/admin/admission-years/${id}/publish`,
-        {},
-      )
+      .delete<ApiResponse<unknown>>(`/api/admin/admission-years/${id}`)
       .pipe(map(() => undefined));
   }
 

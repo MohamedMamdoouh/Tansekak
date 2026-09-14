@@ -41,9 +41,9 @@ public class AdmissionYearsController(IAdmissionYearService service) : Controlle
         return item is null ? ControllerResponses.NotFoundResponse<AdmissionYearDto>() : Ok(ApiResponse<AdmissionYearDto>.Ok(item));
     }
 
-    [HttpPost("{id:int}/publish")]
-    public async Task<ActionResult<ApiResponse<object>>> Publish(int id, CancellationToken ct) =>
-        await service.PublishAsync(id, ct)
+    [HttpDelete("{id:int}")]
+    public async Task<ActionResult<ApiResponse<object>>> Delete(int id, CancellationToken ct) =>
+        await service.DeleteAsync(id, ct)
             ? Ok(ApiResponse<object>.Ok(new { }))
             : ControllerResponses.NotFoundResponse<object>();
 }

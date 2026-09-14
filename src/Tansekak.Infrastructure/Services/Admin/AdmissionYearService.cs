@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Tansekak.Application.Common;
 using Tansekak.Application.DTOs;
 using Tansekak.Application.Interfaces;
@@ -7,7 +8,11 @@ using Tansekak.Infrastructure.Persistence;
 
 namespace Tansekak.Infrastructure.Services;
 
-public class AdmissionYearService(AppDbContext db, EntityIdAllocator idAllocator) : IAdmissionYearService
+public class AdmissionYearService(
+    AppDbContext db,
+    EntityIdAllocator idAllocator,
+    IR2Storage r2Storage,
+    ILogger<AdmissionYearService> logger) : IAdmissionYearService
 {
     public async Task<IReadOnlyList<AdmissionYearDto>> GetAllAsync(CancellationToken cancellationToken = default) =>
         await db.AdmissionYears.AsNoTracking().OrderByDescending(x => x.Year)
@@ -25,6 +30,7 @@ public class AdmissionYearService(AppDbContext db, EntityIdAllocator idAllocator
 
     public async Task<AdmissionYearDto> CreateAsync(CreateAdmissionYearDto dto, CancellationToken cancellationToken = default)
     {
+        await EnsureNoYearExistsAsync(cancellationToken);
         await EnsureYearUniqueAsync(dto.Year, null, cancellationToken);
 
         var entity = new AdmissionYear
@@ -32,7 +38,7 @@ public class AdmissionYearService(AppDbContext db, EntityIdAllocator idAllocator
             Id = await idAllocator.NextAsync(EntityIdAllocator.AdmissionYears, cancellationToken),
             Year = dto.Year,
             MaximumScore = dto.MaximumScore,
-            IsCurrent = false
+            IsCurrent = true
         };
         db.AdmissionYears.Add(entity);
         await db.SaveChangesAsync(cancellationToken);
@@ -52,25 +58,86 @@ public class AdmissionYearService(AppDbContext db, EntityIdAllocator idAllocator
         return new AdmissionYearDto(entity.Id, entity.Year, entity.MaximumScore, entity.IsCurrent);
     }
 
-    public async Task<bool> PublishAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
-
-        var entity = await db.AdmissionYears.FindAsync([id], cancellationToken);
-        if (entity is null)
+        if (!await db.AdmissionYears.AnyAsync(x => x.Id == id, cancellationToken))
             return false;
 
-        // Exclude the target row: ExecuteUpdate bypasses the change tracker, so clearing
-        // IsCurrent on the tracked entity leaves SaveChanges with nothing to write back
-        // when re-publishing an already-current year (resulting in zero current years).
-        await db.AdmissionYears
-            .Where(x => x.IsCurrent && x.Id != id)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(x => x.IsCurrent, false), cancellationToken);
+        await using var transaction = db.Database.IsRelational()
+            ? await db.Database.BeginTransactionAsync(cancellationToken)
+            : null;
 
-        entity.IsCurrent = true;
-        await db.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        var objectKeys = await db.ImportJobs
+            .AsNoTracking()
+            .Where(x => x.AdmissionYearId == id)
+            .Select(x => x.ObjectKey)
+            .ToListAsync(cancellationToken);
+
+        foreach (var objectKey in objectKeys.Where(k => !string.IsNullOrWhiteSpace(k)))
+        {
+            try
+            {
+                await r2Storage.DeleteAsync(objectKey!, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Failed to delete R2 object {ObjectKey} for admission year {YearId}.",
+                    objectKey,
+                    id);
+            }
+        }
+
+        if (db.Database.IsRelational())
+        {
+            await db.AdmissionCutoffs
+                .Where(x => x.AdmissionYearId == id)
+                .ExecuteDeleteAsync(cancellationToken);
+            await db.StudentResults
+                .Where(x => x.AdmissionYearId == id)
+                .ExecuteDeleteAsync(cancellationToken);
+            await db.ImportJobs
+                .Where(x => x.AdmissionYearId == id)
+                .ExecuteDeleteAsync(cancellationToken);
+            await db.AdmissionYears
+                .Where(x => x.Id == id)
+                .ExecuteDeleteAsync(cancellationToken);
+        }
+        else
+        {
+            var cutoffs = await db.AdmissionCutoffs
+                .Where(x => x.AdmissionYearId == id)
+                .ToListAsync(cancellationToken);
+            db.AdmissionCutoffs.RemoveRange(cutoffs);
+
+            var results = await db.StudentResults
+                .Where(x => x.AdmissionYearId == id)
+                .ToListAsync(cancellationToken);
+            db.StudentResults.RemoveRange(results);
+
+            var jobs = await db.ImportJobs
+                .Where(x => x.AdmissionYearId == id)
+                .ToListAsync(cancellationToken);
+            db.ImportJobs.RemoveRange(jobs);
+
+            var entity = await db.AdmissionYears.FindAsync([id], cancellationToken);
+            if (entity is not null)
+                db.AdmissionYears.Remove(entity);
+
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        if (transaction is not null)
+            await transaction.CommitAsync(cancellationToken);
+
         return true;
+    }
+
+    private async Task EnsureNoYearExistsAsync(CancellationToken cancellationToken)
+    {
+        if (await db.AdmissionYears.AnyAsync(cancellationToken))
+            throw new ValidationException(ApiErrorCodes.AdmissionYearLimitReached);
     }
 
     private async Task EnsureYearUniqueAsync(int year, int? excludeId, CancellationToken cancellationToken)
