@@ -45,9 +45,11 @@ public class StudentResultService(AppDbContext db, CurrentAdmissionYearProvider 
                     x => x.TotalDegree > entity.TotalDegree,
                     cancellationToken);
 
+                // CompareTo translates to SQL; string.Compare(..., StringComparison) does not.
+                var entitySeatingNo = entity.SeatingNo;
                 var higherByTieBreak = await peers.CountAsync(
                     x => x.TotalDegree == entity.TotalDegree
-                        && string.Compare(x.SeatingNo, entity.SeatingNo, StringComparison.Ordinal) < 0,
+                        && x.SeatingNo.CompareTo(entitySeatingNo) < 0,
                     cancellationToken);
 
                 trackRank = higherByScore + higherByTieBreak + 1;
