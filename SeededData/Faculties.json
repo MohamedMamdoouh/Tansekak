@@ -2,7 +2,7 @@
   {
     "id": 1,
     "nameAr": "الزراعة",
-    "allowedTracks": ["Mathematics", "Science"]
+    "allowedTracks": ["Science"]
   },
   {
     "id": 2,
@@ -17,7 +17,7 @@
   {
     "id": 5,
     "nameAr": "الذكاء الاصطناعي",
-    "allowedTracks": ["Mathematics", "Science"]
+    "allowedTracks": ["Science"]
   },
   {
     "id": 6,
@@ -27,12 +27,12 @@
   {
     "id": 8,
     "nameAr": "التجارة",
-    "allowedTracks": ["Literature", "Mathematics", "Science"]
+    "allowedTracks": ["Literature", "Science"]
   },
   {
     "id": 9,
     "nameAr": "حاسبات ومعلومات",
-    "allowedTracks": ["Mathematics", "Science"]
+    "allowedTracks": ["Science"]
   },
   {
     "id": 10,
@@ -52,17 +52,17 @@
   {
     "id": 14,
     "nameAr": "الاقتصاد والعلوم السياسية",
-    "allowedTracks": ["Literature", "Mathematics", "Science"]
+    "allowedTracks": ["Literature", "Science"]
   },
   {
     "id": 15,
     "nameAr": "التربية",
-    "allowedTracks": ["Literature", "Mathematics", "Science"]
+    "allowedTracks": ["Literature", "Science"]
   },
   {
     "id": 16,
     "nameAr": "هندسة",
-    "allowedTracks": ["Mathematics"]
+    "allowedTracks": ["Science"]
   },
   {
     "id": 18,
@@ -77,7 +77,7 @@
   {
     "id": 21,
     "nameAr": "الألسن",
-    "allowedTracks": ["Literature", "Mathematics", "Science"]
+    "allowedTracks": ["Literature", "Science"]
   },
   {
     "id": 22,
@@ -87,7 +87,7 @@
   {
     "id": 23,
     "nameAr": "الإعلام",
-    "allowedTracks": ["Literature", "Mathematics", "Science"]
+    "allowedTracks": ["Literature", "Science"]
   },
   {
     "id": 24,
@@ -117,7 +117,7 @@
   {
     "id": 29,
     "nameAr": "العلوم",
-    "allowedTracks": ["Literature", "Mathematics", "Science"]
+    "allowedTracks": ["Literature", "Science"]
   },
   {
     "id": 31,

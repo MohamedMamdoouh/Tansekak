@@ -3,8 +3,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
-import { SESSION_EXPIRED_MESSAGE } from '../../../constants/auth-messages';
 import { ApiService } from '../../../services/api.service';
+import { resolveApiError } from '../../../utils/api-error.util';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AdmissionYearStore } from '../../../services/admission-year.store';
 import {
   AdmissionCutoff,
@@ -99,14 +100,11 @@ export class AdminCutoffsComponent implements OnInit {
           this.page = res.page ?? this.page;
           this.loading = false;
         },
-        error: (err) => {
+        error: (err: HttpErrorResponse) => {
           this.loading = false;
           this.items = [];
           this.totalCount = 0;
-          this.loadError =
-            err.status === 401
-              ? SESSION_EXPIRED_MESSAGE
-              : (err.error?.message ?? 'تعذر تحميل السجلات.');
+          this.loadError = resolveApiError(err, 'تعذر تحميل السجلات.');
         },
       });
   }
@@ -185,9 +183,9 @@ export class AdminCutoffsComponent implements OnInit {
         this.cancelEdit();
         this.load();
       },
-      error: (err) => {
+      error: (err: HttpErrorResponse) => {
         this.saving = false;
-        this.formError = err.error?.message ?? 'تعذر حفظ السجل.';
+        this.formError = resolveApiError(err, 'تعذر حفظ السجل.');
       },
     });
   }
@@ -219,8 +217,9 @@ export class AdminCutoffsComponent implements OnInit {
         }
         this.load();
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
         this.deleting = false;
+        this.formError = resolveApiError(err, 'تعذر حذف السجل.');
       },
     });
   }

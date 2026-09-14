@@ -12,6 +12,7 @@ import { AdminDashboardComponent } from './pages/admin/dashboard/dashboard.compo
 import { AdminCutoffsComponent } from './pages/admin/cutoffs/cutoffs.component';
 import { AdminImportComponent } from './pages/admin/import/import.component';
 import { AdminImportResultsComponent } from './pages/admin/import-results/import-results.component';
+import { AdminYearsComponent } from './pages/admin/years/years.component';
 import { adminGuard } from './guards/admin.guard';
 import { importUploadGuard } from './guards/import-upload.guard';
 
@@ -30,6 +31,7 @@ export const routes: Routes = [
     component: AdminLayoutComponent,
     children: [
       { path: '', component: AdminDashboardComponent },
+      { path: 'years', component: AdminYearsComponent },
       { path: 'cutoffs', component: AdminCutoffsComponent },
       { path: 'import', component: AdminImportComponent, canDeactivate: [importUploadGuard] },
       {

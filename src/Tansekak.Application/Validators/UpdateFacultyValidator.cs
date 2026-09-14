@@ -5,5 +5,10 @@ namespace Tansekak.Application.Validators;
 
 public class UpdateFacultyValidator : AbstractValidator<UpdateFacultyDto>
 {
-    public UpdateFacultyValidator() => RuleFor(x => x.NameAr).NotEmpty().MaximumLength(200);
+    public UpdateFacultyValidator()
+    {
+        RuleFor(x => x.NameAr)
+            .NotEmpty().WithMessage("اسم الكلية مطلوب.")
+            .MaximumLength(200).WithMessage("اسم الكلية طويل جداً.");
+    }
 }

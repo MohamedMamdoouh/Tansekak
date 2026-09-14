@@ -11,28 +11,20 @@ public class DashboardService(AppDbContext db, CurrentAdmissionYearProvider year
     {
         var currentYear = await yearProvider.GetCurrentYearNumberAsync(cancellationToken);
 
-        var governoratesTask = db.Governorates.CountAsync(cancellationToken);
-        var universitiesTask = db.Universities.CountAsync(cancellationToken);
-        var facultiesTask = db.Faculties.CountAsync(cancellationToken);
-        var universityFacultiesTask = db.UniversityFaculties.CountAsync(cancellationToken);
-        var cutoffsTask = db.AdmissionCutoffs.CountAsync(cancellationToken);
-        var studentResultsTask = db.StudentResults.CountAsync(cancellationToken);
-
-        await Task.WhenAll(
-            governoratesTask,
-            universitiesTask,
-            facultiesTask,
-            universityFacultiesTask,
-            cutoffsTask,
-            studentResultsTask);
+        var governoratesCount = await db.Governorates.CountAsync(cancellationToken);
+        var universitiesCount = await db.Universities.CountAsync(cancellationToken);
+        var facultiesCount = await db.Faculties.CountAsync(cancellationToken);
+        var universityFacultiesCount = await db.UniversityFaculties.CountAsync(cancellationToken);
+        var cutoffsCount = await db.AdmissionCutoffs.CountAsync(cancellationToken);
+        var studentResultsCount = await db.StudentResults.CountAsync(cancellationToken);
 
         return new DashboardDto(
-            await governoratesTask,
-            await universitiesTask,
-            await facultiesTask,
-            await universityFacultiesTask,
-            await cutoffsTask,
-            await studentResultsTask,
+            governoratesCount,
+            universitiesCount,
+            facultiesCount,
+            universityFacultiesCount,
+            cutoffsCount,
+            studentResultsCount,
             currentYear);
     }
 }

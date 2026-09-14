@@ -16,6 +16,9 @@ public class StudentResultImportService(
 {
     private const int BatchSize = 1000;
 
+    private static readonly string ValidationFailedMessage =
+        ArabicErrorCatalog.GetMessage(ApiErrorCodes.ValidationFailed);
+
     public async Task<ImportResultDto> ImportAsync(
         int yearId,
         Stream fileStream,
@@ -24,23 +27,23 @@ public class StudentResultImportService(
     {
         var ext = Path.GetExtension(fileName);
         if (!ext.Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
-            return Fail("Only .xlsx files are supported.");
+            return Fail(ApiErrorCodes.OnlyXlsxFiles);
 
         _ = await db.AdmissionYears.FindAsync([yearId], cancellationToken)
-            ?? throw new NotFoundException("Admission year not found.");
+            ?? throw new NotFoundException(ApiErrorCodes.AdmissionYearNotFound);
 
         var (parsedRows, parseErrors) = StudentResultExcelParser.Parse(fileStream);
         if (parseErrors.Count > 0)
         {
             logger.LogWarning("Excel parse failed for year {YearId} with {Count} errors.", yearId, parseErrors.Count);
-            return new ImportResultDto(false, "Validation failed.", Errors: parseErrors);
+            return new ImportResultDto(false, ValidationFailedMessage, Errors: parseErrors);
         }
 
         var validationErrors = ValidateRows(parsedRows);
         if (validationErrors.Count > 0)
         {
             logger.LogWarning("Import validation failed for year {YearId} with {Count} errors.", yearId, validationErrors.Count);
-            return new ImportResultDto(false, "Validation failed.", Errors: validationErrors);
+            return new ImportResultDto(false, ValidationFailedMessage, Errors: validationErrors);
         }
 
         await using var transaction = db.Database.IsRelational()
@@ -116,15 +119,15 @@ public class StudentResultImportService(
         foreach (var row in rows)
         {
             if (!seen.Add(row.SeatingNo))
-                errors.Add(Err(row.RowNumber, "seating_no", "DUPLICATE", "Duplicate seating number in file."));
+                errors.Add(Err(row.RowNumber, "seating_no", ApiErrorCodes.Duplicate));
         }
 
         return errors;
     }
 
-    private static ImportResultDto Fail(string message) =>
-        new(false, message);
+    private static ImportResultDto Fail(string errorCode) =>
+        new(false, ArabicErrorCatalog.GetMessage(errorCode));
 
-    private static ImportValidationErrorDto Err(int row, string col, string code, string msg) =>
-        new(row, col, code, msg);
+    private static ImportValidationErrorDto Err(int row, string col, string code, string? message = null) =>
+        new(row, col, code, message ?? ArabicErrorCatalog.GetMessage(code));
 }

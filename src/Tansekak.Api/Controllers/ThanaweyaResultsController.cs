@@ -1,11 +1,7 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Tansekak.Application.Common;
 using Tansekak.Application.DTOs;
 using Tansekak.Application.Interfaces;
-using Tansekak.Infrastructure.Identity;
-using Tansekak.Infrastructure.Services;
 
 namespace Tansekak.Api.Controllers;
 
@@ -18,7 +14,7 @@ public class ThanaweyaResultsController(IStudentResultService service) : Control
     {
         var result = await service.GetBySeatingNoAsync(seatingNo, ct);
         return result is null
-            ? NotFound(ApiResponse<StudentResultDto>.Fail("لم يتم العثور على نتيجة لهذا الرقم."))
+            ? NotFound(ApiResponse<StudentResultDto>.Fail(ApiErrorCodes.StudentResultNotFound))
             : Ok(ApiResponse<StudentResultDto>.Ok(result));
     }
 }

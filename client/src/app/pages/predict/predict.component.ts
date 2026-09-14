@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../services/api.service';
 import { Config, DEFAULT_MAXIMUM_SCORE } from '../../models';
-import { getTrackLabel } from '../../utils/track-label.util';
+import { canonicalizeTrack, getTrackLabel } from '../../utils/track-label.util';
 
 @Component({
   selector: 'app-predict',
@@ -45,7 +45,7 @@ export class PredictComponent {
           }
         }
         if (params['track']) {
-          this.form.patchValue({ track: params['track'] });
+          this.form.patchValue({ track: canonicalizeTrack(params['track']) });
         }
       });
 

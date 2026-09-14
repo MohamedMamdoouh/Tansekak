@@ -33,7 +33,7 @@ public class UniversityService(AppDbContext db, EntityIdAllocator idAllocator) :
     public async Task<UniversityDto> CreateAsync(CreateUniversityDto dto, CancellationToken cancellationToken = default)
     {
         if (!UniversityTypeHelper.TryParse(dto.Type, out var type))
-            throw new ArgumentException("Invalid university type.");
+            throw new ValidationException(ApiErrorCodes.InvalidUniversityType);
 
         var entity = new University
         {
@@ -50,7 +50,7 @@ public class UniversityService(AppDbContext db, EntityIdAllocator idAllocator) :
     public async Task<UniversityDto?> UpdateAsync(int id, UpdateUniversityDto dto, CancellationToken cancellationToken = default)
     {
         if (!UniversityTypeHelper.TryParse(dto.Type, out var type))
-            throw new ArgumentException("Invalid university type.");
+            throw new ValidationException(ApiErrorCodes.InvalidUniversityType);
 
         var entity = await db.Universities.FindAsync([id], cancellationToken);
         if (entity is null) return null;

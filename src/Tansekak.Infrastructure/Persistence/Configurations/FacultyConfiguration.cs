@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Tansekak.Domain.Entities;
 using Tansekak.Domain.Enums;
+using Tansekak.Infrastructure.Persistence;
 
 namespace Tansekak.Infrastructure.Persistence.Configurations;
 

@@ -5,11 +5,9 @@ namespace Tansekak.Api.Controllers;
 
 public static class ControllerResponses
 {
-    public const string NotFoundMessage = "Not found.";
-
     public static ActionResult<ApiResponse<T>> NotFoundResponse<T>() =>
-        new NotFoundObjectResult(ApiResponse<T>.Fail(NotFoundMessage));
+        new NotFoundObjectResult(ApiResponse<T>.Fail(ApiErrorCodes.NotFound));
 
     public static IActionResult NotFoundResult() =>
-        new NotFoundObjectResult(ApiResponse<object>.Fail(NotFoundMessage));
+        new NotFoundObjectResult(ApiResponse<object>.Fail(ApiErrorCodes.NotFound));
 }

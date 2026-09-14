@@ -8,8 +8,13 @@ public class UpdateUniversityValidator : AbstractValidator<UpdateUniversityDto>
 {
     public UpdateUniversityValidator()
     {
-        RuleFor(x => x.NameAr).NotEmpty().MaximumLength(200);
-        RuleFor(x => x.GovernorateId).GreaterThan(0);
-        RuleFor(x => x.Type).NotEmpty().Must(type => UniversityTypeHelper.TryParse(type, out _)).WithMessage("Invalid university type.");
+        RuleFor(x => x.NameAr)
+            .NotEmpty().WithMessage("اسم الجامعة مطلوب.")
+            .MaximumLength(200).WithMessage("اسم الجامعة طويل جداً.");
+        RuleFor(x => x.GovernorateId).GreaterThan(0).WithMessage("المحافظة غير صحيحة.");
+        RuleFor(x => x.Type)
+            .NotEmpty().WithMessage("نوع الجامعة مطلوب.")
+            .Must(type => UniversityTypeHelper.TryParse(type, out _))
+            .WithMessage("نوع الجامعة غير صحيح.");
     }
 }

@@ -52,6 +52,15 @@
         border: 1px solid rgba(255, 255, 255, 0.16);
       }
 
+      a.year-anchor {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      a.year-anchor:hover {
+        background: rgba(255, 255, 255, 0.16);
+      }
+
       .year-anchor--empty {
         justify-items: stretch;
         text-align: right;

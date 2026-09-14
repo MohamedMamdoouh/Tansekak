@@ -8,8 +8,14 @@ export interface AuthUser {
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
+  errorCode?: string;
   data: T;
-  errors?: { field: string; message: string; rowNumber?: number }[];
+  errors?: {
+    field: string;
+    message: string;
+    rowNumber?: number;
+    errorCode?: string;
+  }[];
 }
 
 export interface Config {
@@ -121,13 +127,12 @@ export interface StudentResult {
 }
 
 export const TRACK_LABELS: Record<string, string> = {
-  Science: 'علمي علوم',
-  Mathematics: 'علمي رياضة',
-  Literature: 'أدبي',
+  Science: 'الشعبة العلمية',
+  Mathematics: 'الشعبة العلمية',
+  Literature: 'الشعبة الأدبية',
 };
 
 export const TRACK_OPTIONS = [
-  { value: 'Science', label: 'علمي علوم' },
-  { value: 'Mathematics', label: 'علمي رياضة' },
-  { value: 'Literature', label: 'أدبي' },
+  { value: 'Science', label: 'الشعبة العلمية' },
+  { value: 'Literature', label: 'الشعبة الأدبية' },
 ];

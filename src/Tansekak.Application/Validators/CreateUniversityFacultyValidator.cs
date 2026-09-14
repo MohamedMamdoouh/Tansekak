@@ -7,8 +7,8 @@ public class CreateUniversityFacultyValidator : AbstractValidator<CreateUniversi
 {
     public CreateUniversityFacultyValidator()
     {
-        RuleFor(x => x.UniversityId).GreaterThan(0);
-        RuleFor(x => x.FacultyId).GreaterThan(0);
+        RuleFor(x => x.UniversityId).GreaterThan(0).WithMessage("الجامعة غير صحيحة.");
+        RuleFor(x => x.FacultyId).GreaterThan(0).WithMessage("الكلية غير صحيحة.");
     }
 }
 
@@ -16,7 +16,7 @@ public class UpdateUniversityFacultyValidator : AbstractValidator<UpdateUniversi
 {
     public UpdateUniversityFacultyValidator()
     {
-        RuleFor(x => x.UniversityId).GreaterThan(0);
-        RuleFor(x => x.FacultyId).GreaterThan(0);
+        RuleFor(x => x.UniversityId).GreaterThan(0).WithMessage("الجامعة غير صحيحة.");
+        RuleFor(x => x.FacultyId).GreaterThan(0).WithMessage("الكلية غير صحيحة.");
     }
 }

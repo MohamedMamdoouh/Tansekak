@@ -2,7 +2,9 @@ import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../services/auth.service';
+import { resolveApiError } from '../../../utils/api-error.util';
 
 @Component({
   selector: 'app-admin-login',
@@ -31,8 +33,8 @@ export class AdminLoginComponent {
       .login(this.form.value.email!, this.form.value.password!)
       .subscribe({
         next: () => this.router.navigate(['/admin']),
-        error: () => {
-          this.error = 'بيانات الدخول غير صحيحة.';
+        error: (err: HttpErrorResponse) => {
+          this.error = resolveApiError(err, 'بيانات الدخول غير صحيحة.');
           this.loading = false;
         },
       });

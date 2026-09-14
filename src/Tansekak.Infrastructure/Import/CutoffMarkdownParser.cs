@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
+using Tansekak.Application.Common;
 using Tansekak.Application.DTOs;
 
 namespace Tansekak.Infrastructure.Import;
@@ -29,7 +30,7 @@ public static partial class CutoffMarkdownParser
 
             if (cells.Length < 2)
             {
-                errors.Add(Error(lineNumber, "الكلية", "INVALID_ROW", "Expected two table columns."));
+                errors.Add(Error(lineNumber, "الكلية", ApiErrorCodes.InvalidRow));
                 continue;
             }
 
@@ -38,19 +39,19 @@ public static partial class CutoffMarkdownParser
 
             if (string.IsNullOrWhiteSpace(label))
             {
-                errors.Add(Error(lineNumber, "الكلية", "REQUIRED", "College name is required."));
+                errors.Add(Error(lineNumber, "الكلية", ApiErrorCodes.Required));
                 continue;
             }
 
             if (LeadingScore().IsMatch(label))
             {
-                errors.Add(Error(lineNumber, "الكلية", "MALFORMED", "College column contains a score value."));
+                errors.Add(Error(lineNumber, "الكلية", ApiErrorCodes.CollegeContainsScore));
                 continue;
             }
 
             if (!decimal.TryParse(scoreText, NumberStyles.Any, CultureInfo.InvariantCulture, out var score))
             {
-                errors.Add(Error(lineNumber, "الحد الأدنى", "INVALID", "Cutoff score must be a number."));
+                errors.Add(Error(lineNumber, "الحد الأدنى", ApiErrorCodes.CutoffMustBeNumber));
                 continue;
             }
 
@@ -67,8 +68,8 @@ public static partial class CutoffMarkdownParser
         line.Contains("الكلية", StringComparison.OrdinalIgnoreCase)
         || line.Contains("الحد", StringComparison.OrdinalIgnoreCase);
 
-    private static ImportValidationErrorDto Error(int row, string column, string code, string message) =>
-        new(row, column, code, message);
+    private static ImportValidationErrorDto Error(int row, string column, string code) =>
+        new(row, column, code, ArabicErrorCatalog.GetMessage(code));
 
     [GeneratedRegex(@"^\d+(?:\.\d+)?\s")]
     private static partial Regex LeadingScore();

@@ -42,7 +42,9 @@ public class AdmissionCutoffService(AppDbContext db, EntityIdAllocator idAllocat
     public async Task<AdmissionCutoffDto> CreateAsync(CreateAdmissionCutoffDto dto, CancellationToken cancellationToken = default)
     {
         if (!TrackHelper.TryParse(dto.Track, out var track))
-            throw new ArgumentException("Invalid track.");
+            throw new ValidationException(ApiErrorCodes.InvalidTrack);
+
+        track = TrackHelper.Canonical(track);
 
         await ValidateCutoffAsync(dto.AdmissionYearId, dto.UniversityFacultyId, track, dto.CutoffScore, null, cancellationToken);
 
@@ -62,7 +64,9 @@ public class AdmissionCutoffService(AppDbContext db, EntityIdAllocator idAllocat
     public async Task<AdmissionCutoffDto?> UpdateAsync(int id, UpdateAdmissionCutoffDto dto, CancellationToken cancellationToken = default)
     {
         if (!TrackHelper.TryParse(dto.Track, out var track))
-            throw new ArgumentException("Invalid track.");
+            throw new ValidationException(ApiErrorCodes.InvalidTrack);
+
+        track = TrackHelper.Canonical(track);
 
         var entity = await db.AdmissionCutoffs.FindAsync([id], cancellationToken);
         if (entity is null) return null;
@@ -92,7 +96,10 @@ public class AdmissionCutoffService(AppDbContext db, EntityIdAllocator idAllocat
 
         if (yearId.HasValue) query = query.Where(x => x.AdmissionYearId == yearId.Value);
         if (!string.IsNullOrWhiteSpace(track) && TrackHelper.TryParse(track, out var t))
-            query = query.Where(x => x.Track == t);
+        {
+            var bucket = TrackHelper.TracksInBucket(t);
+            query = query.Where(x => bucket.Contains(x.Track));
+        }
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(x => x.UniversityFaculty.University.NameAr.Contains(search) || x.UniversityFaculty.Faculty.NameAr.Contains(search));
 
@@ -108,26 +115,27 @@ public class AdmissionCutoffService(AppDbContext db, EntityIdAllocator idAllocat
         CancellationToken cancellationToken)
     {
         _ = await db.AdmissionYears.FindAsync([yearId], cancellationToken)
-            ?? throw new NotFoundException("Admission year not found.");
+            ?? throw new NotFoundException(ApiErrorCodes.AdmissionYearNotFound);
 
         var universityFaculty = await db.UniversityFaculties
             .Include(x => x.Faculty)
             .FirstOrDefaultAsync(x => x.Id == universityFacultyId, cancellationToken)
-            ?? throw new NotFoundException("University faculty not found.");
+            ?? throw new NotFoundException(ApiErrorCodes.UniversityFacultyNotFound);
 
         FacultyTrackValidator.EnsureTrackAllowed(universityFaculty.Faculty, track);
 
         if (cutoffScore < 0)
-            throw new ArgumentException("Cutoff score must be non-negative.");
+            throw new ValidationException(ApiErrorCodes.CutoffNegative);
 
+        var bucket = TrackHelper.TracksInBucket(track);
         var duplicate = await db.AdmissionCutoffs.AnyAsync(x =>
             x.AdmissionYearId == yearId
             && x.UniversityFacultyId == universityFacultyId
-            && x.Track == track
+            && bucket.Contains(x.Track)
             && (!excludeId.HasValue || x.Id != excludeId.Value),
             cancellationToken);
 
         if (duplicate)
-            throw new ArgumentException("A cutoff for this university faculty and track already exists for the selected year.");
+            throw new ValidationException(ApiErrorCodes.CutoffDuplicate);
     }
 }

@@ -8,3 +8,7 @@ node_modules/
 dist/
 .env
 *.log
+*.pdf
+*.xlsx
+__pycache__/
+tmp-pdf-extract/

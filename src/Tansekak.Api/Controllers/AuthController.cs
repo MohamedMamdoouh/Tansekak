@@ -20,20 +20,20 @@ public class AuthController(SignInManager<ApplicationUser> signInManager, UserMa
         var user = await userManager.FindByEmailAsync(request.Email);
         if (user is null)
         {
-            return Unauthorized(ApiResponse<AuthUserDto>.Fail("Invalid credentials."));
+            return Unauthorized(ApiResponse<AuthUserDto>.Fail(ApiErrorCodes.InvalidCredentials));
         }
 
         var result = await signInManager.PasswordSignInAsync(user, request.Password, isPersistent: true, lockoutOnFailure: true);
         if (!result.Succeeded)
         {
-            return Unauthorized(ApiResponse<AuthUserDto>.Fail("Invalid credentials."));
+            return Unauthorized(ApiResponse<AuthUserDto>.Fail(ApiErrorCodes.InvalidCredentials));
         }
 
         var authUser = await BuildAuthUserAsync(user);
         if (authUser is null)
         {
             await signInManager.SignOutAsync();
-            return Unauthorized(ApiResponse<AuthUserDto>.Fail("Invalid credentials."));
+            return Unauthorized(ApiResponse<AuthUserDto>.Fail(ApiErrorCodes.InvalidCredentials));
         }
 
         return Ok(ApiResponse<AuthUserDto>.Ok(authUser));
@@ -52,10 +52,10 @@ public class AuthController(SignInManager<ApplicationUser> signInManager, UserMa
     public async Task<ActionResult<ApiResponse<AuthUserDto>>> Me(CancellationToken cancellationToken)
     {
         var user = await userManager.GetUserAsync(User);
-        if (user is null) return Unauthorized(ApiResponse<AuthUserDto>.Fail("Not authenticated."));
+        if (user is null) return Unauthorized(ApiResponse<AuthUserDto>.Fail(ApiErrorCodes.NotAuthenticated));
 
         var authUser = await BuildAuthUserAsync(user);
-        if (authUser is null) return Unauthorized(ApiResponse<AuthUserDto>.Fail("Not authenticated."));
+        if (authUser is null) return Unauthorized(ApiResponse<AuthUserDto>.Fail(ApiErrorCodes.NotAuthenticated));
 
         return Ok(ApiResponse<AuthUserDto>.Ok(authUser));
     }

@@ -11,20 +11,17 @@ public static class StudentTrackInferrer
 
         var text = NormalizeForMatch(caseDesc);
 
-        if (ContainsScienceTrack(text))
-            return AcademicTrack.Science;
-
-        if (ContainsMathematicsTrack(text))
-            return AcademicTrack.Mathematics;
-
         if (ContainsLiteratureTrack(text))
             return AcademicTrack.Literature;
+
+        if (ContainsScientificTrack(text))
+            return AcademicTrack.Science;
 
         return null;
     }
 
     public static string? ToDisplayName(AcademicTrack? track) =>
-        track is null ? null : TrackHelper.ToDisplayName(track.Value);
+        track is null ? null : TrackHelper.ToDisplayName(TrackHelper.Canonical(track.Value));
 
     internal static string NormalizeForMatch(string text) =>
         text.Trim()
@@ -33,8 +30,15 @@ public static class StudentTrackInferrer
             .Replace('إ', 'ا')
             .Replace('آ', 'ا');
 
+    internal static bool ContainsScientificTrack(string normalizedText) =>
+        normalizedText.Contains("علمي علوم", StringComparison.Ordinal) ||
+        normalizedText.Contains("علمي رياضة", StringComparison.Ordinal) ||
+        normalizedText.Contains("علمي رياضه", StringComparison.Ordinal) ||
+        normalizedText.Contains("الشعبة العلمية", StringComparison.Ordinal) ||
+        normalizedText.Contains("علمي", StringComparison.Ordinal);
+
     internal static bool ContainsScienceTrack(string normalizedText) =>
-        normalizedText.Contains("علمي علوم", StringComparison.Ordinal);
+        ContainsScientificTrack(normalizedText);
 
     internal static bool ContainsMathematicsTrack(string normalizedText) =>
         normalizedText.Contains("علمي رياضة", StringComparison.Ordinal) ||

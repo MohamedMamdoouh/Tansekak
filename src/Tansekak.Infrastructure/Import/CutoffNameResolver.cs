@@ -1,3 +1,4 @@
+using Tansekak.Application.Common;
 using Tansekak.Application.DTOs;
 
 namespace Tansekak.Infrastructure.Import;
@@ -62,8 +63,8 @@ public sealed class CutoffNameResolver
                 unresolved.Add(new ImportValidationErrorDto(
                     row.LineNumber,
                     "الكلية",
-                    "UNRESOLVED",
-                    $"Could not match \"{row.SourceLabel}\" to a university/faculty pair."));
+                    ApiErrorCodes.UnresolvedCollege,
+                    ArabicErrorCatalog.GetMessage(ApiErrorCodes.UnresolvedCollege, row.SourceLabel)));
             }
         }
 
@@ -98,8 +99,7 @@ public sealed class CutoffNameResolver
             var facultyPart = normalizedKey[..^suffixKey.Length];
             var facultyKey = ArabicTextNormalizer.NormalizeKey(candidate.FacultyNameAr);
             if (facultyPart.Equals(facultyKey, StringComparison.Ordinal)
-                || facultyPart.Contains(facultyKey, StringComparison.Ordinal)
-                || facultyKey.Contains(facultyPart, StringComparison.Ordinal))
+                || facultyPart.EndsWith(facultyKey, StringComparison.Ordinal))
             {
                 entry = candidate;
                 return true;
@@ -170,13 +170,31 @@ public sealed class CutoffNameResolver
             yield return $"علاج طبيعي {shortName}";
 
         if (normalizedFaculty is "الاقتصاد والعلوم السياسيه")
+        {
             yield return $"اقتصاد و علوم سياسيه {shortName}";
+            yield return $"سياسه واقتصاد {shortName}";
+        }
 
         if (normalizedFaculty is "الاعلام")
             yield return $"اعلام {shortName}";
 
         if (normalizedFaculty is "الاثار")
             yield return $"آثار {shortName}";
+
+        if (normalizedFaculty is "الطب البيطري" or "طب بيطري")
+            yield return $"طب بيطري {shortName}";
+
+        if (normalizedFaculty is "التخطيط العمراني والاقليمي")
+            yield return $"تخطيط عمراني {shortName}";
+
+        if (normalizedFaculty is "الفنون الجميله")
+            yield return $"فنون جميله {shortName}";
+
+        if (normalizedFaculty is "الذكاء الاصطناعي")
+            yield return $"ذكاء اصطناعي {shortName}";
+
+        if (normalizedFaculty is "السياحه والفنادق")
+            yield return $"سياحه وفنادق {shortName}";
     }
 
     private void AddExactAlias(string alias, CutoffCatalogEntry entry)

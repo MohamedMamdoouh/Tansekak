@@ -1,5 +1,6 @@
 import { ApiResponse, ImportResult } from '../models';
 import { unwrapApiData } from './api-normalize.util';
+import { resolveApiError } from './api-error.util';
 
 export function normalizeImportResult(
   data: ImportResult | null | undefined,
@@ -62,37 +63,8 @@ export function importErrorMessage(
   status: number,
   response: ApiResponse<unknown> | null | undefined,
 ): string {
-  if (status === 0) {
-    return 'انقطع الاتصال بالخادم اثناء الاستيراد. تحقق من اتصال الانترنت ثم حاول مرة أخرى.';
-  }
-
-  if (status === 403) {
-    return 'ليس لديك صلاحية لتنفيذ هذا الاستيراد.';
-  }
-
-  if (status === 400 && response?.message) {
-    return response.message;
-  }
-
-  if (status === 503) {
-    return (
-      response?.message ?? 'الخدمة غير متاحة حاليا. حاول مرة أخرى لاحقا.'
-    );
-  }
-
   if (status === 502 || status === 504) {
     return 'انتهت مهلة الخادم (5 دقائق). قد يكون الاستيراد لا يزال جاريا — انتظر دقيقة ثم تحقق من عدد النتائج في لوحة التحكم.';
-  }
-
-  if (status === 401 || status === 403) {
-    return 'انتهت جلسة تسجيل الدخول. سجل الدخول مرة أخرى ثم أعد المحاولة.';
-  }
-
-  if (status >= 500) {
-    return (
-      response?.message ??
-      'حدث خطأ في الخادم اثناء الاستيراد. راجع سجل MonsterASP ثم حاول مرة اخرى.'
-    );
   }
 
   const importData = extractImportResult(response);
@@ -104,9 +76,5 @@ export function importErrorMessage(
     return `فشل التحقق من الملف (${response.errors.length} خطأ). راجع الجدول بالأسفل.`;
   }
 
-  const dataMessage =
-    importData?.message ??
-    (response?.data as ImportResult | undefined)?.message;
-
-  return response?.message ?? dataMessage ?? 'فشل الاستيراد.';
+  return resolveApiError({ status, error: response }, 'فشل الاستيراد.');
 }

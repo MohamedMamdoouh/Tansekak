@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Tansekak.Application.Common;
 using Tansekak.Application.DTOs;
 using Tansekak.Application.Interfaces;
+using Tansekak.Infrastructure.Identity;
+using Tansekak.Infrastructure.Services;
 
 namespace Tansekak.Api.Controllers;
 
@@ -24,16 +26,16 @@ public class ImportResultsController(
         CancellationToken ct)
     {
         if (file is null || file.Length == 0)
-            return BadRequest(ApiResponse<ImportResultDto>.Fail("File is required."));
+            return BadRequest(ApiResponse<ImportResultDto>.Fail(ApiErrorCodes.FileRequired));
 
         if (file.Length > DirectUploadLimitBytes)
             return StatusCode(
                 StatusCodes.Status413PayloadTooLarge,
-                ApiResponse<ImportResultDto>.Fail("File exceeds the 20 MB direct upload limit. Use the R2 upload flow."));
+                ApiResponse<ImportResultDto>.Fail(ApiErrorCodes.FileTooLarge));
 
         var ext = Path.GetExtension(file.FileName);
         if (!ext.Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
-            return BadRequest(ApiResponse<ImportResultDto>.Fail("Only .xlsx files are supported."));
+            return BadRequest(ApiResponse<ImportResultDto>.Fail(ApiErrorCodes.OnlyXlsxFiles));
 
         await using var stream = file.OpenReadStream();
         var result = await importService.ImportAsync(yearId, stream, file.FileName, ct);
@@ -49,10 +51,10 @@ public class ImportResultsController(
         if (!r2Storage.IsConfigured)
             return StatusCode(
                 StatusCodes.Status503ServiceUnavailable,
-                ApiResponse<UploadUrlDto>.Fail("Large file uploads are unavailable. Configure Cloudflare R2."));
+                ApiResponse<UploadUrlDto>.Fail(ApiErrorCodes.R2NotConfigured));
 
         if (string.IsNullOrWhiteSpace(request.FileName))
-            return BadRequest(ApiResponse<UploadUrlDto>.Fail("File name is required."));
+            return BadRequest(ApiResponse<UploadUrlDto>.Fail(ApiErrorCodes.FileNameRequired));
 
         var (uploadUrl, objectKey) = await r2Storage.CreatePresignedUploadAsync(yearId, request.FileName, ct);
         return Ok(ApiResponse<UploadUrlDto>.Ok(new UploadUrlDto(uploadUrl, objectKey)));
@@ -67,10 +69,10 @@ public class ImportResultsController(
         if (!r2Storage.IsConfigured)
             return StatusCode(
                 StatusCodes.Status503ServiceUnavailable,
-                ApiResponse<StartImportJobDto>.Fail("Large file uploads are unavailable. Configure Cloudflare R2."));
+                ApiResponse<StartImportJobDto>.Fail(ApiErrorCodes.R2NotConfigured));
 
         if (string.IsNullOrWhiteSpace(request.ObjectKey))
-            return BadRequest(ApiResponse<StartImportJobDto>.Fail("Object key is required."));
+            return BadRequest(ApiResponse<StartImportJobDto>.Fail(ApiErrorCodes.ObjectKeyRequired));
 
         var job = await importJobService.CreateQueuedJobAsync(yearId, request.ObjectKey, ct);
         return Ok(ApiResponse<StartImportJobDto>.Ok(new StartImportJobDto(job.Id), "Import started."));
@@ -79,13 +81,16 @@ public class ImportResultsController(
     private ActionResult<ApiResponse<ImportResultDto>> ToActionResult(ImportResultDto result) =>
         result.Success
             ? Ok(ApiResponse<ImportResultDto>.Ok(result, result.Message))
-            : BadRequest(ApiResponse<ImportResultDto>.Fail(result.Message, result.Errors?.Select(e => new ApiError
-            {
-                Field = e.Column,
-                Message = e.Message,
-                RowNumber = e.RowNumber,
-                ErrorCode = e.ErrorCode
-            }).ToList()));
+            : BadRequest(ApiResponse<ImportResultDto>.Fail(
+                ApiErrorCodes.ValidationFailed,
+                result.Message,
+                result.Errors?.Select(e => new ApiError
+                {
+                    Field = e.Column,
+                    Message = e.Message,
+                    RowNumber = e.RowNumber,
+                    ErrorCode = e.ErrorCode
+                }).ToList()));
 }
 
 public record UploadUrlRequest(string FileName);

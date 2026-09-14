@@ -42,6 +42,12 @@ export class AdmissionYearStore {
     return this.loadCurrentYear();
   }
 
+  refreshYears(): Observable<AdmissionYear[]> {
+    this.yearsCache$ = undefined;
+    this.currentYearCache$ = undefined;
+    return this.loadYears();
+  }
+
   getMaximumScoreForYear(year: number, fallback: number): number {
     const match = this.years().find((item) => item.year === year)
       ?? this.currentYear();

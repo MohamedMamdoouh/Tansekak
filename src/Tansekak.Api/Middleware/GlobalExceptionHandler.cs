@@ -12,30 +12,25 @@ public class GlobalExceptionHandler(RequestDelegate next, ILogger<GlobalExceptio
         {
             await next(context);
         }
-        catch (NotFoundException ex)
+        catch (AppException ex)
         {
-            logger.LogWarning(ex, "Resource not found");
-            await WriteError(context, HttpStatusCode.NotFound, ex.Message);
-        }
-        catch (ServiceUnavailableException ex)
-        {
-            logger.LogWarning(ex, "Service unavailable");
-            await WriteError(context, HttpStatusCode.ServiceUnavailable, ex.Message);
+            logger.LogWarning(ex, "Application error {ErrorCode}", ex.ErrorCode);
+            await WriteError(context, ex.StatusCode, ex.ErrorCode, ex.UserMessage);
         }
         catch (ArgumentException ex)
         {
             logger.LogWarning(ex, "Validation error");
-            await WriteError(context, HttpStatusCode.BadRequest, ex.Message);
+            await WriteError(context, HttpStatusCode.BadRequest, ApiErrorCodes.ValidationFailed);
         }
         catch (InvalidOperationException ex)
         {
             logger.LogWarning(ex, "Business rule violation");
-            await WriteError(context, HttpStatusCode.BadRequest, ex.Message);
+            await WriteError(context, HttpStatusCode.BadRequest, ApiErrorCodes.ValidationFailed);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Unexpected error");
-            await WriteError(context, HttpStatusCode.InternalServerError, "An unexpected error occurred.");
+            await WriteError(context, HttpStatusCode.InternalServerError, ApiErrorCodes.InternalError);
         }
     }
 
@@ -44,14 +39,18 @@ public class GlobalExceptionHandler(RequestDelegate next, ILogger<GlobalExceptio
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    private static async Task WriteError(HttpContext context, HttpStatusCode code, string message)
+    private static async Task WriteError(
+        HttpContext context,
+        HttpStatusCode code,
+        string errorCode,
+        string? message = null)
     {
         if (context.Response.HasStarted)
-            throw new InvalidOperationException(message);
+            throw new InvalidOperationException(ArabicErrorCatalog.GetMessage(ApiErrorCodes.InternalError));
 
         context.Response.StatusCode = (int)code;
         context.Response.ContentType = "application/json";
-        var response = ApiResponse<object>.Fail(message);
+        var response = ApiResponse<object>.Fail(errorCode, message ?? ArabicErrorCatalog.GetMessage(errorCode));
         await context.Response.WriteAsync(JsonSerializer.Serialize(response, JsonOptions));
     }
 }

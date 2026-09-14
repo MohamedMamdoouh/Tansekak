@@ -1,8 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { SESSION_EXPIRED_MESSAGE } from '../../../constants/auth-messages';
 import { ApiService } from '../../../services/api.service';
+import { resolveApiError } from '../../../utils/api-error.util';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Dashboard } from '../../../models';
 
 interface StatCard {
@@ -44,13 +45,10 @@ export class AdminDashboardComponent implements OnInit {
         this.data = data;
         this.loading = false;
       },
-      error: (err) => {
+      error: (err: HttpErrorResponse) => {
         this.loading = false;
         this.data = null;
-        this.loadError =
-          err.status === 401
-            ? SESSION_EXPIRED_MESSAGE
-            : (err.error?.message ?? 'تعذر تحميل بيانات لوحة الإدارة.');
+        this.loadError = resolveApiError(err, 'تعذر تحميل بيانات لوحة الإدارة.');
       },
     });
   }

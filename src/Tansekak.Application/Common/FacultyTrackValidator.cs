@@ -6,7 +6,7 @@ namespace Tansekak.Application.Common;
 public static class FacultyTrackValidator
 {
     public static bool IsTrackAllowed(Faculty faculty, AcademicTrack track) =>
-        faculty.AllowedTracks.Count > 0 && faculty.AllowedTracks.Contains(track);
+        faculty.AllowedTracks.Count > 0 && TrackHelper.AllowsTrack(faculty.AllowedTracks, track);
 
     public static string BuildRejectionMessage(Faculty faculty, AcademicTrack track) =>
         $"كلية \"{faculty.NameAr}\" غير متاحة لشعبة {TrackHelper.ToArabicName(track)}.";
@@ -14,6 +14,8 @@ public static class FacultyTrackValidator
     public static void EnsureTrackAllowed(Faculty faculty, AcademicTrack track)
     {
         if (!IsTrackAllowed(faculty, track))
-            throw new ArgumentException(BuildRejectionMessage(faculty, track));
+            throw new ValidationException(
+                ApiErrorCodes.FacultyTrackNotAllowed,
+                BuildRejectionMessage(faculty, track));
     }
 }

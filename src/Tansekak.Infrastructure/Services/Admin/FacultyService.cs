@@ -51,20 +51,28 @@ public class FacultyService(AppDbContext db, EntityIdAllocator idAllocator) : IF
     private static List<AcademicTrack> ParseAllowedTracks(IReadOnlyList<string> allowedTracks)
     {
         if (allowedTracks is null || allowedTracks.Count == 0)
-            throw new ArgumentException("At least one allowed track is required.");
+            throw new ValidationException(ApiErrorCodes.AllowedTracksRequired);
 
         var tracks = new List<AcademicTrack>();
         foreach (var value in allowedTracks)
         {
             if (!TrackHelper.TryParse(value, out var track))
-                throw new ArgumentException($"Invalid track value: \"{value}\".");
-            if (!tracks.Contains(track))
-                tracks.Add(track);
+                throw new ValidationException(ApiErrorCodes.InvalidTrack);
+            var canonical = TrackHelper.Canonical(track);
+            if (!tracks.Contains(canonical))
+                tracks.Add(canonical);
         }
 
         return tracks;
     }
 
     private static FacultyDto ToDto(Faculty entity) =>
-        new(entity.Id, entity.NameAr, entity.AllowedTracks.Select(TrackHelper.ToDisplayName).ToList());
+        new(
+            entity.Id,
+            entity.NameAr,
+            entity.AllowedTracks
+                .Select(TrackHelper.Canonical)
+                .Distinct()
+                .Select(TrackHelper.ToDisplayName)
+                .ToList());
 }

@@ -108,6 +108,36 @@ export class ApiService {
       .pipe(map((r) => r.data));
   }
 
+  createAdmissionYear(payload: {
+    year: number;
+    maximumScore: number;
+  }): Observable<AdmissionYear> {
+    return this.http
+      .post<ApiResponse<AdmissionYear>>('/api/admin/admission-years', payload)
+      .pipe(map((r) => r.data));
+  }
+
+  updateAdmissionYear(
+    id: number,
+    payload: { year: number; maximumScore: number },
+  ): Observable<AdmissionYear> {
+    return this.http
+      .put<ApiResponse<AdmissionYear>>(
+        `/api/admin/admission-years/${id}`,
+        payload,
+      )
+      .pipe(map((r) => r.data));
+  }
+
+  publishAdmissionYear(id: number): Observable<void> {
+    return this.http
+      .post<ApiResponse<unknown>>(
+        `/api/admin/admission-years/${id}/publish`,
+        {},
+      )
+      .pipe(map(() => undefined));
+  }
+
   getCutoffs(
     yearId?: number,
     search = '',

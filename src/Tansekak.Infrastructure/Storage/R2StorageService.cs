@@ -1,6 +1,7 @@
 using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.Options;
+using Tansekak.Application.Common;
 using Tansekak.Application.Interfaces;
 using Tansekak.Infrastructure.Options;
 
@@ -18,11 +19,11 @@ public class R2StorageService(IOptions<R2Options> options) : IR2Storage
         CancellationToken cancellationToken = default)
     {
         if (!IsConfigured)
-            throw new InvalidOperationException("R2 storage is not configured.");
+            throw new ServiceUnavailableException(ApiErrorCodes.R2NotConfigured);
 
         var extension = Path.GetExtension(fileName);
         if (!extension.Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
-            throw new ArgumentException("Only .xlsx files are supported.");
+            throw new ValidationException(ApiErrorCodes.OnlyXlsxFiles);
 
         var objectKey = $"imports/{yearId}/{Guid.NewGuid():N}{extension}";
         using var client = CreateClient();
@@ -42,7 +43,7 @@ public class R2StorageService(IOptions<R2Options> options) : IR2Storage
     public async Task<Stream> OpenReadAsync(string objectKey, CancellationToken cancellationToken = default)
     {
         if (!IsConfigured)
-            throw new InvalidOperationException("R2 storage is not configured.");
+            throw new ServiceUnavailableException(ApiErrorCodes.R2NotConfigured);
 
         ValidateObjectKey(objectKey);
         using var client = CreateClient();
@@ -81,7 +82,7 @@ public class R2StorageService(IOptions<R2Options> options) : IR2Storage
             || objectKey.Contains("..", StringComparison.Ordinal)
             || objectKey.StartsWith('/'))
         {
-            throw new ArgumentException("Invalid object key.");
+            throw new ValidationException(ApiErrorCodes.InvalidObjectKey);
         }
     }
 }

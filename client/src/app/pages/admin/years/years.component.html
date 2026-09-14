@@ -1,0 +1,175 @@
+
+    <div class="container">
+      <h1>سنوات القبول</h1>
+      <p class="year-label">
+        تفعيل سنة يجعلها السنة الحالية للتنبؤ والنتائج واستيراد البيانات.
+      </p>
+
+      <div class="card form-card">
+        <h2 class="form-title">{{ editId ? 'تعديل سنة' : 'إضافة سنة' }}</h2>
+        <form [formGroup]="form" (ngSubmit)="save()">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>السنة</label>
+              <input
+                type="number"
+                inputmode="numeric"
+                formControlName="year"
+                placeholder="مثال: 2027"
+                min="2000"
+                max="2100"
+              />
+              @if (form.get('year')?.invalid && form.get('year')?.touched) {
+                <small class="field-error">يرجى إدخال سنة بين 2000 و 2100</small>
+              }
+            </div>
+
+            <div class="form-group">
+              <label>الحد الأقصى للمجموع</label>
+              <input
+                type="number"
+                inputmode="decimal"
+                step="0.01"
+                min="0.01"
+                max="1000"
+                formControlName="maximumScore"
+                [placeholder]="'مثال: ' + defaultMaximumScore"
+              />
+              @if (
+                form.get('maximumScore')?.invalid &&
+                form.get('maximumScore')?.touched
+              ) {
+                <small class="field-error"
+                  >يرجى إدخال حد أقصى أكبر من صفر ولا يتجاوز 1000</small
+                >
+              }
+            </div>
+          </div>
+
+          @if (formError) {
+            <p class="form-error">{{ formError }}</p>
+          }
+
+          <div class="actions">
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="saving"
+            >
+              {{ saving ? 'جاري الحفظ...' : editId ? 'حفظ' : 'إضافة' }}
+            </button>
+            @if (editId) {
+              <button
+                type="button"
+                class="btn btn-secondary"
+                [disabled]="saving"
+                (click)="cancelEdit()"
+              >
+                إلغاء
+              </button>
+            }
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>السنة</th>
+                <th>الحد الأقصى للمجموع</th>
+                <th>الحالة</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of items; track item.id) {
+                <tr>
+                  <td>{{ item.year }}</td>
+                  <td>{{ item.maximumScore }}</td>
+                  <td>
+                    @if (item.isCurrent) {
+                      <span class="current-badge">الحالية</span>
+                    } @else {
+                      <span class="muted">غير مفعّلة</span>
+                    }
+                  </td>
+                  <td class="row-actions">
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm"
+                      (click)="edit(item)"
+                    >
+                      تعديل
+                    </button>
+                    @if (!item.isCurrent) {
+                      <button
+                        type="button"
+                        class="btn btn-primary btn-sm"
+                        (click)="openPublishDialog(item)"
+                      >
+                        تفعيل
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (loadError) {
+          <p class="form-error">{{ loadError }}</p>
+        }
+        @if (items.length === 0 && !loading && !loadError) {
+          <p class="empty">لا توجد سنوات قبول. أضف سنة ثم فعّلها.</p>
+        }
+        @if (loading) {
+          <p class="empty">جاري التحميل...</p>
+        }
+      </div>
+    </div>
+
+    @if (publishTarget) {
+      <div class="dialog-backdrop" (click)="closePublishDialog()">
+        <div
+          class="dialog"
+          (click)="$event.stopPropagation()"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div class="dialog-icon dialog-icon--publish">✓</div>
+          <h3>تفعيل سنة القبول</h3>
+          <p class="dialog-lead">
+            تفعيل سنة {{ publishTarget.year }} سيجعلها السنة الحالية للتنبؤ
+            والنتائج فورًا.
+          </p>
+          <div class="dialog-card">
+            <div>
+              <strong>{{ publishTarget.year }}</strong>
+            </div>
+            <div class="dialog-muted">
+              الحد الأقصى للمجموع: {{ publishTarget.maximumScore }}
+            </div>
+          </div>
+          <div class="dialog-actions">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              (click)="closePublishDialog()"
+            >
+              إلغاء
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              [disabled]="publishing"
+              (click)="confirmPublish()"
+            >
+              {{ publishing ? 'جاري التفعيل...' : 'نعم، فعّل' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }

@@ -5,10 +5,14 @@ namespace Tansekak.Application.Common;
 
 public static class StudentTrackRankCalculator
 {
-    public static AcademicTrack? ResolveTrack(StudentResult entity) =>
-        entity.Track
-        ?? StudentTrackInferrer.TryInferFromCaseDesc(entity.StudentCaseDesc)
-        ?? SeatingNumberTrackInferrer.TryInferFromSeatingNo(entity.SeatingNo);
+    public static AcademicTrack? ResolveTrack(StudentResult entity)
+    {
+        var resolved = entity.Track
+            ?? StudentTrackInferrer.TryInferFromCaseDesc(entity.StudentCaseDesc)
+            ?? SeatingNumberTrackInferrer.TryInferFromSeatingNo(entity.SeatingNo);
+
+        return resolved is null ? null : TrackHelper.Canonical(resolved.Value);
+    }
 
     public static bool RanksHigher(
         decimal score,

@@ -1,6 +1,9 @@
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Policy;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
+using Tansekak.Api.Middleware;
 using Tansekak.Application.Common;
 
 namespace Tansekak.Api.Extensions;
@@ -29,12 +32,14 @@ public static class ServiceCollectionExtensions
                         }))
                         .ToList();
 
-                    var message = errors.FirstOrDefault()?.Message ?? "Validation failed.";
-                    var response = ApiResponse<object>.Fail(message, errors);
+                    var message = errors.FirstOrDefault()?.Message
+                        ?? ArabicErrorCatalog.GetMessage(ApiErrorCodes.ValidationFailed);
+                    var response = ApiResponse<object>.Fail(ApiErrorCodes.ValidationFailed, message, errors);
                     return new BadRequestObjectResult(response);
                 };
             });
 
+        services.AddSingleton<IAuthorizationMiddlewareResultHandler, AuthorizationResultHandler>();
         services.AddFluentValidationAutoValidation();
         services.AddOpenApi();
 

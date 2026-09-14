@@ -2,7 +2,7 @@
 
 Use this checklist when deploying Tansekak to **Render** with **Neon Postgres** and **Cloudflare R2** storage.
 
-See also: [production.env.example](./production.env.example) for all environment variables.
+See also: [production.env.example](./production.env.example) for environment variables, [IMPORT.md](IMPORT.md) for cutoff and student-result uploads, and [API.md](API.md) for the HTTP contract.
 
 ---
 
@@ -51,7 +51,8 @@ Render Dashboard → your service → **Environment**:
 
 | Variable | Required | Notes |
 | -------- | -------- | ----- |
-| `ConnectionStrings__DefaultConnection` | Yes | Neon pooled connection string |
+| `ConnectionStrings__DefaultConnection` | Yes* | Neon pooled connection string |
+| `DATABASE_URL` | Alternative | Neon `postgresql://…` URI if the connection string above is unset |
 | `AdminSeed__Email` | Yes | Unique email (not `admin@tansekak.local`) |
 | `AdminSeed__Password` | Yes | Strong password (not `Admin@12345`) |
 | `R2__AccountId` | For large imports | Cloudflare account ID |
@@ -61,6 +62,8 @@ Render Dashboard → your service → **Environment**:
 | `ASPNETCORE_ENVIRONMENT` | Optional | Already `Production` in Dockerfile |
 
 Do **not** set `Frontend__Origin` — SPA and API are same-origin on Render.
+
+\*Required unless `DATABASE_URL` is set.
 
 `PORT` is set automatically by Render. The app binds to `0.0.0.0:$PORT` (default `8080`).
 
@@ -79,10 +82,10 @@ If validation fails, check Render deploy logs for the exact error message.
 
 1. EF Core migrations run automatically
 2. Reference catalog seeds from `SeededData/` JSON (governorates, universities, faculties, links)
-3. Bootstrap admission year is created (current UTC calendar year, max score 320, marked current)
+3. Bootstrap admission year is created (**2027**, max score 320, marked current)
 4. Admin user is created from `AdminSeed__*` if no admin exists
 
-**Important:** Cutoffs are **not** seeded. After first deploy, sign in to admin and import cutoff Markdown files for each track before public prediction works.
+**Important:** Cutoffs are **not** seeded and the Markdown files are **not** in the container (only catalog JSON is). After first deploy, clone the repo locally, sign in to admin, confirm the year on `/admin/years`, and upload `SeededData/cutoffs/science-2026.md` and `literature-2026.md` via `/admin/import`. Filename **2026** is the official source cycle; rows attach to the **current published year** (bootstrap **2027**). See [IMPORT.md](IMPORT.md).
 
 ---
 
@@ -134,7 +137,7 @@ CI does **not** build the Docker image or deploy. Deploy is handled by Render au
 - [ ] Confirm Neon connection string and all Render env vars are set
 - [ ] Push to `main` or trigger a manual deploy in Render
 - [ ] Watch Render deploy logs for build success
-- [ ] Sign in to admin and import cutoff data for all three tracks
+- [ ] From a **local clone**, sign in to admin, confirm the year on `/admin/years`, and upload Science + Literature Markdown from `SeededData/cutoffs/` (files are not on the server)
 
 ---
 
@@ -146,7 +149,8 @@ CI does **not** build the Docker image or deploy. Deploy is handled by Render au
 | SPA routes | `https://<domain>/predict` | Angular app loads |
 | Admin login | `https://<domain>/admin/login` | Login page loads |
 | Auth | Sign in with `AdminSeed__*` credentials | Cookie auth over HTTPS |
-| Config API | `GET https://<domain>/api/config` | JSON with current year, max score, tracks |
+| Config API | `GET https://<domain>/api/config` | JSON with current year, max score, tracks `Science` and `Literature` |
+| Admin years | `https://<domain>/admin/years` | Create / publish year works after login |
 | Predict | Submit prediction form (after cutoff import) | `POST /api/admission/predict` returns results |
 | Small import | Upload Excel ≤ 20 MB in admin | Direct upload succeeds |
 | Large import | Upload Excel > 20 MB in admin | Presigned URL flow completes |
@@ -162,7 +166,7 @@ CI does **not** build the Docker image or deploy. Deploy is handled by Render au
 | `localhost` connection error | Connection string still points locally or not set |
 | `AdminSeed:Email must not use the development default` | Still using `admin@tansekak.local` |
 | Admin login fails | Wrong `AdminSeed__*` values; user already created on first boot with different password |
-| Predict returns empty / service unavailable | No cutoffs imported yet, or no current admission year |
+| Predict returns empty / service unavailable | No cutoffs imported yet, or no current admission year. Cutoff Markdown must be uploaded from a local clone; it is not in the Docker image |
 | Large import returns 503 | R2 env vars missing or incomplete |
 | Large import CORS error | R2 CORS `AllowedOrigins` does not exactly match your Render domain |
 | Import job interrupted | Free-tier spin-down — upgrade to Starter plan or retry |

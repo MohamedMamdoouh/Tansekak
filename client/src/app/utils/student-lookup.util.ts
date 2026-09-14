@@ -2,10 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormGroup } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { StudentResult } from '../models';
-import {
-  GENERIC_ERROR_MESSAGE,
-  NOT_FOUND_MESSAGE,
-} from '../constants/student-result.constants';
+import { resolveApiError } from './api-error.util';
 
 export interface StudentLookupState {
   loading: boolean;
@@ -29,7 +26,7 @@ export function submitStudentLookup(
     error: (err: HttpErrorResponse) =>
       setState({
         loading: false,
-        error: err.status === 404 ? NOT_FOUND_MESSAGE : GENERIC_ERROR_MESSAGE,
+        error: resolveApiError(err, 'حدث خطأ أثناء البحث. حاول مرة أخرى لاحقاً.'),
       }),
   });
 }

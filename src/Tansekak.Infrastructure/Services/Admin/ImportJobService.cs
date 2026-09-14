@@ -24,12 +24,12 @@ public class ImportJobService(
         CancellationToken cancellationToken = default)
     {
         _ = await db.AdmissionYears.FindAsync([yearId], cancellationToken)
-            ?? throw new NotFoundException("Admission year not found.");
+            ?? throw new NotFoundException(ApiErrorCodes.AdmissionYearNotFound);
 
         if (string.IsNullOrWhiteSpace(objectKey)
             || !objectKey.StartsWith($"imports/{yearId}/", StringComparison.Ordinal))
         {
-            throw new ArgumentException("Invalid object key for the selected admission year.");
+            throw new ValidationException(ApiErrorCodes.InvalidObjectKey);
         }
 
         var job = new ImportJob
@@ -115,7 +115,7 @@ public class ImportJobService(
         try
         {
             if (string.IsNullOrWhiteSpace(job.ObjectKey))
-                throw new InvalidOperationException("Import job is missing an object key.");
+                throw new ValidationException(ApiErrorCodes.ImportJobMissingKey);
 
             await using var stream = await r2Storage.OpenReadAsync(job.ObjectKey, cancellationToken);
             var fileName = Path.GetFileName(job.ObjectKey);
@@ -134,7 +134,7 @@ public class ImportJobService(
         {
             logger.LogError(ex, "Import job {JobId} failed.", jobId);
             job.Status = ImportJobStatus.Failed;
-            job.Message = "Import failed.";
+            job.Message = ArabicErrorCatalog.GetMessage(ApiErrorCodes.InternalError);
             job.CompletedAtUtc = DateTime.UtcNow;
             await db.SaveChangesAsync(cancellationToken);
         }

@@ -7,11 +7,13 @@ import { EMPTY, switchMap } from 'rxjs';
 import { ApiService } from '../../services/api.service';
 import { AdmissionResult, PredictResponse } from '../../models';
 import { PREDICT_RESULTS_PAGE_SIZE } from '../../constants/pagination.constants';
-import { getTrackLabel } from '../../utils/track-label.util';
+import { canonicalizeTrack, getTrackLabel } from '../../utils/track-label.util';
 import {
   isValidResultsQuery,
   parseResultsScore,
 } from '../../utils/results-query.util';
+import { resolveApiError } from '../../utils/api-error.util';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-results',
@@ -43,7 +45,7 @@ export class ResultsComponent {
     this.route.queryParams
       .pipe(
         switchMap((params) => {
-          this.track = params['track'] ?? '';
+          this.track = canonicalizeTrack(params['track'] ?? '');
           this.score = parseResultsScore(params['score']);
 
           if (!isValidResultsQuery(this.track, this.score)) {
@@ -155,8 +157,8 @@ export class ResultsComponent {
     this.loadingMore = false;
   }
 
-  private handleError(err: { error?: { message?: string } }): void {
-    this.error = err.error?.message ?? 'تعذر تحميل النتائج.';
+  private handleError(err: HttpErrorResponse): void {
+    this.error = resolveApiError(err, 'تعذر تحميل النتائج.');
     this.loading = false;
     this.loadingMore = false;
   }

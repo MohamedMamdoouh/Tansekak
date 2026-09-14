@@ -1,2171 +1,392 @@
-# Tansekak
+# Tansekak — Product Specification (As-Built)
 
-**Product Name:** Tansekak
-**Version:** 1.0
-**Status:** Superseded by
+| Field | Value |
+| --- | --- |
+| Product | Tansekak (تنسيقك) |
+| Status | Current stage — as built |
+| Date | 2026-09-14 |
+| Audience | Operators, engineers, and reviewers of the shipped product |
 
-**Language:** English
+This document describes the **shipped** product. It is not a backlog or a wish list.
 
----
+The original long-form requirements document is archived at [docs/PRD-ORIGINAL.md](PRD-ORIGINAL.md). Do not treat that file as the source of truth for current behavior.
 
-## Amendment (As-built — current stage)
-
-The shipped product diverges from the original PRD in the following ways. This section reflects the codebase as of the current release.
-
-### Architecture and stack
-
-- **Database:** PostgreSQL (Npgsql) — not SQL Server. Dev and prod both use PostgreSQL; SQLite is test-only.
-- **Deployment:** Docker monolith on Render; Neon Postgres; Cloudflare R2 for large imports.
-- **Architecture:** Clean Architecture with anemic domain entities, service interfaces + DTOs (not CQRS/MediatR), no repository layer.
-- **IDs:** Manual integer allocation via `EntityIdAllocator` / `EntityIdSequences` table.
-
-### Public features
-
-- **Result categories:** Returns **eligible colleges only** (`score >= cutoff`). No "Near" or "Not Available" tiers; no `nearThreshold` in config.
-- **Pagination:** Frontend uses `pageSize: 20` with unlimited load-more. API default is 10; max 100 per page.
-- **Thanaweya lookup:** Added post-MVP — `/thanaweya-result` and `/track-rank` routes with seating number lookup and track rank.
-- **Guide and designer pages:** `/guide` (static FAQ) and `/designer` (developer profile) added.
-- **Branding:** UI displays **تنسيقك** in Arabic; API returns `appName: "tansekak"`.
-
-### Admin features
-
-- **Admin UI:** Dashboard, cutoff CRUD, cutoff Markdown import, student Excel import only.
-- **API-only catalog management:** Governorates, universities, faculties, university-faculties, and admission years are managed via API (no admin UI pages).
-- **No activate/deactivate:** Create and edit only for catalog entities. Only admission cutoffs may be deleted.
-- **Publish current year:** `POST /api/admin/admission-years/{id}/publish` (not PATCH).
-
-### Data model
-
-- **University scope:** Includes Public Universities and Institutes.
-- **University entity:** `Type` enum (`Public = 1`, `Institute = 2`).
-- **Faculty entity:** `AllowedTracks` (list of academic tracks) — used to filter prediction results.
-- **Removed fields:** `NameEn`, `Slug`, and `IsActive` are not used. Entities store `NameAr` only.
-- **Added entities:** `StudentResult`, `ImportJob`, `EntityIdSequence`.
-
-### Import and seeding
-
-- **Cutoff import:** Markdown (`.md`) only — not Excel/CSV. One track per upload; replaces year+track cutoffs.
-- **Student import:** Excel (`.xlsx`) with columns `seating_no`, `arabic_name`, `total_degree`, `student_case_desc`. Direct upload ≤20 MB; R2 presigned flow for larger files with async job polling.
-- **Seeding:** Catalog JSON only (governorates, universities, faculties, university-faculty links). Runs once when database is empty. Creates bootstrap admission year (current UTC year, max score 320). **Cutoffs are not seeded** — must be imported via admin.
-
-### Authentication
-
-- Cookie-based ASP.NET Core Identity (not JWT). Single `Administrator` role.
-
-### Documentation referenced in §32 but not created
-
-- `docs/PROJECT_SPEC.md`, `docs/API.md`, `docs/DATABASE.md` — consolidated into README.md instead.
+Operator and developer setup lives in [README.md](../README.md). Production deploy details live in [docs/PRODUCTION_SETUP.md](PRODUCTION_SETUP.md).
 
 ---
 
-# 1. Project Overview
+## 1. Purpose
 
-## 1.1 Purpose
+Tansekak is an **admission eligibility checker** for Egyptian Thanaweya Amma graduates.
 
-**Tansekak** is a web application that helps Egyptian Thanaweya Amma students predict which public universities and faculties they are eligible for based on their total score and the official 2026 admission cutoffs.
+A student enters an academic track and a total score. The app compares those values to official cutoff scores for the **current published admission year** and lists university faculties the student is **eligible** for.
 
-The system compares the student's score against the current year's (2026) official admission data.
+Students can also look up an imported Thanaweya result by seating number and see their rank among peers in the same track.
 
-The application is designed to be simple, fast, accurate, and updated every year after the official admission results are announced.
-
-## 1.2 Product Identity
-
-| Field           | Value    |
-| --------------- | -------- |
-| Product Name    | Tansekak |
-| Arabic Name     | تنسيقك   |
-| Public Branding | Tansekak |
-
-The product name **Tansekak** must appear in:
-
-- Browser tab title
-- Home page header
-- Administration panel header
-- API configuration response
+Results are **indicative only**. Egypt’s official electronic coordination portal decides final placement. Tansekak does not register preferences, allocate seats, or issue admission decisions.
 
 ---
 
-# 2. Project Goals
+## 2. Users
 
-The system must allow students to:
+| User | Goal |
+| --- | --- |
+| Student / parent | Check which faculties a score is eligible for; look up a Thanaweya result and track rank; read a short coordination FAQ. |
+| Operator / administrator | Publish the current admission year; maintain cutoffs (CRUD and Markdown import); import student results from Excel. |
+| Catalog maintainer | Manage governorates, universities, faculties, and university–faculty links via API only (no admin UI). |
 
-- Select their academic track.
-- Enter their total score.
-- View all eligible faculties based on the previous year's admission cutoffs.
-- View faculties that are very close to their score.
-- View faculties that are above their score.
-- Sort results from closest cutoff to farthest cutoff.
-- Search within the results.
-- Load additional results without reloading the page.
-
-The system must also allow administrators to:
-
-- Manage admission years.
-- Import official admission data using Excel or CSV.
-- Validate imported files before saving.
-- View validation errors.
-- Edit imported records manually.
-- Publish one admission year as the current year.
+There is a single Identity role: **Administrator**. Public visitors are unauthenticated. Admin login is not linked from the public site.
 
 ---
 
-# 3. Project Scope
+## 3. In scope
 
-## Included
-
-### Public Website
-
-- Home page
-- Admission prediction
-- Faculty search
-- Arabic-only user interface
-- Responsive design
-- Mobile support
-
-### Administration Panel
-
-- Arabic-only user interface
-- Login
-- Dashboard
-- Admission year management
-- University management
-- Faculty management
-- University–faculty management
-- Admission cutoff management
-- Excel import
-- CSV import
-- Import validation
-- Manual editing
+- Public RTL Arabic SPA for prediction, results, Thanaweya lookup, track rank, guide, and designer credits.
+- Eligible-college prediction against the current published year.
+- Admin cookie-authenticated UI for years, cutoffs, and imports.
+- Catalog JSON bootstrap, admission-year bootstrap, and admin seed.
+- Markdown cutoff import and Excel student-result import for a chosen admission year (UI always uses the current year).
+- Direct Excel upload ≤20 MB; Cloudflare R2 + async job for larger files.
+- Envelope API with stable `errorCode` values and Arabic failure messages.
 
 ---
 
-## Out of Scope
+## 4. Out of scope / non-goals
 
-The first version MUST NOT include:
+Tansekak does **not**:
 
-- Student accounts
-- Student login
-- Student profiles
-- Favorites
-- Notifications
-- University ranking
-- Faculty descriptions
-- Tuition fees
-- Images
-- Maps
-- AI recommendations
-- Historical statistics
-- Comparison between years
-- Private universities
-- National universities
-- Technological universities
-
-Those features may be implemented in future versions.
+- Replace the official coordination portal or submit student preferences.
+- Guarantee placement, seats, or demand-adjusted cutoffs.
+- Return ineligible faculties or extra eligibility bands.
+- Expose Mathematics as a public track (علوم and رياضة are one Science bucket).
+- Store English names, slugs, or active/inactive flags on catalog entities.
+- Seed cutoffs automatically.
+- Provide admin UI for governorates, universities, faculties, or university–faculties.
+- Use bearer tokens for auth.
+- Ship OpenAPI outside Development.
+- Include `Tansekak.Api.Tests` in the solution or CI `dotnet test Tansekak.sln` run.
+- Bundle sample cutoff Markdown into the Docker image.
 
 ---
 
-# 4. Target Users
+## 5. Branding and UI
 
-## Student
+| Surface | Name |
+| --- | --- |
+| Public brand | Arabic **تنسيقك** |
+| API `appName` (`GET /api/config`) | `tansekak` |
+| Admin chrome | **لوحة الإدارة** |
 
-A student who wants to know which faculties were available based on the previous year's admission cutoffs.
-
-The student does not need an account.
-
-The student only provides:
-
-- Academic Track
-- Total Score
-
----
-
-## Administrator
-
-An authenticated administrator responsible for maintaining admission data.
-
-The administrator can:
-
-- Login
-- Import data
-- Edit data
-- Activate and deactivate data
-- Publish admission years
-
-Authentication will be implemented using ASP.NET Core Identity.
+- UI is **RTL Arabic**.
+- Catalog and result names are **NameAr only**. There is no `NameEn`, `Slug`, or `IsActive`.
+- Admin sign-in is at `/admin/login` and is not linked from public pages.
 
 ---
 
-# 5. Supported Academic Tracks
+## 6. Public product
 
-The application supports only Egyptian Thanaweya Amma.
+### 6.1 Routes
 
-Supported tracks:
+| Route | Page |
+| --- | --- |
+| `/` | Landing — overview and entry points |
+| `/predict` | Track + score form |
+| `/results` | Eligible faculties (paginated, searchable) |
+| `/thanaweya-result` | Seating-number result lookup |
+| `/track-rank` | Seating lookup with track rank among peers |
+| `/guide` | Static coordination FAQ |
+| `/designer` | Developer / credits page |
 
-- Science
-- Mathematics
-- Literature
+Unknown paths redirect to `/`.
 
-No additional education systems are included in Version 1.
+### 6.2 Prediction
 
----
+**Request:** academic track and total score. The API uses the **current published** admission year (`IsCurrent`). Score must not exceed that year’s `MaximumScore`.
 
-# 6. Supported Universities
+**Eligibility (must all hold):**
 
-Version 1 supports only:
+1. Cutoff belongs to the current year.
+2. Student score **≥** cutoff score (eligible only).
+3. Cutoff track is in the student’s Science or Literature **bucket**.
+4. Faculty `AllowedTracks` matches the student’s canonical track.
 
-- Egyptian Public Universities
+**Sort:** `abs(score − cutoff)` ascending (closest eligible cutoff first). Duplicate university–faculty rows are collapsed to one result.
 
-The database design must remain extensible to support:
+**Pagination:**
 
-- Private Universities
-- National Universities
-- Technological Universities
+| Layer | Page size |
+| --- | --- |
+| Frontend | `pageSize` **20**, unlimited load-more (and show-all remaining pages) |
+| API | Default **10**, maximum **100** |
 
-without database redesign.
+**Search:** client-side filter of **already loaded** rows by university or faculty `NameAr`. Search does not query the server.
 
----
+Until cutoffs exist for the current year, prediction returns an empty list.
 
-# 7. Admission Logic
+### 6.3 Thanaweya lookup and track rank
 
-The prediction is based ONLY on:
+Both `/thanaweya-result` and `/track-rank` look up `GET /api/thanaweya-results/{seatingNo}` for the **current** admission year.
 
-- Student Score
-- Student Academic Track
-- Previous Year's Official Admission Cutoff
+When a row exists, the API returns seating number, Arabic name, total degree, student case, inferred/canonical track, track rank, and track cohort size when rank can be computed.
 
-The application never predicts future admission results.
+**Rank rule:** among students in the same canonical track, **higher score ranks better**; ties are broken by **lower seating number**.
 
-It only compares:
-
-Student Score
-
-against
-
-Previous Year's Cutoff Score.
-
----
-
-# 8. Result Categories
-
-Every admission record belongs to exactly one category.
-
-## Available
-
-Condition
-
-StudentScore >= CutoffScore
+Lookup returns not found when the seating number is missing for the current year.
 
 ---
 
-## Near
+## 7. Academic tracks
 
-Condition
+Public UI and `GET /api/config` expose **two** tracks:
 
-StudentScore < CutoffScore
+| API value | Arabic label |
+| --- | --- |
+| `Science` | الشعبة العلمية |
+| `Literature` | الشعبة الأدبية |
 
-AND
+The domain enum still has `Mathematics = 2`. Mathematics is **canonicalized to Science everywhere** (prediction, import, rank, labels, `AllowedTracks` matching).
 
-(CutoffScore - StudentScore) < 1
-
-The threshold value MUST be configurable.
-
-Default value:
-
-0.99
+The **Science bucket** includes stored `Science` and `Mathematics` cutoff/result rows. Literature is its own bucket.
 
 ---
 
-## Not Available
+## 8. Admin product
 
-Condition
+Authentication is **cookie-based ASP.NET Core Identity** with the **Administrator** role.
 
-StudentScore < CutoffScore
+| Route | Capability |
+| --- | --- |
+| `/admin/login` | Sign in (not linked from public) |
+| `/admin` | Dashboard |
+| `/admin/years` | Create, edit, and **publish** (POST publish) |
+| `/admin/cutoffs` | CRUD for the **current year only** (API may filter by `yearId`) |
+| `/admin/import` | Science and/or Literature `.md` for the **current year** |
+| `/admin/import-results` | `.xlsx` for the **current year**; replaces all results for that year |
 
-AND
+Import pages show a progress overlay. Navigation away is **blocked** until the import finishes or the operator confirms leaving.
 
-(CutoffScore - StudentScore) >= NearThreshold
+### 8.1 Dashboard
 
----
+Shows the current year plus counts for:
 
-# 9. Result Sorting
+- governorates
+- universities
+- faculties
+- university–faculties
+- student results
 
-Results inside each category MUST be sorted by:
+The dashboard API also returns `cutoffsCount`. The UI **does not display** it.
 
-ABS(StudentScore - CutoffScore)
+### 8.2 Admission years
 
-Ascending.
+- Create and edit year number and maximum score.
+- Year range: **2000–2100**.
+- Maximum score: **0.01–1000**, default **320**.
+- Duplicate calendar year is rejected.
+- **Publish** (`POST /api/admin/admission-years/{id}/publish`) marks one year `IsCurrent` and clears the flag on others.
+- Prediction, public lookup, and the admin import UI all use the published current year.
 
-The closest cutoff always appears first.
+### 8.3 Cutoffs
 
-Example
+Admin UI lists/creates/updates/deletes cutoffs for the current year. University and faculty dropdowns come from the existing catalog. Cutoffs are the only catalog-adjacent records the UI can delete.
 
-Student Score = 286
+### 8.4 API-only catalog (no UI)
 
-Results
-
-286.0
-
-286.25
-
-286.5
-
-287
-
-288
-
-...
-
----
-
-# 10. Pagination
-
-The system MUST initially return only:
-
-10 results
-
-If additional results exist, show only another 10 results. Total result shoudn't exceed 20.
-
----
-
-# 11. Search
-
-After results are displayed,
-
-students can search by:
-
-- Faculty Name (NameAr)
-- University Name (NameAr)
-
-Search is client-side for the currently loaded results.
-
----
-
-# 12. Database Design
-
-## Overview
-
-The system is built around six core business entities:
+These have admin API endpoints (GET/POST/PUT, no delete) and no SPA pages:
 
 - Governorates
 - Universities
 - Faculties
-- University Faculties
-- Admission Years
-- Admission Cutoffs
+- University–faculties
 
-Academic Track is implemented as an enumeration and is **not** stored as a database table.
-
-All entities with a display name store both Arabic and English names (`NameAr`, `NameEn`) in the database and API. The frontend is entirely Arabic and displays only `NameAr` for entity names.
-
----
-
-# 13. Entity Definitions
-
-## 13.1 Governorate
-
-Represents an Egyptian governorate.
-
-### Properties
-
-| Property | Type          | Required | Notes         |
-| -------- | ------------- | -------- | ------------- |
-| Id       | int           | Yes      | Primary Key   |
-| NameAr   | nvarchar(200) | Yes      | Unique        |
-| NameEn   | nvarchar(200) | Yes      | Unique        |
-| IsActive | bit           | Yes      | Default: true |
-
-Example
-
-{
-"id": 1,
-"nameAr": "القاهرة",
-"nameEn": "Cairo"
-}
-
-### Constraints
-
-- NameAr must be unique.
-- NameEn must be unique.
-- Governorates cannot be deactivated if referenced by an active university.
-
----
-
-## 13.2 University
-
-Represents a public Egyptian university.
-
-### Properties
-
-| Property      | Type          | Required | Notes         |
-| ------------- | ------------- | -------- | ------------- |
-| Id            | int           | Yes      | Primary Key   |
-| NameAr        | nvarchar(200) | Yes      | Unique        |
-| NameEn        | nvarchar(200) | Yes      | Unique        |
-| Slug          | nvarchar(200) | Yes      | Unique        |
-| GovernorateId | int           | Yes      | Foreign Key   |
-| IsActive      | bit           | Yes      | Default: true |
-
-Example
-
-{
-"id": 1,
-"nameAr": "جامعة القاهرة",
-"nameEn": "Cairo University"
-}
-
-### Relationships
-
-- One Governorate
-- Many University Faculties
-
-### Constraints
-
-Unique:
-
-- NameAr
-- NameEn
-- Slug
-
-Delete behavior:
-
-Restrict
-
----
-
-## 13.3 Faculty
-
-Represents a normalized faculty name in Arabic and English.
-
-Examples:
-
-- Medicine / طب
-- Dentistry / أسنان
-- Pharmacy / صيدلة
-- Engineering / هندسة
-- Computer Science / حاسبات ومعلومات
-- Commerce / تجارة
-- Law / حقوق
-
-### Properties
-
-| Property | Type          | Required | Notes         |
-| -------- | ------------- | -------- | ------------- |
-| Id       | int           | Yes      | Primary Key   |
-| NameAr   | nvarchar(200) | Yes      | Unique        |
-| NameEn   | nvarchar(200) | Yes      | Unique        |
-| Slug     | nvarchar(200) | Yes      | Unique        |
-| IsActive | bit           | Yes      | Default: true |
-
-Example
-
-{
-"id": 1,
-"nameAr": "حاسبات ومعلومات",
-"nameEn": "Computer Science"
-}
-
-### Relationships
-
-- Many University Faculties
-
-### Constraints
-
-Unique:
-
-- NameAr
-- NameEn
-- Slug
-
-Delete behavior:
-
-Restrict
-
----
-
-## 13.4 UniversityFaculty
-
-Represents the existence of a faculty within a specific university.
-
-Example:
-
-Cairo University / جامعة القاهرة → Computer Science / حاسبات ومعلومات
-
-### Properties
-
-| Property     | Type | Required | Notes         |
-| ------------ | ---- | -------- | ------------- |
-| Id           | int  | Yes      | Primary Key   |
-| UniversityId | int  | Yes      | FK            |
-| FacultyId    | int  | Yes      | FK            |
-| IsActive     | bit  | Yes      | Default: true |
-
-### Relationships
-
-- One University
-- One Faculty
-- Many Admission Cutoffs
-
-### Constraints
-
-Unique:
-
-(UniversityId, FacultyId)
-
-Delete behavior:
-
-Restrict
-
----
-
-## 13.5 AdmissionYear
-
-Represents one admission season.
-
-### Properties
-
-| Property     | Type         | Required | Notes                       |
-| ------------ | ------------ | -------- | --------------------------- |
-| Id           | int          | Yes      | Primary Key                 |
-| Year         | int          | Yes      | Unique                      |
-| MaximumScore | decimal(6,2) | Yes      | Example: 320                |
-| IsCurrent    | bit          | Yes      | Only one row may be current |
-| IsActive     | bit          | Yes      | Default: true               |
-
-### Constraints
-
-- Year must be unique.
-- Only one record may have IsCurrent = true.
-- MaximumScore must be greater than zero.
-
-Delete behavior:
-
-Restrict
-
----
-
-## 13.6 AdmissionCutoff
-
-Represents one official admission cutoff.
-
-Example:
-
-2026
-
-Cairo University / جامعة القاهرة
-
-Computer Science / حاسبات ومعلومات
-
-Mathematics
-
-286.5
-
-### Properties
-
-| Property            | Type         | Required | Notes           |
-| ------------------- | ------------ | -------- | --------------- |
-| Id                  | int          | Yes      | Primary Key     |
-| AdmissionYearId     | int          | Yes      | FK              |
-| UniversityFacultyId | int          | Yes      | FK              |
-| Track               | tinyint      | Yes      | Enum            |
-| CutoffScore         | decimal(6,2) | Yes      | Official cutoff |
-
-### Relationships
-
-- One Admission Year
-- One University Faculty
-
-### Constraints
-
-Unique:
-
-(AdmissionYearId, UniversityFacultyId, Track)
-
-Validation:
-
-- CutoffScore > 0
-- CutoffScore <= AdmissionYear.MaximumScore
-
-Delete behavior:
-
-Restrict
-
-Physical deletion of Admission Cutoff records is allowed.
-
----
-
-# 14. Enumerations
-
-## AcademicTrack
-
-```text
-Science = 1
-
-Mathematics = 2
-
-Literature = 3
-```
-
-The enumeration values must never change after release.
-
----
-
-# 15. Entity Relationships
-
-Governorate (1)
-│
-│
-▼
-University (Many)
-
-University (1)
-│
-│
-▼
-UniversityFaculty (Many)
-
-Faculty (1)
-│
-│
-▼
-UniversityFaculty (Many)
-
-UniversityFaculty (1)
-│
-│
-▼
-AdmissionCutoff (Many)
-
-AdmissionYear (1)
-│
-│
-▼
-AdmissionCutoff (Many)
-
----
-
-# 16. Database Rules
-
-The database must enforce the following rules.
-
-## Rule 1
-
-Governorate NameAr must be unique.
-
-Governorate NameEn must be unique.
-
----
-
-## Rule 2
-
-University NameAr must be unique.
-
-University NameEn must be unique.
-
----
-
-## Rule 3
-
-Faculty NameAr must be unique.
-
-Faculty NameEn must be unique.
-
----
-
-## Rule 4
-
-Admission years are unique.
-
----
-
-## Rule 5
-
-Only one admission year can be current.
-
----
-
-## Rule 6
-
-A university cannot contain the same faculty more than once.
-
-The combination of UniversityId and FacultyId must be unique.
-
----
-
-## Rule 7
-
-A cutoff record must be unique for:
-
-Admission Year +
-University Faculty +
-Track
-
-Duplicate records are forbidden.
-
----
-
-## Rule 8
-
-Negative scores are not allowed.
-
----
-
-## Rule 9
-
-Scores greater than the year's MaximumScore are not allowed.
-
----
-
-## Rule 10
-
-Deactivating referenced records is prohibited.
-
-Physical deletion of referenced records is prohibited.
-
-Cascade delete must never be used.
-
-Admission Cutoff is the only entity that may be physically deleted.
-
----
-
-# 17. Indexes
-
-The following indexes are required.
-
-Governorate
-
-- IX_Governorate_NameAr (Unique)
-- IX_Governorate_NameEn (Unique)
-
-University
-
-- IX_University_NameAr (Unique)
-- IX_University_NameEn (Unique)
-- IX_University_Slug (Unique)
-
-Faculty
-
-- IX_Faculty_NameAr (Unique)
-- IX_Faculty_NameEn (Unique)
-- IX_Faculty_Slug (Unique)
-
-UniversityFaculty
-
-- IX_UniversityFaculty_UniversityId
-- IX_UniversityFaculty_FacultyId
-- UX_UniversityFaculty_UniversityId_FacultyId (Unique)
-
-AdmissionYear
-
-- IX_AdmissionYear_Year (Unique)
-- IX_AdmissionYear_IsCurrent
-
-AdmissionCutoff
-
-- IX_AdmissionCutoff_Track
-- IX_AdmissionCutoff_UniversityFacultyId
-
-Composite Unique Index
-
-AdmissionYearId
-
-UniversityFacultyId
-
-Track
-
----
-
-# 18. Seed Data
-
-The project must support seeding the following data.
-
-- Egyptian Governorates (with NameAr and NameEn)
-- Egyptian Public Universities (with NameAr and NameEn)
-- Standard Faculty List (with NameAr and NameEn)
-- University–Faculty Assignments
-- One or more Admission Years
-- Official Admission Cutoff Records
-
-Every seed record for Governorates, Universities, and Faculties must include both NameAr and NameEn.
-
-The application must be fully functional after seeding.
-
----
-
-# 19. Business Rules
-
-This section defines the mandatory business rules that the system must enforce.
-
-These rules are part of the business domain and must never be bypassed.
-
----
-
-# 19.1 Admission Prediction
-
-The prediction engine compares only:
-
-- Student Total Score
-- Student Academic Track
-- Official Admission Cutoff
-
-No prediction algorithms, AI, machine learning, or statistical estimation are allowed.
-
-The system does not predict future admission results.
-
-It only compares the student's score against the selected admission year's official cutoff data.
-
----
-
-# 19.2 Admission Year
-
-The system supports multiple admission years.
-
-Exactly one admission year must always be marked as Current.
-
-All public search requests use the Current admission year.
-
-Administrators may switch the Current year at any time.
-
-Changing the Current year immediately affects all public results.
-
----
-
-# 19.3 Student Input
-
-Students are required to provide only:
-
-- Academic Track
-- Total Score
-
-Students are not required to:
-
-- Create an account
-- Login
-- Provide personal information
-
----
-
-# 19.4 Academic Track
-
-Supported tracks:
-
-- Science
-- Mathematics
-- Literature
-
-Any other value must be rejected.
-
----
-
-# 19.5 Score Validation
-
-Student score:
-
-- Must be greater than or equal to zero.
-- Must not exceed the Current Admission Year's MaximumScore.
-
-Example
-
-MaximumScore = 320
-
-Valid
-
-0
-145.5
-286
-320
-
-Invalid
-
--1
-321
-500
-
----
-
-# 19.6 Available Category
-
-A faculty is Available when
-
-StudentScore >= CutoffScore
-
----
-
-# 19.7 Near Category
-
-A faculty is Near when
-
-StudentScore < CutoffScore
-
-AND
-
-(CutoffScore - StudentScore) < NearThreshold
-
-NearThreshold must be configurable.
-
-Default value:
-
-0.99
-
----
-
-# 19.8 Not Available Category
-
-A faculty is Not Available when
-
-StudentScore < CutoffScore
-
-AND
-
-(CutoffScore - StudentScore) >= NearThreshold
-
----
-
-# 19.9 Result Ordering
-
-Results inside every category are sorted by
-
-ABS(StudentScore - CutoffScore)
-
-Ascending.
-
-The closest score always appears first.
-
-Example
-
-Student Score = 286
-
-Available
-
-286
-285.5
-285
-
-Near
-
-286.25
-286.5
-286.75
-
-Not Available
-
-287
-288
-290
-
----
-
-# 19.10 Search
-
-Students may search results by
-
-- Faculty Name (NameAr)
-- University Name (NameAr)
-
-Search is case-insensitive.
-
-Search is performed on the currently loaded results.
-
----
-
-# 19.11 Bilingual Data Storage
-
-Arabic and English names represent the same entity and must always be maintained together.
-
-Both NameAr and NameEn are mandatory for every Governorate, University, and Faculty.
-
-The API must always return both names.
-
-The frontend is entirely Arabic. All UI text, labels, and messages are in Arabic.
-
-The frontend displays only NameAr for entity names. NameEn is stored and returned by the API but is not shown in the frontend.
-
-No language switching is provided.
-
-No translation logic or hardcoded name mapping is allowed in the frontend.
-
----
-
-# 19.12 Load More
-
-The first request returns only 10 results, and another 10 in max.
-
----
-
-# 20. Administration Rules
-
-Only authenticated administrators may access the Administration Panel.
-
-Authentication is implemented using ASP.NET Core Identity.
-
-Anonymous users must never access any administration endpoint.
-
----
-
-# 20.0 Governorates
-
-Administrators may:
-
-- Create (NameAr and NameEn are required)
-- Edit (NameAr and NameEn must be maintained together)
-- Activate
-- Deactivate
-
-Deactivation is allowed only when the governorate is not referenced by any active university.
-
-Physical deletion is not allowed.
-
----
-
-# 20.1 Universities
-
-Administrators may:
-
-- Create (NameAr and NameEn are required)
-- Edit (NameAr and NameEn must be maintained together)
-- Activate
-- Deactivate
-
-Deactivation is allowed only when the university is not referenced by any active UniversityFaculty or AdmissionCutoff.
-
-Otherwise the operation must fail.
-
-Physical deletion is not allowed.
-
----
-
-# 20.2 Faculties
-
-Administrators may:
-
-- Create (NameAr and NameEn are required)
-- Edit (NameAr and NameEn must be maintained together)
-- Activate
-- Deactivate
-
-Deactivation is allowed only when the faculty is not referenced by any active UniversityFaculty or AdmissionCutoff.
-
-Physical deletion is not allowed.
-
----
-
-# 20.3 University Faculties
-
-Administrators may:
-
-- Create
-- Edit
-- Activate
-- Deactivate
-- Search
-- Filter
-
-A university cannot be assigned the same faculty more than once.
-
-Deactivation is allowed only when the university faculty is not referenced by any AdmissionCutoff.
-
-Physical deletion is not allowed.
-
----
-
-# 20.4 Admission Years
-
-Administrators may
-
-Create
-
-Edit
-
-Activate
-
-Deactivate
-
-Publish
-
-Only one admission year may be Current.
-
-Publishing a year automatically sets every other year to IsCurrent = false.
-
-Physical deletion is not allowed.
-
----
-
-# 20.5 Admission Cutoffs
-
-Administrators may
-
-Create
-
-Edit
-
-Delete
-
-Search
-
-Filter
-
-Duplicate records are forbidden.
-
-Admission Cutoff is the only entity that supports physical deletion.
-
----
-
-# 21. Excel / CSV Import
-
-The system must support
-
-- Excel (.xlsx)
-- CSV (.csv)
-
-No other file types are supported.
-
----
-
-# 21.1 Import Process
-
-The complete workflow is
-
-Upload
-
-↓
-
-Read File
-
-↓
-
-Validate
-
-↓
-
-Generate Validation Report
-
-↓
-
-If validation succeeds
-
-↓
-
-Import Data
-
-The database must never be modified before validation completes successfully.
-
----
-
-# 21.2 Column Mapping
-
-Columns are identified by
-
-Column Name
-
-NOT
-
-Column Position.
-
-The following columns are mandatory.
-
-| Column      | Required |
-| ----------- | -------- |
-| University  | Yes      |
-| Faculty     | Yes      |
-| Track       | Yes      |
-| CutoffScore | Yes      |
-
-Example
-
-Valid
-
-University,Faculty,Track,CutoffScore
-
-Also Valid
-
-Track,CutoffScore,Faculty,University
-
-The order does not matter.
-
----
-
-# 21.3 Supported Track Values
-
-Science
-
-Mathematics
-
-Literature
-
-Values are case-insensitive.
-
-Any other value is invalid.
-
----
-
-# 21.4 Validation Rules
-
-Every row must be validated before import.
-
-Validation includes
-
-University exists (matched by NameAr or NameEn)
-
-Faculty exists (matched by NameAr or NameEn)
-
-University offers the specified faculty
-
-Track is valid
-
-Score is numeric
-
-Score > 0
-
-Score <= MaximumScore
-
-No duplicate rows
-
-No duplicate database records
-
-If any validation fails,
-
-the entire import is rejected.
-
-Partial imports are not allowed.
-
----
-
-# 21.5 Duplicate Detection
-
-Duplicates inside the uploaded file are invalid.
-
-Duplicates against existing database records are invalid.
-
-A duplicate is defined as
-
-AdmissionYear
-
--
-
-University Faculty
-
--
-
-Track
-
-Import rows are matched to a University Faculty by resolving the University and Faculty columns to an existing UniversityFaculty record.
-
----
-
-# 21.6 Error Report
-
-If validation fails,
-
-the user receives a complete validation report.
-
-Each error contains
-
-- Row Number
-- Column
-- Error Code
-- Error Message
-
-Example
-
-Row 25
-
-Column
-
-Faculty
-
-Message
-
-Faculty does not exist.
-
----
-
-Row 42
-
-Column
-
-University
-
-Message
-
-University does not offer this faculty.
-
----
-
-# 21.7 Successful Import
-
-When validation succeeds,
-
-all rows are imported inside a single database transaction.
-
-If any database error occurs,
-
-the entire transaction must roll back.
-
-No partial import is allowed.
-
----
-
-# 22. Manual Editing
-
-Administrators may edit imported records.
-
-The same validation rules apply to manual edits.
-
-Duplicate records must never be created.
-
----
-
-# 23. Delete and Deactivation Operations
-
-Governorates
-
-Universities
-
-Faculties
-
-University Faculties
-
-Admission Years
-
-must use Activate / Deactivate operations only.
-
-Physical deletion is not allowed for these entities.
-
-Deactivation must respect foreign key constraints and business rules.
-
-Cascade Delete is prohibited.
-
-Admission Cutoff is the only entity that may be physically deleted.
-
----
-
-# 24. Error Handling
-
-Validation errors return
-
-HTTP 400
-
-Unauthorized requests return
-
-HTTP 401
-
-Forbidden requests return
-
-HTTP 403
-
-Unexpected errors return
-
-HTTP 500
-
-All error responses must use a consistent response model.
-
-Example
-
-{
-"success": false,
-"message": "...",
-"errors": [
-...
-]
-}
-
----
-
-# 25. Public API Specification
-
-Base URL
-
-/api
-
-All public endpoints are anonymous.
-
-No authentication is required.
-
----
-
-## 25.1 Get Application Configuration
-
-Endpoint
-
-GET /api/config
-
-Purpose
-
-Returns all information required to initialize the home page.
-
-Response
-
-{
-"appName": "tansekak",
-"currentYear": 2026,
-"maximumScore": 320,
-"nearThreshold": 0.99,
-"tracks": [
-"Science",
-"Mathematics",
-"Literature"
-]
-}
-
----
-
-## 25.2 Predict Admission
-
-Endpoint
-
-POST /api/admission/predict
-
-Request
-
-{
-"track": "Science",
-"score": 286,
-"page": 1,
-"pageSize": 20
-}
-
-Validation
-
-Track is required.
-
-Track must be valid.
-
-Score must be greater than or equal to zero.
-
-Score must not exceed MaximumScore.
-
-Page must be greater than zero.
-
-PageSize must be greater than zero.
-
-Default PageSize = 20.
-
----
-
-Response
-
-{
-"available": [
-...
-],
-"near": [
-...
-],
-"notAvailable": [
-...
-],
-"hasMore": true
-}
-
----
-
-Admission Result DTO
-
-{
-"university": {
-"nameAr": "جامعة القاهرة",
-"nameEn": "Cairo University"
-},
-"faculty": {
-"nameAr": "حاسبات ومعلومات",
-"nameEn": "Computer Science"
-},
-"track": "Mathematics",
-"cutoffScore": 286,
-"studentScore": 286.5,
-"difference": 0.5,
-"status": "Available"
-}
-
-Status values
-
-Available
-
-Near
-
-NotAvailable
-
----
-
-## 25.3 Load More
-
-Additional results are retrieved by increasing
-
-Page
-
-The sorting order must remain identical.
-
-No duplicated records may appear.
-
----
-
-# 26. Administration API
-
-All administration endpoints require authentication.
-
-Authorization
-
-Authenticated Administrator
-
----
-
-## Authentication
-
-POST /api/admin/auth/login
-
-POST /api/admin/auth/logout
-
-GET /api/admin/auth/me
-
-Authentication is implemented using ASP.NET Core Identity.
-
----
-
-## Governorates
-
-GET
-
-POST
-
-PUT
-
-PATCH (Activate / Deactivate)
-
-No Delete endpoint.
-
-Response Example
-
-{
-"id": 1,
-"nameAr": "القاهرة",
-"nameEn": "Cairo"
-}
-
----
-
-## Universities
-
-GET
-
-GET by Id
-
-POST
-
-PUT
-
-PATCH (Activate / Deactivate)
-
-Search
-
-Filtering
-
-No Delete endpoint.
-
-Response Example
-
-{
-"id": 1,
-"nameAr": "جامعة القاهرة",
-"nameEn": "Cairo University",
-"slug": "cairo-university",
-"governorateId": 1,
-"isActive": true
-}
-
----
-
-## Faculties
-
-GET
-
-GET by Id
-
-POST
-
-PUT
-
-PATCH (Activate / Deactivate)
-
-Search
-
-Filtering
-
-No Delete endpoint.
-
-Response Example
-
-{
-"id": 15,
-"nameAr": "حاسبات ومعلومات",
-"nameEn": "Computer Science",
-"slug": "computer-science",
-"isActive": true
-}
-
----
-
-## University Faculties
-
-GET
-
-GET by Id
-
-POST
-
-PUT
-
-PATCH (Activate / Deactivate)
-
-Search
-
-Filtering
-
-No Delete endpoint.
-
----
-
-## Admission Years
-
-GET
-
-GET by Id
-
-POST
-
-PUT
-
-PATCH Publish
-
-PATCH Activate / Deactivate
-
-No Delete endpoint.
-
-Business Rule
-
-Publishing one year automatically unpublishes every other year.
-
-Exactly one year must always be Current.
-
----
-
-## Admission Cutoffs
-
-GET
-
-GET by Id
-
-POST
-
-PUT
-
-DELETE
-
-Filtering
-
-Search
-
-Pagination
-
-Sorting
-
-Admission Cutoff records may be deleted.
-
----
-
-## Import
-
-POST
-
-/api/admin/admission-years/{yearId}/import
-
-Accepted file types
-
-xlsx
-
-csv
-
-Multipart/form-data
-
-Response
-
-Validation Report
-
-or
-
-Import Summary
-
----
-
-# 27. Standard API Response
-
-Successful Response
-
-{
-"success": true,
-"message": "Operation completed successfully.",
-"data": { }
-}
-
-Validation Error
-
-{
-"success": false,
-"message": "Validation failed.",
-"errors": [
-{
-"field": "Faculty",
-"message": "Faculty does not exist."
-}
-]
-}
-
-Unexpected Error
-
-{
-"success": false,
-"message": "An unexpected error occurred."
-}
-
----
-
-# 28. Security Requirements
-
-Authentication
-
-ASP.NET Core Identity
-
-Password hashing
-
-ASP.NET Identity Password Hasher
-
-HTTPS
-
-Required in Production.
-
-Authorization
-
-Role-based.
-
-Roles
-
-Administrator
-
-No student roles exist.
-
----
-
-# 29. Logging
-
-The system must log
-
-Authentication failures
-
-Import operations
-
-Import validation failures
-
-Manual edits
-
-Activate and deactivate operations
-
-Publishing admission years
-
-Unexpected exceptions
-
-Sensitive information must never be logged.
-
-Passwords
-
-Access Tokens
-
-Connection Strings
-
-Personal Information
-
-must never appear in logs.
-
----
-
-# 30. Performance Requirements
-
-The prediction endpoint should return results in less than
-
-500 ms
-
-under normal load.
-
-Importing 10,000 records should complete successfully.
-
-Database queries must use indexes.
-
-N+1 queries are prohibited.
-
-AsNoTracking should be used for read-only queries.
-
-Pagination must always be server-side.
-
 ---
-
-# 31. Coding Standards
-
-Backend
-
-ASP.NET Core (.NET)
-
-Entity Framework Core
-
-SQL Server
-
-Clean Architecture
-
-FluentValidation
-
-Frontend
 
-Angular
+## 9. Data model (summary)
 
-Standalone Components
-
-Reactive Forms
-
-TypeScript Strict Mode
-
-No jQuery.
-
-No server-side rendering is required.
-
-## Frontend Language
-
-The frontend is entirely Arabic.
-
-The application name displayed to users is **تنسيقك**, loaded from the `appName` field in the configuration API response.
-
-All UI text, labels, navigation, messages, and displayed entity names use Arabic.
-
-Entity display names must use NameAr from the API.
-
-NameEn is stored in the database and returned by the API for administration and import purposes, but it is not displayed in the frontend.
-
-The layout must support right-to-left (RTL) text direction.
-
-No English UI is provided.
-
-No language switching is provided.
-
-No translation logic or hardcoded name mapping is allowed in the frontend.
-
-All display names must come directly from the API.
-
----
+Business entities use **integer IDs** allocated by `EntityIdAllocator` / `EntityIdSequence`. ASP.NET Identity tables use **PostgreSQL identity columns**. `ImportJob` uses a **Guid** primary key.
 
-# 32. Project Structure
+| Entity | Role |
+| --- | --- |
+| **Governorate** | Egyptian governorate (`NameAr`) |
+| **University** | `NameAr`, `GovernorateId`, `Type` = `Public` (1) or `Institute` (2) |
+| **Faculty** | `NameAr`, `AllowedTracks` (JSON list of academic tracks) |
+| **UniversityFaculty** | Links a university to a faculty; cutoffs hang off this pair |
+| **AdmissionYear** | Calendar year, `MaximumScore`, `IsCurrent` |
+| **AdmissionCutoff** | Year + university–faculty + track + `CutoffScore` |
+| **StudentResult** | Year + seating no, Arabic name, total degree, case description, optional stored track |
+| **ImportJob** | Async Excel import status (`queued` / `running` / `completed` / `failed`) |
+| **EntityIdSequence** | Next integer ID per entity name |
 
-/src
+**Relationships (high level):**
 
 ```
-Tansekak.Api
-
-Tansekak.Application
-
-Tansekak.Domain
-
-Tansekak.Infrastructure
+Governorate 1──* University 1──* UniversityFaculty *──1 Faculty
+AdmissionYear 1──* AdmissionCutoff *──1 UniversityFaculty
+AdmissionYear 1──* StudentResult
+AdmissionYear 1──* ImportJob
 ```
 
-/docs
+Uniqueness that matters in operations: one calendar year value; cutoffs are replaced per year+track on Markdown import; student results are replaced per year on Excel import.
 
+---
+
+## 10. Bootstrap and seeding
+
+On startup the API applies EF migrations, then:
+
+1. **Catalog seed (once):** if `Governorates` is empty, load JSON from `SeededData/` (`Governorates`, `Universities`, `Faculties`, `UniversityFaculties`). After that, the database is the source of truth.
+2. **Admission year:** create year **2027**, max score **320**, `IsCurrent = true`.
+3. **Admin user:** from `AdminSeed` (`AdminSeed__Email` / `AdminSeed__Password`). Development defaults are rejected at startup outside Development.
+
+**Cutoffs are not seeded.** Sample files:
+
+- `SeededData/cutoffs/science-2026.md`
+- `SeededData/cutoffs/literature-2026.md`
+
+**2026** is the official source cycle in those files. The operator attaches them to the **CURRENT** year (bootstrap default **2027**) via `/admin/import`. Files are uploaded from a **local clone**; they are **not** in the Docker image.
+
+Student workbooks are not stored in the repo.
+
+---
+
+## 11. Import
+
+### 11.1 Cutoffs (Markdown)
+
+- Pipe table; headers **الكلية** / **الحد الأدنى**.
+- `.md` only, max **10 MB**, **one track per file**.
+- UI slots: Science and/or Literature for the **current** year.
+- Each file **replaces** all cutoffs for that year + that track.
+- `Mathematics` on import is accepted and stored as **Science**.
+- College labels are matched to the university–faculty catalog (Arabic normalization). Faculty must allow the imported track.
+
+### 11.2 Student results (Excel)
+
+- Columns: `seating_no`, `arabic_name`, `total_degree`, `student_case_desc`.
+- UI always imports into the **current** year. API path includes `yearId` and can target any year.
+- Import **replaces all** student results for that year.
+- Track is inferred from case description and/or seating number, then canonicalized.
+
+| Size | Path |
+| --- | --- |
+| ≤20 MB | Direct multipart POST, synchronous |
+| >20 MB | Presigned R2 PUT, then `from-storage` async job |
+| Direct upload >20 MB | HTTP **413** |
+| Large upload without R2 | HTTP **503** |
+
+Poll `GET /api/admin/import-jobs/{jobId}` until `completed` or `failed`. R2 is optional at process start (warning only) and required for the large-file path.
+
+---
+
+## 12. API contract
+
+Envelope for controller JSON:
+
+```json
+{
+  "success": true,
+  "message": "Operation completed successfully.",
+  "errorCode": null,
+  "data": {},
+  "errors": null
+}
 ```
-PROJECT_SPEC.md
 
-API.md
+| Rule | Behavior |
+| --- | --- |
+| Success default `message` | English `Operation completed successfully.` |
+| Failure `message` | Arabic from `ArabicErrorCatalog` |
+| Failure `errorCode` | Stable machine code |
+| `GET /health` | Raw `{ "status": "healthy" }` — **not** wrapped |
+| Auth | Cookie Identity, not tokens |
+| OpenAPI | `/openapi/v1.json` in **Development only** (no Swagger UI) |
 
-DATABASE.md
-```
+### 12.1 Public endpoints
 
----
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/config` | `appName`, current year, max score, tracks `Science` / `Literature` |
+| `POST` | `/api/admission/predict` | Eligible faculties (`track`, `score`, `page`, `pageSize`) |
+| `GET` | `/api/thanaweya-results/{seatingNo}` | Current-year student result + rank fields |
 
-# 33. Acceptance Criteria
+### 12.2 Admin endpoints (Administrator cookie)
 
-The project is considered complete when:
+| Area | Methods / notes |
+| --- | --- |
+| Auth | `POST /api/admin/auth/login`, `logout`; `GET /api/admin/auth/me` |
+| Dashboard | `GET /api/admin/dashboard` |
+| Catalog | `GET/POST/PUT` governorates, universities, faculties, university-faculties |
+| Years | `GET/POST/PUT /api/admin/admission-years`; `GET .../current`; `POST .../{id}/publish` |
+| Cutoffs | `GET/POST/PUT/DELETE /api/admin/admission-cutoffs` (optional `yearId` filter) |
+| Cutoff import | `POST /api/admin/admission-years/{yearId}/import` |
+| Results import | `POST .../import-results`; `.../upload-url`; `.../from-storage` |
+| Jobs | `GET /api/admin/import-jobs/{jobId}` |
 
-- The product is branded as **Tansekak** across the public website and administration panel.
-- Students can predict eligible faculties using the current admission year.
-- Administrators can manage universities, faculties, university–faculty assignments, admission years, and admission cutoffs.
-- Every Governorate has Arabic and English names (NameAr and NameEn).
-- Every University has Arabic and English names (NameAr and NameEn).
-- Every Faculty has Arabic and English names (NameAr and NameEn).
-- API responses expose both NameAr and NameEn for all named entities.
-- The frontend is entirely Arabic and displays only NameAr for entity names.
-- All frontend UI text, labels, and navigation are in Arabic.
-- Governorates, universities, faculties, university–faculty assignments, and admission years support Activate / Deactivate only; physical deletion is not available for these entities.
-- Admission cutoff records may be physically deleted.
-- Excel and CSV imports are fully validated before saving.
-- Invalid imports never modify the database.
-- Authentication is functional.
-- All public endpoints work without authentication.
-- Results are correctly categorized into Available, Near, and Not Available.
-- Results are sorted by the closest cutoff.
-- Pagination works correctly.
-- The system is responsive on desktop and mobile.
-- The project builds successfully without warnings or runtime errors.
-
----
-
-# 34. Minimum Viable Product (MVP)
-
-The first release of the system MUST include only the following features.
-
-## Public Website
-
-- Home page
-- Academic track selection
-- Student score input
-- Admission prediction
-- Available results
-- Near results
-- Not Available results
-- Search by university name (NameAr)
-- Search by faculty name (NameAr)
-- Arabic-only user interface
-- Load More pagination
-- Responsive layout
-- Mobile support
+In production the API serves the Angular build from `wwwroot/` and falls back to `index.html` for client routes. Local Development uses CORS to `http://localhost:4200`. Production SPA and API share one origin.
 
 ---
 
-## Administration Panel
+## 13. Stack and architecture
 
-- Login
-- Logout
-- Dashboard
-- Governorate management (NameAr and NameEn)
-- University management (NameAr and NameEn)
-- Faculty management (NameAr and NameEn)
-- University–faculty management
-- Admission year management
-- Admission cutoff management
-- Excel import
-- CSV import
-- Validation report
-- Manual editing
-- Publish current admission year
+| Layer | Technology |
+| --- | --- |
+| API | ASP.NET Core 10 |
+| Data | EF Core, PostgreSQL, Npgsql |
+| Frontend | Angular 19 standalone, RTL |
+| Validation | FluentValidation |
+| Excel | ClosedXML |
+| Object storage | Cloudflare R2 (optional; large Excel) |
+| Tests | xUnit |
 
----
+**Clean Architecture** projects: `Tansekak.Domain`, `Tansekak.Application`, `Tansekak.Infrastructure`, `Tansekak.Api`.
 
-## Database
-
-The database must contain
-
-- Governorates
-- Universities
-- Faculties
-- University Faculties
-- Admission Years
-- Admission Cutoffs
+Application layer is **service interfaces + DTOs**. There is **no MediatR** and **no repository layer**. Infrastructure services use `AppDbContext` directly. Domain entities are anemic POCOs.
 
 ---
 
-## Authentication
+## 14. Deployment
 
-ASP.NET Core Identity
+- **One Docker monolith** on Render (API + SPA). Bind HTTP to **`0.0.0.0:$PORT`**.
+- **Neon** PostgreSQL.
+- **Cloudflare R2** optional except for Excel files over 20 MB.
+- Filesystem is ephemeral; do not rely on local disk beyond the image.
+- GitHub Actions CI: build + `dotnet test Tansekak.sln`. Render deploys on push to `main`.
 
-Administrator only.
-
-No public registration.
-
-No password reset.
-
-No email verification.
+Production requires a real connection string and unique `AdminSeed` credentials (dev defaults are rejected).
 
 ---
 
-## Import
+## 15. Tests
 
-Supported formats
+| Project | In `Tansekak.sln` / CI | Coverage |
+| --- | --- | --- |
+| `Tansekak.Application.Tests` | Yes | Track rules, Arabic error catalog, related helpers |
+| `Tansekak.Infrastructure.Tests` | Yes | Prediction, year publish, import, seeded Markdown parse, connection resolution |
+| `Tansekak.Api.Tests` | **No** | Exists on disk (`GlobalExceptionHandler`); **not** in the solution, so `dotnet test Tansekak.sln` does not run it |
 
-- XLSX
-- CSV
-
-Validation is mandatory.
-
-Partial import is prohibited.
-
----
-
-## Prediction Engine
-
-Input
-
-- Academic Track
-- Student Score
-
-Output
-
-- Available
-- Near
-- Not Available
-
-Sorting
-
-Closest cutoff first.
+There are no integration or end-to-end test projects.
 
 ---
 
-# 35. Future Versions
+## 16. Success criteria (current stage)
 
-The following features are intentionally excluded from Version 1.
+The product is successful for this stage when:
 
-These features may be implemented later.
-
----
-
-## Universities
-
-- Private Universities
-- National Universities
-- Technological Universities
+- A student can get an **eligible-only** faculty list for the published year, filtered by track and `AllowedTracks`, sorted by closest cutoff.
+- A student can look up an imported result by seating number and see track rank when data exists.
+- An operator can publish a year, import Science/Literature Markdown, import Excel results, and CRUD current-year cutoffs.
+- Failures return Arabic catalog messages and stable error codes; health is a raw probe; auth is cookies.
+- Fresh databases bootstrap catalog + 2027 current year + admin, and predictions stay empty until cutoffs are imported.
 
 ---
 
-## Student Features
+## 17. Related documents
 
-- Student Accounts
-- Student Profiles
-- Saved Results
-- Favorite Faculties
-- Search History
-
----
-
-## Faculty Details
-
-- Faculty Description
-- Career Information
-- Study Duration
-- Tuition Fees
-- Official Website
-- Images
-
----
-
-## Admission Analysis
-
-- Multi-year comparison
-- Admission trends
-- Charts
-- Statistics
-- Cutoff history
-
----
-
-## Smart Features
-
-- AI recommendations
-- Personalized suggestions
-- Similar faculties
-- Probability estimation
-
----
-
-## Notifications
-
-- Email notifications
-- Push notifications
-- SMS notifications
-
----
-
-## Administration
-
-- Audit Logs
-- Activity History
-- Multiple Administrators
-- Permission Management
-
----
-
-# 36. Non-Goals
-
-The project is NOT intended to
-
-Predict future admission cutoffs.
-
-Estimate next year's admission.
-
-Replace the official admission system.
-
-Collect student personal information.
-
-Provide career counseling.
-
-Recommend universities using AI.
-
-The project only compares the student's score against official admission data.
-
----
-
-# 37. Assumptions
-
-The following assumptions are considered true.
-
-- Official admission data is accurate.
-- Administrators upload verified files.
-- There is exactly one Current Admission Year.
-- Universities, faculties, and university–faculty assignments are managed by administrators.
-- Every Governorate, University, and Faculty stores both Arabic and English names.
-- Students always enter scores using the current year's maximum score.
-
----
-
-# 38. Success Criteria
-
-The project is considered successful when
-
-- Students can obtain accurate admission results within a few seconds.
-- Administrators can update yearly admission data without code changes.
-- A new admission year can be added using only Excel or CSV.
-- Switching the Current admission year requires no deployment.
-- Invalid imports never affect production data.
-- The application remains maintainable for future admission years.
-- The entire frontend is in Arabic, including all UI text and displayed entity names.
-
----
-
-# 40. Development Principles
-
-The implementation MUST follow these principles.
-
-- Clean Architecture.
-- Domain-driven naming.
-- SOLID principles.
-- Dependency Injection.
-- Repository pattern is NOT required unless there is a real need.
-- Entity Framework Core should be used directly through the application's DbContext abstraction.
-- Validation must use FluentValidation.
-- Business logic must never exist inside Controllers.
-- Controllers must remain thin.
-- Services must contain business logic.
-- Database constraints must enforce data integrity whenever possible.
-- No hardcoded values.
-- Configuration must be stored in configuration files or the database.
-- Every public API must return a consistent response model.
-- Every endpoint must support cancellation using CancellationToken.
-- Every asynchronous operation must use async/await.
-- Read-only queries should use AsNoTracking().
-- All database operations must support transactions when required.
-- Exceptions must be handled centrally using a Global Exception Handler.
-- Structured logging must be used.
-- Sensitive data must never be logged.
-
----
-
-# 41. Final Notes
-
-This document is the single source of truth for **Tansekak**.
-
-If implementation details conflict with this specification, this specification takes precedence.
-
-No functionality may be implemented based on assumptions.
-
-Any missing requirement must be clarified before implementation.
-
-The implementation must prioritize simplicity, maintainability, correctness, and long-term extensibility over unnecessary complexity.
+| Document | Role |
+| --- | --- |
+| [docs/PRD-ORIGINAL.md](PRD-ORIGINAL.md) | Archived original PRD (historical; not as-built) |
+| [README.md](../README.md) | Developer and operator guide |
+| [docs/API.md](API.md) | Public and admin HTTP contract |
+| [docs/IMPORT.md](IMPORT.md) | Cutoff Markdown and student Excel import |
+| [docs/PRODUCTION_SETUP.md](PRODUCTION_SETUP.md) | Production env, Render, Neon, R2 |
+| [docs/production.env.example](production.env.example) | Production environment template |

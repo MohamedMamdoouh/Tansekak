@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Tansekak.Application.Common;
 using Tansekak.Application.DTOs;
 using Tansekak.Application.Interfaces;
 using Tansekak.Domain.Entities;
@@ -24,6 +25,8 @@ public class AdmissionYearService(AppDbContext db, EntityIdAllocator idAllocator
 
     public async Task<AdmissionYearDto> CreateAsync(CreateAdmissionYearDto dto, CancellationToken cancellationToken = default)
     {
+        await EnsureYearUniqueAsync(dto.Year, null, cancellationToken);
+
         var entity = new AdmissionYear
         {
             Id = await idAllocator.NextAsync(EntityIdAllocator.AdmissionYears, cancellationToken),
@@ -40,6 +43,9 @@ public class AdmissionYearService(AppDbContext db, EntityIdAllocator idAllocator
     {
         var entity = await db.AdmissionYears.FindAsync([id], cancellationToken);
         if (entity is null) return null;
+
+        await EnsureYearUniqueAsync(dto.Year, id, cancellationToken);
+
         entity.Year = dto.Year;
         entity.MaximumScore = dto.MaximumScore;
         await db.SaveChangesAsync(cancellationToken);
@@ -62,5 +68,15 @@ public class AdmissionYearService(AppDbContext db, EntityIdAllocator idAllocator
         await db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return true;
+    }
+
+    private async Task EnsureYearUniqueAsync(int year, int? excludeId, CancellationToken cancellationToken)
+    {
+        var duplicate = await db.AdmissionYears.AnyAsync(
+            x => x.Year == year && (!excludeId.HasValue || x.Id != excludeId.Value),
+            cancellationToken);
+
+        if (duplicate)
+            throw new ValidationException(ApiErrorCodes.AdmissionYearDuplicate);
     }
 }

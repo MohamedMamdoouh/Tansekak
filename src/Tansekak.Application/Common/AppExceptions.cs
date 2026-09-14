@@ -1,15 +1,32 @@
+using System.Net;
+
 namespace Tansekak.Application.Common;
 
-public class NotFoundException : Exception
+public sealed class NotFoundException : AppException
 {
-    public NotFoundException(string message) : base(message)
+    public NotFoundException(string errorCode = ApiErrorCodes.NotFound)
+        : base(errorCode, HttpStatusCode.NotFound)
+    {
+    }
+
+    public NotFoundException(string errorCode, string userMessage)
+        : base(errorCode, HttpStatusCode.NotFound, userMessage)
     {
     }
 }
 
-public class ServiceUnavailableException : Exception
+public sealed class ServiceUnavailableException : AppException
 {
-    public ServiceUnavailableException(string message) : base(message)
+    public ServiceUnavailableException(string errorCode = ApiErrorCodes.ServiceUnavailable)
+        : base(errorCode, HttpStatusCode.ServiceUnavailable)
+    {
+    }
+}
+
+public sealed class ValidationException : AppException
+{
+    public ValidationException(string errorCode, string? userMessage = null)
+        : base(errorCode, HttpStatusCode.BadRequest, userMessage)
     {
     }
 }

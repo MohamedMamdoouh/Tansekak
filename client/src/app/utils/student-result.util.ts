@@ -1,4 +1,5 @@
 import { StudentResult } from '../models';
+import { canonicalizeTrack } from './track-label.util';
 
 export function hasTrackRank(result: StudentResult): boolean {
   return result.trackRank != null && result.trackTotalStudents != null;
@@ -12,7 +13,7 @@ export function predictQueryParams(
     score: result.totalDegree,
   };
   if (result.track) {
-    params.track = result.track;
+    params.track = canonicalizeTrack(result.track);
   }
   return params;
 }

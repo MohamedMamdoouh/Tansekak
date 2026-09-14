@@ -1,4 +1,5 @@
 using ClosedXML.Excel;
+using Tansekak.Application.Common;
 using Tansekak.Application.DTOs;
 
 namespace Tansekak.Infrastructure.Import;
@@ -29,14 +30,14 @@ public static class StudentResultExcelParser
         var worksheet = workbook.Worksheets.FirstOrDefault();
         if (worksheet is null)
         {
-            errors.Add(Err(0, "File", "EMPTY", "Workbook contains no worksheets."));
+            errors.Add(Err(0, "File", ApiErrorCodes.WorkbookEmpty));
             return (rows, errors);
         }
 
         var headerRow = worksheet.FirstRowUsed();
         if (headerRow is null)
         {
-            errors.Add(Err(0, "File", "EMPTY", "Worksheet contains no data rows."));
+            errors.Add(Err(0, "File", ApiErrorCodes.WorksheetEmpty));
             return (rows, errors);
         }
 
@@ -63,15 +64,15 @@ public static class StudentResultExcelParser
                 continue;
 
             if (string.IsNullOrWhiteSpace(seatingNo))
-                errors.Add(Err(rowNumber, "seating_no", "REQUIRED", "Seating number is required."));
+                errors.Add(Err(rowNumber, "seating_no", ApiErrorCodes.Required));
             if (string.IsNullOrWhiteSpace(arabicName))
-                errors.Add(Err(rowNumber, "arabic_name", "REQUIRED", "Arabic name is required."));
+                errors.Add(Err(rowNumber, "arabic_name", ApiErrorCodes.Required));
             if (string.IsNullOrWhiteSpace(studentCaseDesc))
-                errors.Add(Err(rowNumber, "student_case_desc", "REQUIRED", "Student case description is required."));
+                errors.Add(Err(rowNumber, "student_case_desc", ApiErrorCodes.Required));
             if (!TryParseDecimal(totalDegreeText, out var totalDegree))
-                errors.Add(Err(rowNumber, "total_degree", "INVALID", "Total degree must be a valid number."));
+                errors.Add(Err(rowNumber, "total_degree", ApiErrorCodes.TotalDegreeInvalid));
             else if (totalDegree < 0)
-                errors.Add(Err(rowNumber, "total_degree", "INVALID", "Total degree must be zero or greater."));
+                errors.Add(Err(rowNumber, "total_degree", ApiErrorCodes.TotalDegreeNegative));
 
             if (errors.Any(e => e.RowNumber == rowNumber))
                 continue;
@@ -85,7 +86,7 @@ public static class StudentResultExcelParser
         }
 
         if (rows.Count == 0 && errors.Count == 0)
-            errors.Add(Err(0, "File", "EMPTY", "File contains no data rows."));
+            errors.Add(Err(0, "File", ApiErrorCodes.FileNoDataRows));
 
         return (rows, errors);
     }
@@ -103,7 +104,11 @@ public static class StudentResultExcelParser
         foreach (var required in RequiredHeaders)
         {
             if (!map.ContainsKey(required))
-                errors.Add(Err(headerRow.RowNumber(), required, "MISSING_COLUMN", $"Required column '{required}' was not found."));
+                errors.Add(Err(
+                    headerRow.RowNumber(),
+                    required,
+                    ApiErrorCodes.MissingColumn,
+                    ArabicErrorCatalog.GetMessage(ApiErrorCodes.MissingColumn, required)));
         }
 
         return map;
@@ -127,6 +132,6 @@ public static class StudentResultExcelParser
             out result);
     }
 
-    private static ImportValidationErrorDto Err(int row, string col, string code, string msg) =>
-        new(row, col, code, msg);
+    private static ImportValidationErrorDto Err(int row, string col, string code, string? message = null) =>
+        new(row, col, code, message ?? ArabicErrorCatalog.GetMessage(code));
 }
