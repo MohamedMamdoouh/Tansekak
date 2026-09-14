@@ -130,7 +130,7 @@ Unwrapped. `{ "status": "healthy" }`.
 
 All routes below except `POST /api/admin/auth/login` require an Identity cookie. Dashboard, catalog, years, cutoffs, and import routes also require `Administrator`.
 
-There is **no delete** on governorates, universities, faculties, university–faculties, or admission years. Cutoffs do support `DELETE`.
+There is **no delete** on governorates, universities, faculties, or university–faculties. Cutoffs and admission years do support `DELETE`.
 
 | Method | Path | Body / query | `data` notes |
 | --- | --- | --- | --- |
@@ -157,9 +157,9 @@ There is **no delete** on governorates, universities, faculties, university–fa
 | `GET` | `/api/admin/admission-years` | — | `[{ id, year, maximumScore, isCurrent }]` newest year first |
 | `GET` | `/api/admin/admission-years/current` | — | Current year, or `404` `NOT_FOUND` if none published |
 | `GET` | `/api/admin/admission-years/{id}` | — | Single year |
-| `POST` | `/api/admin/admission-years` | `{ year, maximumScore }` | Created with `isCurrent: true`. Only one year may exist — if any year is already stored → `400` `ADMISSION_YEAR_LIMIT_REACHED`. Year must be 2000–2100; `maximumScore` > 0 and ≤ 1000 |
-| `PUT` | `/api/admin/admission-years/{id}` | `{ year, maximumScore }` | Does not change `isCurrent` |
-| `DELETE` | `/api/admin/admission-years/{id}` | — | Deletes the year and cascades cutoffs, student results, and import jobs for that year (best-effort R2 cleanup). Missing id → `404` |
+| `POST` | `/api/admin/admission-years` | `{ year, maximumScore }` | Created with `isCurrent: true`. **Only one year may exist** — if any year is already stored → `400` `ADMISSION_YEAR_LIMIT_REACHED`. Year must be 2000–2100; `maximumScore` > 0 and ≤ 1000 |
+| `PUT` | `/api/admin/admission-years/{id}` | `{ year, maximumScore }` | Updates year number and max score. Does not change `isCurrent` |
+| `DELETE` | `/api/admin/admission-years/{id}` | — | Deletes the year and cascades cutoffs, student results, and import jobs (best-effort R2 cleanup). Missing id → `404` `NOT_FOUND`. To add a different year, delete the current one first |
 | `GET` | `/api/admin/admission-cutoffs` | `yearId`, `search`, `track`, `page`, `pageSize` | Paged `{ items, totalCount, page, pageSize }`. `page` default `1`, `pageSize` default `10`, max `100`. `search` matches university or faculty Arabic name. `track` uses the same bucket as predict |
 | `GET` | `/api/admin/admission-cutoffs/{id}` | — | `{ id, admissionYearId, universityFacultyId, track, cutoffScore, universityName?, facultyName? }` |
 | `POST` | `/api/admin/admission-cutoffs` | `{ admissionYearId, universityFacultyId, track, cutoffScore }` | Duplicate year+faculty+track bucket → `CUTOFF_DUPLICATE`. Faculty must allow the track |
@@ -208,6 +208,7 @@ Codes with `{0}`: `SCORE_EXCEEDS_MAX` (maximum score), `MISSING_COLUMN` (column 
 | `CUTOFF_DUPLICATE` | يوجد بالفعل حد قبول لهذه الكلية والشعبة في السنة المحددة. |
 | `ADMISSION_YEAR_NOT_FOUND` | سنة القبول غير موجودة. |
 | `ADMISSION_YEAR_DUPLICATE` | هذه السنة موجودة بالفعل. |
+| `ADMISSION_YEAR_LIMIT_REACHED` | يوجد سنة قبول بالفعل. احذفها أولاً لإضافة سنة جديدة. |
 | `UNIVERSITY_FACULTY_NOT_FOUND` | كلية الجامعة غير موجودة. |
 | `STUDENT_RESULT_NOT_FOUND` | لم يتم العثور على نتيجة لهذا الرقم. |
 | `FILE_REQUIRED` | الملف مطلوب. |

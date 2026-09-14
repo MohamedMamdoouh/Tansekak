@@ -1,19 +1,4 @@
-# Tansekak — Product Specification (As-Built)
-
-| Field | Value |
-| --- | --- |
-| Product | Tansekak (تنسيقك) |
-| Status | Current stage — as built |
-| Date | 2026-09-14 |
-| Audience | Operators, engineers, and reviewers of the shipped product |
-
-This document describes the **shipped** product. It is not a backlog or a wish list.
-
-The original long-form requirements document is archived at [docs/PRD-ORIGINAL.md](PRD-ORIGINAL.md). Do not treat that file as the source of truth for current behavior.
-
-Operator and developer setup lives in [README.md](../README.md). Production deploy details live in [docs/PRODUCTION_SETUP.md](PRODUCTION_SETUP.md).
-
----
+# Tansekak — Product Specification
 
 ## 1. Purpose
 
@@ -29,11 +14,11 @@ Results are **indicative only**. Egypt’s official electronic coordination port
 
 ## 2. Users
 
-| User | Goal |
-| --- | --- |
-| Student / parent | Check which faculties a score is eligible for; look up a Thanaweya result and track rank; read a short coordination FAQ. |
-| Operator / administrator | Publish the current admission year; maintain cutoffs (CRUD and Markdown import); import student results from Excel. |
-| Catalog maintainer | Manage governorates, universities, faculties, and university–faculty links via API only (no admin UI). |
+| User                     | Goal                                                                                                                     |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| Student / parent         | Check which faculties a score is eligible for; look up a Thanaweya result and track rank; read a short coordination FAQ. |
+| Operator / administrator | Publish the current admission year; maintain cutoffs (CRUD and Markdown import); import student results from Excel.      |
+| Catalog maintainer       | Manage governorates, universities, faculties, and university–faculty links via API only (no admin UI).                   |
 
 There is a single Identity role: **Administrator**. Public visitors are unauthenticated. Admin login is not linked from the public site.
 
@@ -58,7 +43,6 @@ Tansekak does **not**:
 - Replace the official coordination portal or submit student preferences.
 - Guarantee placement, seats, or demand-adjusted cutoffs.
 - Return ineligible faculties or extra eligibility bands.
-- Expose Mathematics as a public track (علوم and رياضة are one Science bucket).
 - Store English names, slugs, or active/inactive flags on catalog entities.
 - Seed cutoffs automatically.
 - Provide admin UI for governorates, universities, faculties, or university–faculties.
@@ -71,11 +55,10 @@ Tansekak does **not**:
 
 ## 5. Branding and UI
 
-| Surface | Name |
-| --- | --- |
-| Public brand | Arabic **تنسيقك** |
-| API `appName` (`GET /api/config`) | `tansekak` |
-| Admin chrome | **لوحة الإدارة** |
+| Surface                           | Name          |
+| --------------------------------- | ------------- |
+| Public brand                      | **Tasnsekak** |
+| API `appName` (`GET /api/config`) | `tansekak`    |
 
 - UI is **RTL Arabic**.
 - Catalog and result names are **NameAr only**. There is no `NameEn`, `Slug`, or `IsActive`.
@@ -87,15 +70,15 @@ Tansekak does **not**:
 
 ### 6.1 Routes
 
-| Route | Page |
-| --- | --- |
-| `/` | Landing — overview and entry points |
-| `/predict` | Track + score form |
-| `/results` | Eligible faculties (paginated, searchable) |
-| `/thanaweya-result` | Seating-number result lookup |
-| `/track-rank` | Seating lookup with track rank among peers |
-| `/guide` | Static coordination FAQ |
-| `/designer` | Developer / credits page |
+| Route               | Page                                       |
+| ------------------- | ------------------------------------------ |
+| `/`                 | Landing — overview and entry points        |
+| `/predict`          | Track + score form                         |
+| `/results`          | Eligible faculties (paginated, searchable) |
+| `/thanaweya-result` | Seating-number result lookup               |
+| `/track-rank`       | Seating lookup with track rank among peers |
+| `/guide`            | Static coordination FAQ                    |
+| `/designer`         | Developer / credits page                   |
 
 Unknown paths redirect to `/`.
 
@@ -114,10 +97,10 @@ Unknown paths redirect to `/`.
 
 **Pagination:**
 
-| Layer | Page size |
-| --- | --- |
+| Layer    | Page size                                                             |
+| -------- | --------------------------------------------------------------------- |
 | Frontend | `pageSize` **20**, unlimited load-more (and show-all remaining pages) |
-| API | Default **10**, maximum **100** |
+| API      | Default **10**, maximum **100**                                       |
 
 **Search:** client-side filter of **already loaded** rows by university or faculty `NameAr`. Search does not query the server.
 
@@ -139,9 +122,9 @@ Lookup returns not found when the seating number is missing for the current year
 
 Public UI and `GET /api/config` expose **two** tracks:
 
-| API value | Arabic label |
-| --- | --- |
-| `Science` | الشعبة العلمية |
+| API value    | Arabic label   |
+| ------------ | -------------- |
+| `Science`    | الشعبة العلمية |
 | `Literature` | الشعبة الأدبية |
 
 The domain enum still has `Mathematics = 2`. Mathematics is **canonicalized to Science everywhere** (prediction, import, rank, labels, `AllowedTracks` matching).
@@ -154,13 +137,13 @@ The **Science bucket** includes stored `Science` and `Mathematics` cutoff/result
 
 Authentication is **cookie-based ASP.NET Core Identity** with the **Administrator** role.
 
-| Route | Capability |
-| --- | --- |
-| `/admin/login` | Sign in (not linked from public) |
-| `/admin` | Dashboard |
-| `/admin/years` | Create, edit, and **publish** (POST publish) |
-| `/admin/cutoffs` | CRUD for the **current year only** (API may filter by `yearId`) |
-| `/admin/import` | Science and/or Literature `.md` for the **current year** |
+| Route                   | Capability                                                           |
+| ----------------------- | -------------------------------------------------------------------- |
+| `/admin/login`          | Sign in (not linked from public)                                     |
+| `/admin`                | Dashboard                                                            |
+| `/admin/years`          | Create, edit, and delete the single admission year                   |
+| `/admin/cutoffs`        | CRUD for the **current year only** (API may filter by `yearId`)      |
+| `/admin/import`         | Science and/or Literature `.md` for the **current year**             |
 | `/admin/import-results` | `.xlsx` for the **current year**; replaces all results for that year |
 
 Import pages show a progress overlay. Navigation away is **blocked** until the import finishes or the operator confirms leaving.
@@ -179,12 +162,15 @@ The dashboard API also returns `cutoffsCount`. The UI **does not display** it.
 
 ### 8.2 Admission years
 
-- Create and edit year number and maximum score.
-- Year range: **2000–2100**.
-- Maximum score: **0.01–1000**, default **320**.
-- Duplicate calendar year is rejected.
-- **Publish** (`POST /api/admin/admission-years/{id}/publish`) marks one year `IsCurrent` and clears the flag on others.
-- Prediction, public lookup, and the admin import UI all use the published current year.
+Only **one** admission year may exist at a time.
+
+- Create when no year exists; new rows are marked `IsCurrent = true`.
+- A second create while any year exists returns `ADMISSION_YEAR_LIMIT_REACHED`.
+- Edit year number and maximum score (`IsCurrent` is unchanged).
+- Delete cascades cutoffs, student results, and import jobs for that year.
+- To switch cycles: delete the current year, then create the new one.
+- Year range: **2000–2100**. Maximum score: **0.01–1000**, default **320**. Duplicate calendar year is rejected.
+- Prediction, public lookup, and the admin import UI all use the current year (`IsCurrent`).
 
 ### 8.3 Cutoffs
 
@@ -205,17 +191,17 @@ These have admin API endpoints (GET/POST/PUT, no delete) and no SPA pages:
 
 Business entities use **integer IDs** allocated by `EntityIdAllocator` / `EntityIdSequence`. ASP.NET Identity tables use **PostgreSQL identity columns**. `ImportJob` uses a **Guid** primary key.
 
-| Entity | Role |
-| --- | --- |
-| **Governorate** | Egyptian governorate (`NameAr`) |
-| **University** | `NameAr`, `GovernorateId`, `Type` = `Public` (1) or `Institute` (2) |
-| **Faculty** | `NameAr`, `AllowedTracks` (JSON list of academic tracks) |
-| **UniversityFaculty** | Links a university to a faculty; cutoffs hang off this pair |
-| **AdmissionYear** | Calendar year, `MaximumScore`, `IsCurrent` |
-| **AdmissionCutoff** | Year + university–faculty + track + `CutoffScore` |
-| **StudentResult** | Year + seating no, Arabic name, total degree, case description, optional stored track |
-| **ImportJob** | Async Excel import status (`queued` / `running` / `completed` / `failed`) |
-| **EntityIdSequence** | Next integer ID per entity name |
+| Entity                | Role                                                                                  |
+| --------------------- | ------------------------------------------------------------------------------------- |
+| **Governorate**       | Egyptian governorate (`NameAr`)                                                       |
+| **University**        | `NameAr`, `GovernorateId`, `Type` = `Public` (1) or `Institute` (2)                   |
+| **Faculty**           | `NameAr`, `AllowedTracks` (JSON list of academic tracks)                              |
+| **UniversityFaculty** | Links a university to a faculty; cutoffs hang off this pair                           |
+| **AdmissionYear**     | Calendar year, `MaximumScore`, `IsCurrent`                                            |
+| **AdmissionCutoff**   | Year + university–faculty + track + `CutoffScore`                                     |
+| **StudentResult**     | Year + seating no, Arabic name, total degree, case description, optional stored track |
+| **ImportJob**         | Async Excel import status (`queued` / `running` / `completed` / `failed`)             |
+| **EntityIdSequence**  | Next integer ID per entity name                                                       |
 
 **Relationships (high level):**
 
@@ -251,76 +237,22 @@ Student workbooks are not stored in the repo.
 
 ## 11. Import
 
-### 11.1 Cutoffs (Markdown)
+Admin imports target the **current** admission year only. There is no preview step: a file is validated, then applied in full or rejected in full.
 
-- Pipe table; headers **الكلية** / **الحد الأدنى**.
-- `.md` only, max **10 MB**, **one track per file**.
-- UI slots: Science and/or Literature for the **current** year.
-- Each file **replaces** all cutoffs for that year + that track.
-- `Mathematics` on import is accepted and stored as **Science**.
-- College labels are matched to the university–faculty catalog (Arabic normalization). Faculty must allow the imported track.
+- **Cutoffs:** Science and/or Literature Markdown (`.md`, max 10 MB). Pipe table with **الكلية** / **الحد الأدنى**. Each file replaces that track for the current year (Science import also clears legacy `Mathematics` rows).
+- **Student results:** Excel (`.xlsx`) with columns `seating_no`, `arabic_name`, `total_degree`, `student_case_desc`. Replaces all results for the current year. Direct upload ≤ 20 MB; larger files use Cloudflare R2 and an async job.
 
-### 11.2 Student results (Excel)
-
-- Columns: `seating_no`, `arabic_name`, `total_degree`, `student_case_desc`.
-- UI always imports into the **current** year. API path includes `yearId` and can target any year.
-- Import **replaces all** student results for that year.
-- Track is inferred from case description and/or seating number, then canonicalized.
-
-| Size | Path |
-| --- | --- |
-| ≤20 MB | Direct multipart POST, synchronous |
-| >20 MB | Presigned R2 PUT, then `from-storage` async job |
-| Direct upload >20 MB | HTTP **413** |
-| Large upload without R2 | HTTP **503** |
-
-Poll `GET /api/admin/import-jobs/{jobId}` until `completed` or `failed`. R2 is optional at process start (warning only) and required for the large-file path.
+Any validation error rejects the entire file. Import endpoints and error codes: **[docs/API.md](API.md)**.
 
 ---
 
 ## 12. API contract
 
-Envelope for controller JSON:
+JSON responses use a standard envelope (`success`, `message`, `errorCode`, `data`, `errors`). Failures return Arabic messages and stable error codes. `GET /health` is unwrapped. Admin auth is cookie-based Identity (role `Administrator`).
 
-```json
-{
-  "success": true,
-  "message": "Operation completed successfully.",
-  "errorCode": null,
-  "data": {},
-  "errors": null
-}
-```
+Public surface: `GET /api/config`, `POST /api/admission/predict`, `GET /api/thanaweya-results/{seatingNo}`. Admin covers dashboard, catalog CRUD (no delete except cutoffs), admission year CRUD (single year), cutoffs, imports, and import jobs.
 
-| Rule | Behavior |
-| --- | --- |
-| Success default `message` | English `Operation completed successfully.` |
-| Failure `message` | Arabic from `ArabicErrorCatalog` |
-| Failure `errorCode` | Stable machine code |
-| `GET /health` | Raw `{ "status": "healthy" }` — **not** wrapped |
-| Auth | Cookie Identity, not tokens |
-| OpenAPI | `/openapi/v1.json` in **Development only** (no Swagger UI) |
-
-### 12.1 Public endpoints
-
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `GET` | `/api/config` | `appName`, current year, max score, tracks `Science` / `Literature` |
-| `POST` | `/api/admission/predict` | Eligible faculties (`track`, `score`, `page`, `pageSize`) |
-| `GET` | `/api/thanaweya-results/{seatingNo}` | Current-year student result + rank fields |
-
-### 12.2 Admin endpoints (Administrator cookie)
-
-| Area | Methods / notes |
-| --- | --- |
-| Auth | `POST /api/admin/auth/login`, `logout`; `GET /api/admin/auth/me` |
-| Dashboard | `GET /api/admin/dashboard` |
-| Catalog | `GET/POST/PUT` governorates, universities, faculties, university-faculties |
-| Years | `GET/POST/PUT /api/admin/admission-years`; `GET .../current`; `POST .../{id}/publish` |
-| Cutoffs | `GET/POST/PUT/DELETE /api/admin/admission-cutoffs` (optional `yearId` filter) |
-| Cutoff import | `POST /api/admin/admission-years/{yearId}/import` |
-| Results import | `POST .../import-results`; `.../upload-url`; `.../from-storage` |
-| Jobs | `GET /api/admin/import-jobs/{jobId}` |
+Full HTTP contract, status codes, and error catalog: **[docs/API.md](API.md)**.
 
 In production the API serves the Angular build from `wwwroot/` and falls back to `index.html` for client routes. Local Development uses CORS to `http://localhost:4200`. Production SPA and API share one origin.
 
@@ -328,15 +260,15 @@ In production the API serves the Angular build from `wwwroot/` and falls back to
 
 ## 13. Stack and architecture
 
-| Layer | Technology |
-| --- | --- |
-| API | ASP.NET Core 10 |
-| Data | EF Core, PostgreSQL, Npgsql |
-| Frontend | Angular 19 standalone, RTL |
-| Validation | FluentValidation |
-| Excel | ClosedXML |
+| Layer          | Technology                            |
+| -------------- | ------------------------------------- |
+| API            | ASP.NET Core 10                       |
+| Data           | EF Core, PostgreSQL, Npgsql           |
+| Frontend       | Angular 19 standalone, RTL            |
+| Validation     | FluentValidation                      |
+| Excel          | ClosedXML                             |
 | Object storage | Cloudflare R2 (optional; large Excel) |
-| Tests | xUnit |
+| Tests          | xUnit                                 |
 
 **Clean Architecture** projects: `Tansekak.Domain`, `Tansekak.Application`, `Tansekak.Infrastructure`, `Tansekak.Api`.
 
@@ -346,23 +278,19 @@ Application layer is **service interfaces + DTOs**. There is **no MediatR** and 
 
 ## 14. Deployment
 
-- **One Docker monolith** on Render (API + SPA). Bind HTTP to **`0.0.0.0:$PORT`**.
-- **Neon** PostgreSQL.
-- **Cloudflare R2** optional except for Excel files over 20 MB.
-- Filesystem is ephemeral; do not rely on local disk beyond the image.
-- GitHub Actions CI: build + `dotnet test Tansekak.sln`. Render deploys on push to `main`.
+One Docker monolith on Render (API + SPA), Neon PostgreSQL, optional Cloudflare R2 for large Excel imports. GitHub Actions runs build + tests; Render auto-deploys on push to `main`.
 
-Production requires a real connection string and unique `AdminSeed` credentials (dev defaults are rejected).
+Checklist, env vars, and first-boot sequence: **[docs/DEPLOY.md](DEPLOY.md)**.
 
 ---
 
 ## 15. Tests
 
-| Project | In `Tansekak.sln` / CI | Coverage |
-| --- | --- | --- |
-| `Tansekak.Application.Tests` | Yes | Track rules, Arabic error catalog, related helpers |
-| `Tansekak.Infrastructure.Tests` | Yes | Prediction, year publish, import, seeded Markdown parse, connection resolution |
-| `Tansekak.Api.Tests` | **No** | Exists on disk (`GlobalExceptionHandler`); **not** in the solution, so `dotnet test Tansekak.sln` does not run it |
+| Project                         | In `Tansekak.sln` / CI | Coverage                                                                                                          |
+| ------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `Tansekak.Application.Tests`    | Yes                    | Track rules, Arabic error catalog, related helpers                                                                |
+| `Tansekak.Infrastructure.Tests` | Yes                    | Prediction, admission year rules, import, seeded Markdown parse, connection resolution                            |
+| `Tansekak.Api.Tests`            | **No**                 | Exists on disk (`GlobalExceptionHandler`); **not** in the solution, so `dotnet test Tansekak.sln` does not run it |
 
 There are no integration or end-to-end test projects.
 
@@ -374,7 +302,7 @@ The product is successful for this stage when:
 
 - A student can get an **eligible-only** faculty list for the published year, filtered by track and `AllowedTracks`, sorted by closest cutoff.
 - A student can look up an imported result by seating number and see track rank when data exists.
-- An operator can publish a year, import Science/Literature Markdown, import Excel results, and CRUD current-year cutoffs.
+- An operator can manage the admission year, import Science/Literature Markdown, import Excel results, and CRUD current-year cutoffs.
 - Failures return Arabic catalog messages and stable error codes; health is a raw probe; auth is cookies.
 - Fresh databases bootstrap catalog + 2027 current year + admin, and predictions stay empty until cutoffs are imported.
 
@@ -382,11 +310,8 @@ The product is successful for this stage when:
 
 ## 17. Related documents
 
-| Document | Role |
-| --- | --- |
-| [docs/PRD-ORIGINAL.md](PRD-ORIGINAL.md) | Archived original PRD (historical; not as-built) |
-| [README.md](../README.md) | Developer and operator guide |
-| [docs/API.md](API.md) | Public and admin HTTP contract |
-| [docs/IMPORT.md](IMPORT.md) | Cutoff Markdown and student Excel import |
-| [docs/PRODUCTION_SETUP.md](PRODUCTION_SETUP.md) | Production env, Render, Neon, R2 |
-| [docs/production.env.example](production.env.example) | Production environment template |
+| Document                                              | Role                                     |
+| ----------------------------------------------------- | ---------------------------------------- |
+| [README.md](../README.md)                             | Developer and operator guide             |
+| [docs/API.md](API.md)                                 | Public and admin HTTP contract           |
+| [docs/DEPLOY.md](DEPLOY.md)                           | Production deploy, Render, Neon, R2    |

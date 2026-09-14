@@ -14,10 +14,7 @@ Results are **indicative only**. Egypt’s official coordination portal decides 
 | --- | --- |
 | [docs/PRD.md](docs/PRD.md) | As-built product spec |
 | [docs/API.md](docs/API.md) | HTTP contract, error codes |
-| [docs/IMPORT.md](docs/IMPORT.md) | Cutoff Markdown and student Excel import |
-| [docs/PRODUCTION_SETUP.md](docs/PRODUCTION_SETUP.md) | Render + Neon + R2 checklist |
-| [docs/production.env.example](docs/production.env.example) | Production env template |
-| [docs/PRD-ORIGINAL.md](docs/PRD-ORIGINAL.md) | Archived original PRD (not authoritative) |
+| [docs/DEPLOY.md](docs/DEPLOY.md) | Render + Neon + R2 checklist |
 
 ---
 
@@ -61,7 +58,7 @@ Not linked from the public site. Sign in at `/admin/login`.
 | Page | Route | Description |
 | --- | --- | --- |
 | Dashboard | `/admin` | Current year plus catalog and student-result counts (`cutoffsCount` is returned by the API but not shown) |
-| Admission years | `/admin/years` | Create, edit, **publish** the current year |
+| Admission years | `/admin/years` | Create, edit, delete the single admission year |
 | Cutoffs | `/admin/cutoffs` | CRUD for the **current** year |
 | Import cutoffs | `/admin/import` | Science and/or Literature Markdown; each file replaces that track for the current year |
 | Import student results | `/admin/import-results` | Excel for the **current** year (replaces all results for that year) |
@@ -157,13 +154,13 @@ Cutoffs are **not** seeded. From a **local clone**, open `/admin/login`, confirm
 - `SeededData/cutoffs/science-2026.md` → Science
 - `SeededData/cutoffs/literature-2026.md` → Literature
 
-`2026` is the official source cycle. Files attach to the **current published year** (bootstrap **2027**). They are **not** inside the Docker image. See [docs/IMPORT.md](docs/IMPORT.md).
+`2026` is the official source cycle. Files attach to the **current published year** (bootstrap **2027**). They are **not** inside the Docker image.
 
 ---
 
 ## Production
 
-See [docs/PRODUCTION_SETUP.md](docs/PRODUCTION_SETUP.md).
+See [docs/DEPLOY.md](docs/DEPLOY.md).
 
 | Layer | Provider |
 | --- | --- |
@@ -207,7 +204,7 @@ Envelope: `{ success, message, errorCode?, data, errors? }`. Failures use a stab
 
 Auth is **cookie Identity**, role `Administrator`.
 
-Full contract: [docs/API.md](docs/API.md). Import formats and replace rules: [docs/IMPORT.md](docs/IMPORT.md).
+Full contract: [docs/API.md](docs/API.md).
 
 ---
 
@@ -217,7 +214,7 @@ Full contract: [docs/API.md](docs/API.md). Import formats and replace rules: [do
 dotnet test Tansekak.sln --configuration Release
 ```
 
-That runs **Application** and **Infrastructure** tests (track rules, prediction, year publish, seeded Markdown parse, import jobs, connection resolution). `tests/Tansekak.Api.Tests` exists (global exception handler) but is **not** in the solution, so CI does not run it. There are no integration or E2E projects.
+That runs **Application** and **Infrastructure** tests (track rules, prediction, admission year rules, seeded Markdown parse, import jobs, connection resolution). `tests/Tansekak.Api.Tests` exists (global exception handler) but is **not** in the solution, so CI does not run it. There are no integration or E2E projects.
 
 ---
 
