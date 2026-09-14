@@ -1,14 +1,54 @@
+# Build
 bin/
 obj/
+publish/
+publish-test/
+artifacts/
+TestResults/
+coverage/
+
+# IDEs and editors
 .vs/
 .vscode/
+.idea/
+.cursor/
 *.user
 *.suo
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+
+# Node / Angular
 node_modules/
 dist/
+out-tsc/
+.angular/
+
+# Environment and secrets
 .env
+.env.*
+!.env.example
+appsettings.*.local.json
+secrets.json
+
+# Logs
 *.log
+logs/
+
+# Python helpers
+__pycache__/
+*.pyc
+tmp-pdf-extract/
+
+# Import source files
 *.pdf
 *.xlsx
-__pycache__/
-tmp-pdf-extract/
+
+# NuGet
+*.nupkg
+*.snupkg
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
