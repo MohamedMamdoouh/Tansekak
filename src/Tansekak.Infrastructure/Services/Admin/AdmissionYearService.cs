@@ -54,6 +54,13 @@ public class AdmissionYearService(
 
         entity.Year = dto.Year;
         entity.MaximumScore = dto.MaximumScore;
+        // Recover legacy / stuck rows where Publish was removed and no year is current.
+        if (!entity.IsCurrent &&
+            !await db.AdmissionYears.AnyAsync(x => x.IsCurrent, cancellationToken))
+        {
+            entity.IsCurrent = true;
+        }
+
         await db.SaveChangesAsync(cancellationToken);
         return new AdmissionYearDto(entity.Id, entity.Year, entity.MaximumScore, entity.IsCurrent);
     }
@@ -128,10 +135,32 @@ public class AdmissionYearService(
             await db.SaveChangesAsync(cancellationToken);
         }
 
+        // Publish was removed: deleting the current year must not leave remaining
+        // (legacy multi-year) rows with IsCurrent=false — that breaks prediction/results
+        // and Create is blocked while any year still exists.
+        await PromoteNewestYearIfNoCurrentAsync(cancellationToken);
+
         if (transaction is not null)
             await transaction.CommitAsync(cancellationToken);
 
         return true;
+    }
+
+    private async Task PromoteNewestYearIfNoCurrentAsync(CancellationToken cancellationToken)
+    {
+        if (await db.AdmissionYears.AnyAsync(x => x.IsCurrent, cancellationToken))
+            return;
+
+        var newest = await db.AdmissionYears
+            .OrderByDescending(x => x.Year)
+            .ThenByDescending(x => x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (newest is null)
+            return;
+
+        newest.IsCurrent = true;
+        await db.SaveChangesAsync(cancellationToken);
     }
 
     private async Task EnsureNoYearExistsAsync(CancellationToken cancellationToken)
