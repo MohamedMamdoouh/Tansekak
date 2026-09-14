@@ -30,6 +30,7 @@ public static class ApiErrorCodes
     public const string R2NotConfigured = "R2_NOT_CONFIGURED";
     public const string InvalidObjectKey = "INVALID_OBJECT_KEY";
     public const string ImportJobMissingKey = "IMPORT_JOB_MISSING_KEY";
+    public const string ImportJobSuperseded = "IMPORT_JOB_SUPERSEDED";
     public const string AllowedTracksRequired = "ALLOWED_TRACKS_REQUIRED";
     public const string FacultyTrackNotAllowed = "FACULTY_TRACK_NOT_ALLOWED";
 
@@ -82,6 +83,7 @@ public static class ApiErrorCodes
         R2NotConfigured,
         InvalidObjectKey,
         ImportJobMissingKey,
+        ImportJobSuperseded,
         AllowedTracksRequired,
         FacultyTrackNotAllowed,
         Required,

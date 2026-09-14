@@ -62,22 +62,67 @@ public class ImportJobService(
             .Where(x => x.Status == ImportJobStatus.Running
                 && x.StartedAtUtc != null
                 && x.StartedAtUtc < staleCutoff)
-            .Select(x => x.Id)
+            .Select(x => new { x.Id, x.AdmissionYearId, x.CreatedAtUtc, x.ObjectKey })
             .ToListAsync(cancellationToken);
 
         if (staleRunning.Count > 0)
         {
-            await db.ImportJobs
-                .Where(x => staleRunning.Contains(x.Id))
-                .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(j => j.Status, ImportJobStatus.Queued)
-                    .SetProperty(j => j.StartedAtUtc, (DateTime?)null),
+            var requeueIds = new List<Guid>();
+            var superseded = new List<(Guid Id, string? ObjectKey)>();
+
+            foreach (var stale in staleRunning)
+            {
+                // A newer job for the same year means the admin already moved on
+                // (retry after crash). Re-running the old R2 object would full-replace
+                // student results and silently overwrite the newer import.
+                var hasNewerJob = await db.ImportJobs.AnyAsync(
+                    x => x.AdmissionYearId == stale.AdmissionYearId
+                        && x.Id != stale.Id
+                        && x.CreatedAtUtc > stale.CreatedAtUtc,
                     cancellationToken);
 
-            logger.LogWarning(
-                "Requeued {Count} stale import jobs that were running longer than {Timeout}.",
-                staleRunning.Count,
-                StaleRunningJobTimeout);
+                if (hasNewerJob)
+                    superseded.Add((stale.Id, stale.ObjectKey));
+                else
+                    requeueIds.Add(stale.Id);
+            }
+
+            if (superseded.Count > 0)
+            {
+                var supersededIds = superseded.Select(x => x.Id).ToList();
+                var failedMessage = ArabicErrorCatalog.GetMessage(ApiErrorCodes.ImportJobSuperseded);
+                var completedAt = DateTime.UtcNow;
+
+                await db.ImportJobs
+                    .Where(x => supersededIds.Contains(x.Id))
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(j => j.Status, ImportJobStatus.Failed)
+                        .SetProperty(j => j.Message, failedMessage)
+                        .SetProperty(j => j.CompletedAtUtc, completedAt),
+                        cancellationToken);
+
+                foreach (var (id, objectKey) in superseded)
+                    await TryDeleteObjectAsync(objectKey, id, cancellationToken);
+
+                logger.LogWarning(
+                    "Marked {Count} superseded stale import jobs as failed to protect newer imports.",
+                    superseded.Count);
+            }
+
+            if (requeueIds.Count > 0)
+            {
+                await db.ImportJobs
+                    .Where(x => requeueIds.Contains(x.Id))
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(j => j.Status, ImportJobStatus.Queued)
+                        .SetProperty(j => j.StartedAtUtc, (DateTime?)null),
+                        cancellationToken);
+
+                logger.LogWarning(
+                    "Requeued {Count} stale import jobs that were running longer than {Timeout}.",
+                    requeueIds.Count,
+                    StaleRunningJobTimeout);
+            }
         }
 
         var pendingJobIds = await db.ImportJobs
@@ -123,6 +168,31 @@ public class ImportJobService(
             if (string.IsNullOrWhiteSpace(objectKey))
                 throw new ValidationException(ApiErrorCodes.ImportJobMissingKey);
 
+            // Defense in depth: even if a stale job was requeued, never full-replace
+            // results when a newer job for the same year already exists.
+            var hasNewerJob = await db.ImportJobs.AsNoTracking().AnyAsync(
+                x => x.AdmissionYearId == job.AdmissionYearId
+                    && x.Id != jobId
+                    && x.CreatedAtUtc > job.CreatedAtUtc,
+                cancellationToken);
+            if (hasNewerJob)
+            {
+                var supersededMessage = ArabicErrorCatalog.GetMessage(ApiErrorCodes.ImportJobSuperseded);
+                var supersededAt = DateTime.UtcNow;
+                await db.ImportJobs
+                    .Where(x => x.Id == jobId)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(j => j.Status, ImportJobStatus.Failed)
+                        .SetProperty(j => j.Message, supersededMessage)
+                        .SetProperty(j => j.CompletedAtUtc, supersededAt),
+                        cancellationToken);
+                logger.LogWarning(
+                    "Skipped import job {JobId}; a newer job exists for year {YearId}.",
+                    jobId,
+                    job.AdmissionYearId);
+                return;
+            }
+
             await using var stream = await r2Storage.OpenReadAsync(objectKey, cancellationToken);
             var fileName = Path.GetFileName(objectKey);
             var result = await importService.ImportAsync(job.AdmissionYearId, stream, fileName, cancellationToken);
@@ -156,17 +226,25 @@ public class ImportJobService(
         }
         finally
         {
-            if (!string.IsNullOrWhiteSpace(objectKey))
-            {
-                try
-                {
-                    await r2Storage.DeleteAsync(objectKey, cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    logger.LogWarning(ex, "Failed to delete R2 object {ObjectKey} for job {JobId}.", objectKey, jobId);
-                }
-            }
+            await TryDeleteObjectAsync(objectKey, jobId, cancellationToken);
+        }
+    }
+
+    private async Task TryDeleteObjectAsync(
+        string? objectKey,
+        Guid jobId,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(objectKey))
+            return;
+
+        try
+        {
+            await r2Storage.DeleteAsync(objectKey, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to delete R2 object {ObjectKey} for job {JobId}.", objectKey, jobId);
         }
     }
 
