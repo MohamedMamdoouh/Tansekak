@@ -32,6 +32,28 @@ public class AdmissionYearServiceTests
     }
 
     [Fact]
+    public async Task PublishAsync_keeps_current_when_republishing_same_year()
+    {
+        var (db, connection) = TestDbFactory.Create();
+        await using (connection)
+        await using (db)
+        {
+            db.AdmissionYears.AddRange(
+                new AdmissionYear { Id = 1, Year = 2025, MaximumScore = 320, IsCurrent = true },
+                new AdmissionYear { Id = 2, Year = 2026, MaximumScore = 320, IsCurrent = false });
+            await db.SaveChangesAsync();
+
+            var service = new AdmissionYearService(db, new EntityIdAllocator(db));
+            var published = await service.PublishAsync(1);
+            Assert.True(published);
+
+            var currentYears = await db.AdmissionYears.AsNoTracking().Where(x => x.IsCurrent).ToListAsync();
+            Assert.Single(currentYears);
+            Assert.Equal(1, currentYears[0].Id);
+        }
+    }
+
+    [Fact]
     public async Task CreateAsync_rejects_duplicate_year()
     {
         var (db, connection) = TestDbFactory.Create();
