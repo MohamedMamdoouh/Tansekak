@@ -77,7 +77,7 @@ export class AdminCutoffsComponent implements OnInit {
       .getUniversityFaculties()
       .subscribe((uf) => (this.universityFaculties = uf));
     this.admissionYears
-      .loadCurrentYear()
+      .refreshCurrentYear()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((year) => {
         this.currentYear = year;

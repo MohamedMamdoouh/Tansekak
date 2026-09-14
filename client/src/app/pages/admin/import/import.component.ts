@@ -63,7 +63,7 @@ export class AdminImportComponent {
       });
 
     this.admissionYears
-      .loadCurrentYear()
+      .refreshCurrentYear()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (year) => {
