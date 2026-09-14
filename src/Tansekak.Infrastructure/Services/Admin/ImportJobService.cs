@@ -108,24 +108,35 @@ public class ImportJobService(
         if (claimed == 0)
             return;
 
-        var job = await db.ImportJobs.FirstOrDefaultAsync(x => x.Id == jobId, cancellationToken);
+        // AsNoTracking: StudentResultImportService.ImportAsync calls ChangeTracker.Clear()
+        // after each batch on this same scoped DbContext, which would detach a tracked job
+        // and make a later SaveChangesAsync silently skip the Completed/Failed write —
+        // leaving the job stuck in Running while the SPA poll loop waits forever.
+        var job = await db.ImportJobs.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == jobId, cancellationToken);
         if (job is null)
             return;
 
+        var objectKey = job.ObjectKey;
         try
         {
-            if (string.IsNullOrWhiteSpace(job.ObjectKey))
+            if (string.IsNullOrWhiteSpace(objectKey))
                 throw new ValidationException(ApiErrorCodes.ImportJobMissingKey);
 
-            await using var stream = await r2Storage.OpenReadAsync(job.ObjectKey, cancellationToken);
-            var fileName = Path.GetFileName(job.ObjectKey);
+            await using var stream = await r2Storage.OpenReadAsync(objectKey, cancellationToken);
+            var fileName = Path.GetFileName(objectKey);
             var result = await importService.ImportAsync(job.AdmissionYearId, stream, fileName, cancellationToken);
 
-            job.ImportedCount = result.ImportedCount;
-            job.Message = result.Message;
-            job.Status = result.Success ? ImportJobStatus.Completed : ImportJobStatus.Failed;
-            job.CompletedAtUtc = DateTime.UtcNow;
-            await db.SaveChangesAsync(cancellationToken);
+            var completedAt = DateTime.UtcNow;
+            var status = result.Success ? ImportJobStatus.Completed : ImportJobStatus.Failed;
+            await db.ImportJobs
+                .Where(x => x.Id == jobId)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(j => j.ImportedCount, result.ImportedCount)
+                    .SetProperty(j => j.Message, result.Message)
+                    .SetProperty(j => j.Status, status)
+                    .SetProperty(j => j.CompletedAtUtc, completedAt),
+                    cancellationToken);
 
             if (!result.Success)
                 logger.LogWarning("Import job {JobId} failed validation.", jobId);
@@ -133,22 +144,27 @@ public class ImportJobService(
         catch (Exception ex)
         {
             logger.LogError(ex, "Import job {JobId} failed.", jobId);
-            job.Status = ImportJobStatus.Failed;
-            job.Message = ArabicErrorCatalog.GetMessage(ApiErrorCodes.InternalError);
-            job.CompletedAtUtc = DateTime.UtcNow;
-            await db.SaveChangesAsync(cancellationToken);
+            var failedMessage = ArabicErrorCatalog.GetMessage(ApiErrorCodes.InternalError);
+            var completedAt = DateTime.UtcNow;
+            await db.ImportJobs
+                .Where(x => x.Id == jobId)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(j => j.Status, ImportJobStatus.Failed)
+                    .SetProperty(j => j.Message, failedMessage)
+                    .SetProperty(j => j.CompletedAtUtc, completedAt),
+                    cancellationToken);
         }
         finally
         {
-            if (!string.IsNullOrWhiteSpace(job.ObjectKey))
+            if (!string.IsNullOrWhiteSpace(objectKey))
             {
                 try
                 {
-                    await r2Storage.DeleteAsync(job.ObjectKey, cancellationToken);
+                    await r2Storage.DeleteAsync(objectKey, cancellationToken);
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "Failed to delete R2 object {ObjectKey} for job {JobId}.", job.ObjectKey, jobId);
+                    logger.LogWarning(ex, "Failed to delete R2 object {ObjectKey} for job {JobId}.", objectKey, jobId);
                 }
             }
         }

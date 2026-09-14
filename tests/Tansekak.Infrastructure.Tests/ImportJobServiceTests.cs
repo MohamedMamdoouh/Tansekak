@@ -43,6 +43,41 @@ public class ImportJobServiceTests
     }
 
     [Fact]
+    public async Task ProcessJobAsync_persists_completed_status_when_import_clears_change_tracker()
+    {
+        var (db, connection) = TestDbFactory.Create();
+        await using (connection)
+        await using (db)
+        {
+            SeedAdmissionYear(db);
+            var queue = new ImportJobQueue();
+            var jobId = Guid.NewGuid();
+            db.ImportJobs.Add(new ImportJob
+            {
+                Id = jobId,
+                AdmissionYearId = 1,
+                Status = ImportJobStatus.Queued,
+                ObjectKey = "imports/1/test.xlsx",
+                CreatedAtUtc = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+
+            // Mirrors StudentResultImportService batching: Clear() detaches tracked entities
+            // on the shared scoped DbContext after the job row was loaded.
+            var importService = new ClearingImportService(db);
+            var service = CreateService(db, queue, importService);
+
+            await service.ProcessJobAsync(jobId);
+
+            var job = await db.ImportJobs.AsNoTracking().SingleAsync(x => x.Id == jobId);
+            Assert.Equal(ImportJobStatus.Completed, job.Status);
+            Assert.Equal(3, job.ImportedCount);
+            Assert.Equal("cleared-ok", job.Message);
+            Assert.NotNull(job.CompletedAtUtc);
+        }
+    }
+
+    [Fact]
     public async Task ProcessJobAsync_claims_only_one_worker_for_same_job()
     {
         var (db, connection) = TestDbFactory.Create();
@@ -70,7 +105,8 @@ public class ImportJobServiceTests
                 service.ProcessJobAsync(jobId));
 
             Assert.Equal(1, importService.CallCount);
-            var job = await db.ImportJobs.SingleAsync(x => x.Id == jobId);
+            // ExecuteUpdate does not refresh tracked entities; read from the database.
+            var job = await db.ImportJobs.AsNoTracking().SingleAsync(x => x.Id == jobId);
             Assert.Equal(ImportJobStatus.Completed, job.Status);
         }
     }
@@ -102,6 +138,19 @@ public class ImportJobServiceTests
                 IsCurrent = true
             });
             db.SaveChanges();
+        }
+    }
+
+    private sealed class ClearingImportService(AppDbContext db) : IStudentResultImportService
+    {
+        public Task<ImportResultDto> ImportAsync(
+            int yearId,
+            Stream fileStream,
+            string fileName,
+            CancellationToken cancellationToken = default)
+        {
+            db.ChangeTracker.Clear();
+            return Task.FromResult(new ImportResultDto(true, "cleared-ok", 3));
         }
     }
 
