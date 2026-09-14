@@ -14,10 +14,17 @@ export class AdmissionYearStore {
   loadYears(): Observable<AdmissionYear[]> {
     if (!this.yearsCache$) {
       this.yearsCache$ = this.api.getAdmissionYears().pipe(
-        tap((years) => {
-          this.years.set(years);
-          const current = years.find((year) => year.isCurrent) ?? null;
-          this.currentYear.set(current);
+        tap({
+          next: (years) => {
+            this.years.set(years);
+            const current = years.find((year) => year.isCurrent) ?? null;
+            this.currentYear.set(current);
+          },
+          // shareReplay would otherwise permanently replay the failure to every
+          // later subscriber (root singleton), bricking admin pages after a blip.
+          error: () => {
+            this.yearsCache$ = undefined;
+          },
         }),
         shareReplay(1),
       );
@@ -29,7 +36,13 @@ export class AdmissionYearStore {
   loadCurrentYear(): Observable<AdmissionYear> {
     if (!this.currentYearCache$) {
       this.currentYearCache$ = this.api.getCurrentAdmissionYear().pipe(
-        tap((year) => this.currentYear.set(year)),
+        tap({
+          next: (year) => this.currentYear.set(year),
+          error: () => {
+            this.currentYearCache$ = undefined;
+            this.currentYear.set(null);
+          },
+        }),
         shareReplay(1),
       );
     }
