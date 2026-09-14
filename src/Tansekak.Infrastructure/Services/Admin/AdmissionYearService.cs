@@ -60,8 +60,11 @@ public class AdmissionYearService(AppDbContext db, EntityIdAllocator idAllocator
         if (entity is null)
             return false;
 
+        // Exclude the target row: ExecuteUpdate bypasses the change tracker, so clearing
+        // IsCurrent on the tracked entity leaves SaveChanges with nothing to write back
+        // when re-publishing an already-current year (resulting in zero current years).
         await db.AdmissionYears
-            .Where(x => x.IsCurrent)
+            .Where(x => x.IsCurrent && x.Id != id)
             .ExecuteUpdateAsync(setters => setters.SetProperty(x => x.IsCurrent, false), cancellationToken);
 
         entity.IsCurrent = true;
