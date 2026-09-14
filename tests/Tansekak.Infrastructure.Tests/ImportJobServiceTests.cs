@@ -111,16 +111,157 @@ public class ImportJobServiceTests
         }
     }
 
+    [Fact]
+    public async Task PrepareQueueAsync_fails_stale_running_job_when_newer_job_exists()
+    {
+        var (db, connection) = TestDbFactory.Create();
+        await using (connection)
+        await using (db)
+        {
+            SeedAdmissionYear(db);
+            var queue = new ImportJobQueue();
+            var staleJobId = Guid.NewGuid();
+            var newerJobId = Guid.NewGuid();
+            var now = DateTime.UtcNow;
+
+            db.ImportJobs.AddRange(
+                new ImportJob
+                {
+                    Id = staleJobId,
+                    AdmissionYearId = 1,
+                    Status = ImportJobStatus.Running,
+                    ObjectKey = "imports/1/old.xlsx",
+                    CreatedAtUtc = now.AddHours(-5),
+                    StartedAtUtc = now.AddHours(-3)
+                },
+                new ImportJob
+                {
+                    Id = newerJobId,
+                    AdmissionYearId = 1,
+                    Status = ImportJobStatus.Completed,
+                    ObjectKey = "imports/1/new.xlsx",
+                    CreatedAtUtc = now.AddHours(-1),
+                    CompletedAtUtc = now.AddMinutes(-50),
+                    ImportedCount = 10
+                });
+            await db.SaveChangesAsync();
+
+            var r2 = new FakeR2Storage();
+            var service = CreateService(db, queue, r2: r2);
+            await service.PrepareQueueAsync();
+
+            var stale = await db.ImportJobs.AsNoTracking().SingleAsync(x => x.Id == staleJobId);
+            Assert.Equal(ImportJobStatus.Failed, stale.Status);
+            Assert.Contains("استُبدلت", stale.Message);
+            Assert.Contains("imports/1/old.xlsx", r2.DeletedKeys);
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+            {
+                await foreach (var _ in queue.ReadAllAsync(cts.Token))
+                {
+                }
+            });
+        }
+    }
+
+    [Fact]
+    public async Task PrepareQueueAsync_requeues_stale_running_job_when_no_newer_job()
+    {
+        var (db, connection) = TestDbFactory.Create();
+        await using (connection)
+        await using (db)
+        {
+            SeedAdmissionYear(db);
+            var queue = new ImportJobQueue();
+            var staleJobId = Guid.NewGuid();
+            var now = DateTime.UtcNow;
+
+            db.ImportJobs.Add(new ImportJob
+            {
+                Id = staleJobId,
+                AdmissionYearId = 1,
+                Status = ImportJobStatus.Running,
+                ObjectKey = "imports/1/old.xlsx",
+                CreatedAtUtc = now.AddHours(-5),
+                StartedAtUtc = now.AddHours(-3)
+            });
+            await db.SaveChangesAsync();
+
+            var service = CreateService(db, queue);
+            await service.PrepareQueueAsync();
+
+            var stale = await db.ImportJobs.AsNoTracking().SingleAsync(x => x.Id == staleJobId);
+            Assert.Equal(ImportJobStatus.Queued, stale.Status);
+            Assert.Null(stale.StartedAtUtc);
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+            var enumerator = queue.ReadAllAsync(cts.Token).GetAsyncEnumerator(cts.Token);
+            Assert.True(await enumerator.MoveNextAsync());
+            Assert.Equal(staleJobId, enumerator.Current);
+            await enumerator.DisposeAsync();
+        }
+    }
+
+    [Fact]
+    public async Task ProcessJobAsync_skips_import_when_newer_job_exists()
+    {
+        var (db, connection) = TestDbFactory.Create();
+        await using (connection)
+        await using (db)
+        {
+            SeedAdmissionYear(db);
+            var queue = new ImportJobQueue();
+            var oldJobId = Guid.NewGuid();
+            var newerJobId = Guid.NewGuid();
+            var now = DateTime.UtcNow;
+
+            db.ImportJobs.AddRange(
+                new ImportJob
+                {
+                    Id = oldJobId,
+                    AdmissionYearId = 1,
+                    Status = ImportJobStatus.Queued,
+                    ObjectKey = "imports/1/old.xlsx",
+                    CreatedAtUtc = now.AddHours(-2)
+                },
+                new ImportJob
+                {
+                    Id = newerJobId,
+                    AdmissionYearId = 1,
+                    Status = ImportJobStatus.Completed,
+                    ObjectKey = "imports/1/new.xlsx",
+                    CreatedAtUtc = now.AddMinutes(-10),
+                    CompletedAtUtc = now.AddMinutes(-5),
+                    ImportedCount = 42
+                });
+            await db.SaveChangesAsync();
+
+            var importService = new FakeImportService();
+            var r2 = new FakeR2Storage();
+            var service = CreateService(db, queue, importService, r2);
+
+            await service.ProcessJobAsync(oldJobId);
+
+            Assert.Equal(0, importService.CallCount);
+            var oldJob = await db.ImportJobs.AsNoTracking().SingleAsync(x => x.Id == oldJobId);
+            Assert.Equal(ImportJobStatus.Failed, oldJob.Status);
+            Assert.Contains("استُبدلت", oldJob.Message);
+            Assert.Contains("imports/1/old.xlsx", r2.DeletedKeys);
+        }
+    }
+
     private static ImportJobService CreateService(
         AppDbContext db,
         ImportJobQueue queue,
-        IStudentResultImportService? importService = null)
+        IStudentResultImportService? importService = null,
+        FakeR2Storage? r2 = null)
     {
         SeedAdmissionYear(db);
 
         return new ImportJobService(
             db,
-            new FakeR2Storage(),
+            r2 ?? new FakeR2Storage(),
             importService ?? new FakeImportService(),
             queue,
             NullLogger<ImportJobService>.Instance);
@@ -172,6 +313,7 @@ public class ImportJobServiceTests
     private sealed class FakeR2Storage : IR2Storage
     {
         public bool IsConfigured => true;
+        public List<string> DeletedKeys { get; } = [];
 
         public Task<(string UploadUrl, string ObjectKey)> CreatePresignedUploadAsync(
             int yearId,
@@ -185,7 +327,10 @@ public class ImportJobServiceTests
             return Task.FromResult<Stream>(stream);
         }
 
-        public Task DeleteAsync(string objectKey, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
+        public Task DeleteAsync(string objectKey, CancellationToken cancellationToken = default)
+        {
+            DeletedKeys.Add(objectKey);
+            return Task.CompletedTask;
+        }
     }
 }
