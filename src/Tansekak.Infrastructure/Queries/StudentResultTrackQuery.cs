@@ -6,6 +6,10 @@ namespace Tansekak.Infrastructure.Queries;
 
 internal static class StudentResultTrackQuery
 {
+    /// <summary>
+    /// Filters peers for track ranking. All predicates are inlined so EF Core can translate
+    /// them to SQL — custom C# helpers inside <c>Where</c> are not translatable.
+    /// </summary>
     public static IQueryable<StudentResult> FilterByTrack(
         IQueryable<StudentResult> query,
         AcademicTrack track)
@@ -14,65 +18,60 @@ internal static class StudentResultTrackQuery
         return canonical switch
         {
             AcademicTrack.Science => query.Where(x =>
-                x.Track == AcademicTrack.Science ||
-                x.Track == AcademicTrack.Mathematics ||
-                (x.Track == null && (
-                    IsScientificCaseDesc(x.StudentCaseDesc)
+                x.Track == AcademicTrack.Science
+                || x.Track == AcademicTrack.Mathematics
+                || (x.Track == null && (
+                    (x.StudentCaseDesc ?? "").Trim().Replace("ى", "ي").Replace("أ", "ا").Replace("إ", "ا").Replace("آ", "ا").Contains("علمي علوم")
+                    || (x.StudentCaseDesc ?? "").Trim().Replace("ى", "ي").Replace("أ", "ا").Replace("إ", "ا").Replace("آ", "ا").Contains("علمي رياضة")
+                    || (x.StudentCaseDesc ?? "").Trim().Replace("ى", "ي").Replace("أ", "ا").Replace("إ", "ا").Replace("آ", "ا").Contains("علمي رياضه")
+                    || (x.StudentCaseDesc ?? "").Trim().Replace("ى", "ي").Replace("أ", "ا").Replace("إ", "ا").Replace("آ", "ا").Contains("الشعبة العلمية")
+                    || (x.StudentCaseDesc ?? "").Trim().Replace("ى", "ي").Replace("أ", "ا").Replace("إ", "ا").Replace("آ", "ا").Contains("علمي")
                     || (
-                        !ContainsAnyTrackKeyword(x.StudentCaseDesc)
+                        !(
+                            (x.StudentCaseDesc ?? "").Trim().Replace("ى", "ي").Replace("أ", "ا").Replace("إ", "ا").Replace("آ", "ا").Contains("علمي علوم")
+                            || (x.StudentCaseDesc ?? "").Trim().Replace("ى", "ي").Replace("أ", "ا").Replace("إ", "ا").Replace("آ", "ا").Contains("علمي رياضة")
+                            || (x.StudentCaseDesc ?? "").Trim().Replace("ى", "ي").Replace("أ", "ا").Replace("إ", "ا").Replace("آ", "ا").Contains("علمي رياضه")
+                            || (x.StudentCaseDesc ?? "").Trim().Replace("ى", "ي").Replace("أ", "ا").Replace("إ", "ا").Replace("آ", "ا").Contains("علمي")
+                            || (x.StudentCaseDesc ?? "").Trim().Replace("ى", "ي").Replace("أ", "ا").Replace("إ", "ا").Replace("آ", "ا").Contains("ادبي")
+                            || (x.StudentCaseDesc ?? "").Trim().Replace("ى", "ي").Replace("أ", "ا").Replace("إ", "ا").Replace("آ", "ا").Contains("الادبي")
+                        )
                         && x.SeatingNo.Trim().Length == 7
                         && x.SeatingNo.Trim().StartsWith("2")
-                        && IsScientificSeatingDigit(x.SeatingNo.Trim().Substring(1, 1)))))),
+                        && (
+                            x.SeatingNo.Trim().Substring(1, 1) == "4"
+                            || x.SeatingNo.Trim().Substring(1, 1) == "5"
+                            || x.SeatingNo.Trim().Substring(1, 1) == "6"
+                            || x.SeatingNo.Trim().Substring(1, 1) == "7"
+                            || x.SeatingNo.Trim().Substring(1, 1) == "8"
+                            || x.SeatingNo.Trim().Substring(1, 1) == "9"
+                        )
+                    )
+                ))),
             AcademicTrack.Literature => query.Where(x =>
-                x.Track == AcademicTrack.Literature ||
-                (x.Track == null && (
-                    IsLiteraryCaseDesc(x.StudentCaseDesc)
+                x.Track == AcademicTrack.Literature
+                || (x.Track == null && (
+                    (x.StudentCaseDesc ?? "").Trim().Replace("ى", "ي").Replace("أ", "ا").Replace("إ", "ا").Replace("آ", "ا").Contains("ادبي")
+                    || (x.StudentCaseDesc ?? "").Trim().Replace("ى", "ي").Replace("أ", "ا").Replace("إ", "ا").Replace("آ", "ا").Contains("الادبي")
                     || (
-                        !ContainsAnyTrackKeyword(x.StudentCaseDesc)
+                        !(
+                            (x.StudentCaseDesc ?? "").Trim().Replace("ى", "ي").Replace("أ", "ا").Replace("إ", "ا").Replace("آ", "ا").Contains("علمي علوم")
+                            || (x.StudentCaseDesc ?? "").Trim().Replace("ى", "ي").Replace("أ", "ا").Replace("إ", "ا").Replace("آ", "ا").Contains("علمي رياضة")
+                            || (x.StudentCaseDesc ?? "").Trim().Replace("ى", "ي").Replace("أ", "ا").Replace("إ", "ا").Replace("آ", "ا").Contains("علمي رياضه")
+                            || (x.StudentCaseDesc ?? "").Trim().Replace("ى", "ي").Replace("أ", "ا").Replace("إ", "ا").Replace("آ", "ا").Contains("علمي")
+                            || (x.StudentCaseDesc ?? "").Trim().Replace("ى", "ي").Replace("أ", "ا").Replace("إ", "ا").Replace("آ", "ا").Contains("ادبي")
+                            || (x.StudentCaseDesc ?? "").Trim().Replace("ى", "ي").Replace("أ", "ا").Replace("إ", "ا").Replace("آ", "ا").Contains("الادبي")
+                        )
                         && x.SeatingNo.Trim().Length == 7
                         && x.SeatingNo.Trim().StartsWith("2")
-                        && IsLiterarySeatingDigit(x.SeatingNo.Trim().Substring(1, 1)))))),
+                        && (
+                            x.SeatingNo.Trim().Substring(1, 1) == "0"
+                            || x.SeatingNo.Trim().Substring(1, 1) == "1"
+                            || x.SeatingNo.Trim().Substring(1, 1) == "2"
+                            || x.SeatingNo.Trim().Substring(1, 1) == "3"
+                        )
+                    )
+                ))),
             _ => query.Where(_ => false)
         };
-    }
-
-    private static bool IsScientificCaseDesc(string? caseDesc)
-    {
-        var text = Normalize(caseDesc);
-        return text.Contains("علمي علوم")
-            || text.Contains("علمي رياضة")
-            || text.Contains("علمي رياضه")
-            || text.Contains("الشعبة العلمية")
-            || text.Contains("علمي");
-    }
-
-    private static bool IsLiteraryCaseDesc(string? caseDesc)
-    {
-        var text = Normalize(caseDesc);
-        return text.Contains("ادبي") || text.Contains("الادبي");
-    }
-
-    private static bool IsScientificSeatingDigit(string digit) =>
-        digit is "4" or "5" or "6" or "7" or "8" or "9";
-
-    private static bool IsLiterarySeatingDigit(string digit) =>
-        digit is "0" or "1" or "2" or "3";
-
-    private static string Normalize(string? text) =>
-        (text ?? string.Empty).Trim()
-            .Replace("ى", "ي")
-            .Replace("أ", "ا")
-            .Replace("إ", "ا")
-            .Replace("آ", "ا");
-
-    private static bool ContainsAnyTrackKeyword(string? caseDesc)
-    {
-        var text = Normalize(caseDesc);
-        return text.Contains("علمي علوم")
-            || text.Contains("علمي رياضة")
-            || text.Contains("علمي رياضه")
-            || text.Contains("علمي")
-            || text.Contains("ادبي")
-            || text.Contains("الادبي");
     }
 }
