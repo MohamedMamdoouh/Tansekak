@@ -391,6 +391,156 @@ public class ImportJobServiceTests
     }
 
     [Fact]
+    public async Task CancelAsync_persists_running_cancelled_so_prepare_queue_does_not_requeue()
+    {
+        // Cancel while Running must write Cancelled to the DB. Otherwise a crash/redeploy
+        // loses the in-memory cancel signal and PrepareQueueAsync requeues the import.
+        var (db, connection) = TestDbFactory.Create();
+        await using (connection)
+        await using (db)
+        {
+            SeedAdmissionYear(db);
+            var queue = new ImportJobQueue();
+            var registry = new ImportJobCancellationRegistry();
+            var jobId = Guid.NewGuid();
+            var now = DateTime.UtcNow;
+            db.ImportJobs.Add(new ImportJob
+            {
+                Id = jobId,
+                AdmissionYearId = 1,
+                Status = ImportJobStatus.Running,
+                ObjectKey = "imports/1/running.xlsx",
+                CreatedAtUtc = now.AddMinutes(-10),
+                StartedAtUtc = now.AddMinutes(-5)
+            });
+            await db.SaveChangesAsync();
+
+            var r2 = new FakeR2Storage();
+            var service = new ImportJobService(
+                db,
+                r2,
+                new FakeImportService(),
+                queue,
+                registry,
+                NullLogger<ImportJobService>.Instance);
+
+            var cancelled = await service.CancelAsync(jobId);
+            Assert.NotNull(cancelled);
+            Assert.Equal(ImportJobStatus.Cancelled, cancelled!.Status);
+            Assert.Contains("imports/1/running.xlsx", r2.DeletedKeys);
+
+            await service.PrepareQueueAsync();
+
+            var job = await db.ImportJobs.AsNoTracking().SingleAsync(x => x.Id == jobId);
+            Assert.Equal(ImportJobStatus.Cancelled, job.Status);
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+            {
+                await foreach (var _ in queue.ReadAllAsync(cts.Token))
+                {
+                }
+            });
+        }
+    }
+
+    [Fact]
+    public async Task ProcessJobAsync_marks_completed_when_import_succeeded_after_cancel_race()
+    {
+        // CancelAsync can persist Cancelled after ImportAsync has already committed.
+        // Status must follow the data: Completed, not a Cancelled lie.
+        var (db, connection) = TestDbFactory.Create();
+        await using (connection)
+        await using (db)
+        {
+            SeedAdmissionYear(db);
+            var queue = new ImportJobQueue();
+            var registry = new ImportJobCancellationRegistry();
+            var jobId = Guid.NewGuid();
+            db.ImportJobs.Add(new ImportJob
+            {
+                Id = jobId,
+                AdmissionYearId = 1,
+                Status = ImportJobStatus.Queued,
+                ObjectKey = "imports/1/test.xlsx",
+                CreatedAtUtc = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+
+            var importStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var allowFinish = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var importService = new GateImportService(importStarted, allowFinish);
+            var service = new ImportJobService(
+                db,
+                new FakeR2Storage(),
+                importService,
+                queue,
+                registry,
+                NullLogger<ImportJobService>.Instance);
+
+            var processTask = service.ProcessJobAsync(jobId);
+            await importStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+            var cancelResult = await service.CancelAsync(jobId);
+            Assert.Equal(ImportJobStatus.Cancelled, cancelResult!.Status);
+
+            allowFinish.TrySetResult();
+            await processTask.WaitAsync(TimeSpan.FromSeconds(5));
+
+            var job = await db.ImportJobs.AsNoTracking().SingleAsync(x => x.Id == jobId);
+            Assert.Equal(ImportJobStatus.Completed, job.Status);
+            Assert.Equal(9, job.ImportedCount);
+            Assert.Equal("late-complete", job.Message);
+        }
+    }
+
+    [Fact]
+    public async Task ProcessJobAsync_does_not_overwrite_cancelled_with_failed_when_import_returns_failure()
+    {
+        var (db, connection) = TestDbFactory.Create();
+        await using (connection)
+        await using (db)
+        {
+            SeedAdmissionYear(db);
+            var queue = new ImportJobQueue();
+            var registry = new ImportJobCancellationRegistry();
+            var jobId = Guid.NewGuid();
+            db.ImportJobs.Add(new ImportJob
+            {
+                Id = jobId,
+                AdmissionYearId = 1,
+                Status = ImportJobStatus.Queued,
+                ObjectKey = "imports/1/test.xlsx",
+                CreatedAtUtc = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+
+            var importStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var allowFinish = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var importService = new GateFailImportService(importStarted, allowFinish);
+            var service = new ImportJobService(
+                db,
+                new FakeR2Storage(),
+                importService,
+                queue,
+                registry,
+                NullLogger<ImportJobService>.Instance);
+
+            var processTask = service.ProcessJobAsync(jobId);
+            await importStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+            var cancelResult = await service.CancelAsync(jobId);
+            Assert.Equal(ImportJobStatus.Cancelled, cancelResult!.Status);
+
+            allowFinish.TrySetResult();
+            await processTask.WaitAsync(TimeSpan.FromSeconds(5));
+
+            var job = await db.ImportJobs.AsNoTracking().SingleAsync(x => x.Id == jobId);
+            Assert.Equal(ImportJobStatus.Cancelled, job.Status);
+        }
+    }
+
+    [Fact]
     public async Task ProcessJobAsync_skips_import_when_newer_job_exists()
     {
         var (db, connection) = TestDbFactory.Create();
@@ -512,6 +662,40 @@ public class ImportJobServiceTests
             await Task.Delay(Timeout.Infinite, cancellationToken);
             CallCountAfterCancel++;
             return new ImportResultDto(true, "should-not-complete", 1);
+        }
+    }
+
+    private sealed class GateImportService(
+        TaskCompletionSource started,
+        TaskCompletionSource allowFinish) : IStudentResultImportService
+    {
+        public async Task<ImportResultDto> ImportAsync(
+            int yearId,
+            Stream fileStream,
+            string fileName,
+            CancellationToken cancellationToken = default)
+        {
+            // Ignore CT to simulate ImportAsync returning success after CancelAsync
+            // already persisted Cancelled (post-commit race).
+            started.TrySetResult();
+            await allowFinish.Task;
+            return new ImportResultDto(true, "late-complete", 9);
+        }
+    }
+
+    private sealed class GateFailImportService(
+        TaskCompletionSource started,
+        TaskCompletionSource allowFinish) : IStudentResultImportService
+    {
+        public async Task<ImportResultDto> ImportAsync(
+            int yearId,
+            Stream fileStream,
+            string fileName,
+            CancellationToken cancellationToken = default)
+        {
+            started.TrySetResult();
+            await allowFinish.Task;
+            return new ImportResultDto(false, "validation-failed", 0);
         }
     }
 

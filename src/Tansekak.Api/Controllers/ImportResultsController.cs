@@ -94,7 +94,18 @@ public class ImportResultsController(
         await using var stream = file.OpenReadStream();
         await r2Storage.UploadAsync(objectKey, stream, ExcelContentType, ct);
 
-        var job = await importJobService.CreateQueuedJobAsync(yearId, objectKey, ct);
+        // Create/enqueue without the request CT so a disconnect after R2 upload cannot
+        // leave a Queued row that only runs on the next restart. If the client already
+        // aborted, cancel immediately so the background worker never replaces results.
+        var job = await importJobService.CreateQueuedJobAsync(yearId, objectKey, CancellationToken.None);
+        if (ct.IsCancellationRequested)
+        {
+            await importJobService.CancelAsync(job.Id, CancellationToken.None);
+            return StatusCode(
+                499,
+                ApiResponse<StartImportJobDto>.Fail(ApiErrorCodes.ImportJobCancelled));
+        }
+
         return Ok(ApiResponse<StartImportJobDto>.Ok(new StartImportJobDto(job.Id), "Import started."));
     }
 
@@ -112,7 +123,15 @@ public class ImportResultsController(
         if (string.IsNullOrWhiteSpace(request.ObjectKey))
             return BadRequest(ApiResponse<StartImportJobDto>.Fail(ApiErrorCodes.ObjectKeyRequired));
 
-        var job = await importJobService.CreateQueuedJobAsync(yearId, request.ObjectKey, ct);
+        var job = await importJobService.CreateQueuedJobAsync(yearId, request.ObjectKey, CancellationToken.None);
+        if (ct.IsCancellationRequested)
+        {
+            await importJobService.CancelAsync(job.Id, CancellationToken.None);
+            return StatusCode(
+                499,
+                ApiResponse<StartImportJobDto>.Fail(ApiErrorCodes.ImportJobCancelled));
+        }
+
         return Ok(ApiResponse<StartImportJobDto>.Ok(new StartImportJobDto(job.Id), "Import started."));
     }
 
