@@ -173,21 +173,21 @@ public class SeededCutoffImportTests
 
     private static string SeededDataDirectory()
     {
-        var fromOutput = Path.Combine(AppContext.BaseDirectory, "SeededData");
-        if (Directory.Exists(fromOutput))
-            return fromOutput;
-
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
         {
             var candidate = Path.Combine(dir.FullName, "SeededData");
-            if (Directory.Exists(candidate))
+            if (IsCompleteSeedDirectory(candidate))
                 return candidate;
             dir = dir.Parent;
         }
 
         throw new DirectoryNotFoundException("SeededData directory was not found.");
     }
+
+    private static bool IsCompleteSeedDirectory(string path) =>
+        File.Exists(Path.Combine(path, "Faculties.json"))
+        && Directory.Exists(Path.Combine(path, "cutoffs"));
 
     private static string FormatErrors(string fileName, Application.DTOs.ImportResultDto result)
     {
