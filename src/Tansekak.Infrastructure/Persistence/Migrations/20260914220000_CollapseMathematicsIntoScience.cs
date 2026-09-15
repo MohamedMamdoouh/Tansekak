@@ -28,9 +28,9 @@ public class CollapseMathematicsIntoScience : Migration
             SET "Track" = 1
             WHERE "Track" = 2;
 
-            UPDATE "StudentResults"
-            SET "Track" = 1
-            WHERE "Track" = 2;
+            -- StudentResults.Track must stay Mathematics (2). Collapsing those rows to
+            -- Science permanently broke track labels and peer ranks after the product
+            -- restored three distinct tracks; startup repair restores already-migrated DBs.
 
             UPDATE "Faculties" AS f
             SET "AllowedTracks" = COALESCE((

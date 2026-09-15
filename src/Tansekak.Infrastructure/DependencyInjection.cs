@@ -60,6 +60,7 @@ public static class DependencyInjection
         services.AddScoped<CurrentAdmissionYearProvider>();
         services.AddScoped<IDataSeeder, JsonSeedService>();
         services.AddScoped<FacultyAllowedTracksRepairService>();
+        services.AddScoped<StudentMathematicsTrackRepairService>();
         services.AddScoped<CutoffBootstrapService>();
         services.AddScoped<IConfigService, ConfigService>();
         services.AddScoped<IAdmissionPredictionService, AdmissionPredictionService>();
@@ -97,6 +98,9 @@ public static class DependencyInjection
 
         var facultyRepair = scope.ServiceProvider.GetRequiredService<FacultyAllowedTracksRepairService>();
         await facultyRepair.RepairAsync();
+
+        var studentTrackRepair = scope.ServiceProvider.GetRequiredService<StudentMathematicsTrackRepairService>();
+        await studentTrackRepair.RepairAsync();
 
         var cutoffBootstrap = scope.ServiceProvider.GetRequiredService<CutoffBootstrapService>();
         await cutoffBootstrap.BootstrapMissingTracksAsync();
