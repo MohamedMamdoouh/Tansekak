@@ -16,8 +16,6 @@ public class ImportJobService(
     ImportJobQueue queue,
     ILogger<ImportJobService> logger) : IImportJobService
 {
-    public static readonly TimeSpan StaleRunningJobTimeout = TimeSpan.FromHours(2);
-
     public async Task<ImportJobDto> CreateQueuedJobAsync(
         int yearId,
         string objectKey,
@@ -56,35 +54,35 @@ public class ImportJobService(
 
     public async Task PrepareQueueAsync(CancellationToken cancellationToken = default)
     {
-        var staleCutoff = DateTime.UtcNow.Subtract(StaleRunningJobTimeout);
-
-        var staleRunning = await db.ImportJobs
-            .Where(x => x.Status == ImportJobStatus.Running
-                && x.StartedAtUtc != null
-                && x.StartedAtUtc < staleCutoff)
+        // PrepareQueueAsync runs only at process startup. Any Status=Running row is
+        // orphaned from a prior crash/deploy — there is no live worker still holding it.
+        // Filtering by age left recently-interrupted imports stuck Running forever
+        // (timeout is never re-checked while the process stays up).
+        var interruptedRunning = await db.ImportJobs
+            .Where(x => x.Status == ImportJobStatus.Running)
             .Select(x => new { x.Id, x.AdmissionYearId, x.CreatedAtUtc, x.ObjectKey })
             .ToListAsync(cancellationToken);
 
-        if (staleRunning.Count > 0)
+        if (interruptedRunning.Count > 0)
         {
             var requeueIds = new List<Guid>();
             var superseded = new List<(Guid Id, string? ObjectKey)>();
 
-            foreach (var stale in staleRunning)
+            foreach (var interrupted in interruptedRunning)
             {
                 // A newer job for the same year means the admin already moved on
                 // (retry after crash). Re-running the old R2 object would full-replace
                 // student results and silently overwrite the newer import.
                 var hasNewerJob = await db.ImportJobs.AnyAsync(
-                    x => x.AdmissionYearId == stale.AdmissionYearId
-                        && x.Id != stale.Id
-                        && x.CreatedAtUtc > stale.CreatedAtUtc,
+                    x => x.AdmissionYearId == interrupted.AdmissionYearId
+                        && x.Id != interrupted.Id
+                        && x.CreatedAtUtc > interrupted.CreatedAtUtc,
                     cancellationToken);
 
                 if (hasNewerJob)
-                    superseded.Add((stale.Id, stale.ObjectKey));
+                    superseded.Add((interrupted.Id, interrupted.ObjectKey));
                 else
-                    requeueIds.Add(stale.Id);
+                    requeueIds.Add(interrupted.Id);
             }
 
             if (superseded.Count > 0)
@@ -105,7 +103,7 @@ public class ImportJobService(
                     await TryDeleteObjectAsync(objectKey, id, cancellationToken);
 
                 logger.LogWarning(
-                    "Marked {Count} superseded stale import jobs as failed to protect newer imports.",
+                    "Marked {Count} superseded interrupted import jobs as failed to protect newer imports.",
                     superseded.Count);
             }
 
@@ -119,9 +117,8 @@ public class ImportJobService(
                         cancellationToken);
 
                 logger.LogWarning(
-                    "Requeued {Count} stale import jobs that were running longer than {Timeout}.",
-                    requeueIds.Count,
-                    StaleRunningJobTimeout);
+                    "Requeued {Count} import jobs left Running after process restart.",
+                    requeueIds.Count);
             }
         }
 
