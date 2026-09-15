@@ -42,7 +42,9 @@ public class ImportJobService(
 
         db.ImportJobs.Add(job);
         await db.SaveChangesAsync(cancellationToken);
-        await queue.EnqueueAsync(job.Id, cancellationToken);
+        // Enqueue with an uncancellable token so a client disconnect after SaveChanges
+        // cannot leave a Queued row that only runs after the next process restart.
+        await queue.EnqueueAsync(job.Id, CancellationToken.None);
         return ToDto(job);
     }
 
@@ -68,12 +70,17 @@ public class ImportJobService(
         }
 
         // Signal any in-flight worker first so claim races still observe cancel.
+        // Leave the pending flag set: ProcessJobAsync consumes it. Clearing it here
+        // would drop the signal for a worker that has claimed but not yet registered.
         cancellationRegistry.RequestCancel(jobId);
 
         var cancelledMessage = ArabicErrorCatalog.GetMessage(ApiErrorCodes.ImportJobCancelled);
         var completedAt = DateTime.UtcNow;
+        // Persist Cancelled for Running too — in-memory registry alone is lost on
+        // restart, and PrepareQueueAsync would requeue the job and finish the import.
         var cancelled = await db.ImportJobs
-            .Where(x => x.Id == jobId && x.Status == ImportJobStatus.Queued)
+            .Where(x => x.Id == jobId
+                && (x.Status == ImportJobStatus.Queued || x.Status == ImportJobStatus.Running))
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(j => j.Status, ImportJobStatus.Cancelled)
                 .SetProperty(j => j.Message, cancelledMessage)
@@ -81,14 +88,8 @@ public class ImportJobService(
                 cancellationToken);
 
         if (cancelled > 0)
-        {
-            cancellationRegistry.TakePendingCancel(jobId);
             await TryDeleteObjectAsync(job.ObjectKey, jobId, cancellationToken);
-            return await GetAsync(jobId, cancellationToken);
-        }
 
-        // Already Running (or just claimed): cooperative cancel via registry.
-        // ProcessJobAsync will persist Cancelled when it observes the signal.
         return await GetAsync(jobId, cancellationToken);
     }
 
@@ -188,7 +189,12 @@ public class ImportJobService(
                 cancellationToken);
 
         if (claimed == 0)
+        {
+            // Drop a cancel signal for jobs that were cancelled (or otherwise
+            // terminal) before claim so the singleton registry does not retain it.
+            cancellationRegistry.TakePendingCancel(jobId);
             return;
+        }
 
         using var jobCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         using var registration = cancellationRegistry.RegisterRunning(jobId, jobCts);
@@ -228,7 +234,7 @@ public class ImportJobService(
                 var supersededMessage = ArabicErrorCatalog.GetMessage(ApiErrorCodes.ImportJobSuperseded);
                 var supersededAt = DateTime.UtcNow;
                 await db.ImportJobs
-                    .Where(x => x.Id == jobId)
+                    .Where(x => x.Id == jobId && x.Status == ImportJobStatus.Running)
                     .ExecuteUpdateAsync(setters => setters
                         .SetProperty(j => j.Status, ImportJobStatus.Failed)
                         .SetProperty(j => j.Message, supersededMessage)
@@ -247,14 +253,21 @@ public class ImportJobService(
 
             var completedAt = DateTime.UtcNow;
             var status = result.Success ? ImportJobStatus.Completed : ImportJobStatus.Failed;
-            await db.ImportJobs
-                .Where(x => x.Id == jobId)
+            // Only Running → terminal: never overwrite an admin Cancelled row.
+            var updated = await db.ImportJobs
+                .Where(x => x.Id == jobId && x.Status == ImportJobStatus.Running)
                 .ExecuteUpdateAsync(setters => setters
                     .SetProperty(j => j.ImportedCount, result.ImportedCount)
                     .SetProperty(j => j.Message, result.Message)
                     .SetProperty(j => j.Status, status)
                     .SetProperty(j => j.CompletedAtUtc, completedAt),
                     cancellationToken);
+
+            if (updated == 0)
+            {
+                userCancelled = true;
+                return;
+            }
 
             if (!result.Success)
                 logger.LogWarning("Import job {JobId} failed validation.", jobId);
@@ -271,7 +284,7 @@ public class ImportJobService(
             var failedMessage = ArabicErrorCatalog.GetMessage(ApiErrorCodes.InternalError);
             var completedAt = DateTime.UtcNow;
             await db.ImportJobs
-                .Where(x => x.Id == jobId)
+                .Where(x => x.Id == jobId && x.Status == ImportJobStatus.Running)
                 .ExecuteUpdateAsync(setters => setters
                     .SetProperty(j => j.Status, ImportJobStatus.Failed)
                     .SetProperty(j => j.Message, failedMessage)
