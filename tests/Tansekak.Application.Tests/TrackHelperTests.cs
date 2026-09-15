@@ -8,13 +8,10 @@ public class TrackHelperTests
     [Theory]
     [InlineData("ادبي", AcademicTrack.Literature)]
     [InlineData("الادبي", AcademicTrack.Literature)]
-    [InlineData("الشعبة الأدبية", AcademicTrack.Literature)]
-    [InlineData("علمي رياضه", AcademicTrack.Science)]
-    [InlineData("علمي رياضة", AcademicTrack.Science)]
-    [InlineData("Mathematics", AcademicTrack.Science)]
+    [InlineData("علمي رياضه", AcademicTrack.Mathematics)]
+    [InlineData("علمي رياضة", AcademicTrack.Mathematics)]
+    [InlineData("Mathematics", AcademicTrack.Mathematics)]
     [InlineData("علمي علوم", AcademicTrack.Science)]
-    [InlineData("علمي", AcademicTrack.Science)]
-    [InlineData("الشعبة العلمية", AcademicTrack.Science)]
     [InlineData("Science", AcademicTrack.Science)]
     [InlineData("Literature", AcademicTrack.Literature)]
     public void TryParse_accepts_normalized_arabic_variants(string input, AcademicTrack expected)
@@ -25,32 +22,24 @@ public class TrackHelperTests
     }
 
     [Fact]
-    public void AllTracks_exposes_science_and_literature_only()
+    public void AllTracks_exposes_three_tracks()
     {
-        Assert.Equal(["Science", "Literature"], TrackHelper.AllTracks);
+        Assert.Equal(["Science", "Mathematics", "Literature"], TrackHelper.AllTracks);
     }
 
     [Fact]
-    public void Canonical_maps_mathematics_to_science()
+    public void ToArabicName_uses_three_track_labels()
     {
-        Assert.Equal(AcademicTrack.Science, TrackHelper.Canonical(AcademicTrack.Mathematics));
-        Assert.Equal(AcademicTrack.Science, TrackHelper.Canonical(AcademicTrack.Science));
-        Assert.Equal(AcademicTrack.Literature, TrackHelper.Canonical(AcademicTrack.Literature));
+        Assert.Equal("علمي علوم", TrackHelper.ToArabicName(AcademicTrack.Science));
+        Assert.Equal("علمي رياضة", TrackHelper.ToArabicName(AcademicTrack.Mathematics));
+        Assert.Equal("أدبي", TrackHelper.ToArabicName(AcademicTrack.Literature));
     }
 
     [Fact]
-    public void ToArabicName_uses_two_track_labels()
+    public void ToDisplayName_preserves_distinct_tracks()
     {
-        Assert.Equal("الشعبة العلمية", TrackHelper.ToArabicName(AcademicTrack.Science));
-        Assert.Equal("الشعبة العلمية", TrackHelper.ToArabicName(AcademicTrack.Mathematics));
-        Assert.Equal("الشعبة الأدبية", TrackHelper.ToArabicName(AcademicTrack.Literature));
-    }
-
-    [Fact]
-    public void ToDisplayName_maps_mathematics_to_science()
-    {
-        Assert.Equal("Science", TrackHelper.ToDisplayName(AcademicTrack.Mathematics));
         Assert.Equal("Science", TrackHelper.ToDisplayName(AcademicTrack.Science));
+        Assert.Equal("Mathematics", TrackHelper.ToDisplayName(AcademicTrack.Mathematics));
         Assert.Equal("Literature", TrackHelper.ToDisplayName(AcademicTrack.Literature));
     }
 }

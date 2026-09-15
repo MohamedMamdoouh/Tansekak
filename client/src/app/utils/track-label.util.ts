@@ -2,18 +2,14 @@ import { TRACK_LABELS } from '../models';
 
 const TRACK_ALIASES: Record<string, string> = {
   Science: 'Science',
-  Mathematics: 'Science',
+  Mathematics: 'Mathematics',
   Literature: 'Literature',
-  علمي: 'Science',
   'علمي علوم': 'Science',
-  'علمي رياضة': 'Science',
-  'علمي رياضه': 'Science',
-  'الشعبة العلمية': 'Science',
+  'علمي رياضة': 'Mathematics',
+  'علمي رياضه': 'Mathematics',
   أدبي: 'Literature',
   ادبي: 'Literature',
   الادبي: 'Literature',
-  'الشعبة الأدبية': 'Literature',
-  'الشعبة الادبية': 'Literature',
 };
 
 export function canonicalizeTrack(track: string | null | undefined): string {

@@ -88,5 +88,5 @@ The admin UI uploads files over 20 MB to the API (same origin, max **100 MB**). 
 | `GET /health` | `{ "status": "healthy" }` |
 | `/predict` | SPA loads |
 | `/admin/login` → sign in | Cookie auth works |
-| `GET /api/config` | Current year, max score, tracks `Science` / `Literature` |
+| `GET /api/config` | Current year, max score, tracks `Science` / `Mathematics` / `Literature` |
 | `/admin/import` (after cutoffs uploaded) | Prediction returns results |

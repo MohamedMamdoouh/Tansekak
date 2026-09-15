@@ -24,6 +24,9 @@ dist/
 out-tsc/
 .angular/
 
+# Generated cutoff split backup
+SeededData/cutoffs/science-2026-merged.backup.md
+
 # Environment and secrets
 .env
 .env.*

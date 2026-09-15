@@ -66,6 +66,58 @@ public class StudentResultServiceTests
     }
 
     [Fact]
+    public async Task GetBySeatingNoAsync_ranks_science_and_mathematics_separately()
+    {
+        var (db, connection) = TestDbFactory.Create();
+        await using (connection)
+        await using (db)
+        {
+            db.AdmissionYears.Add(new AdmissionYear
+            {
+                Id = 1,
+                Year = 2026,
+                MaximumScore = 410,
+                IsCurrent = true
+            });
+            db.StudentResults.AddRange(
+                new StudentResult
+                {
+                    Id = 1,
+                    AdmissionYearId = 1,
+                    SeatingNo = "2710001",
+                    ArabicName = "طالب علوم",
+                    TotalDegree = 390,
+                    StudentCaseDesc = "علمي علوم",
+                    Track = AcademicTrack.Science
+                },
+                new StudentResult
+                {
+                    Id = 2,
+                    AdmissionYearId = 1,
+                    SeatingNo = "2510002",
+                    ArabicName = "طالب رياضة",
+                    TotalDegree = 390,
+                    StudentCaseDesc = "علمي رياضة",
+                    Track = AcademicTrack.Mathematics
+                });
+            await db.SaveChangesAsync();
+
+            var service = new StudentResultService(db, new CurrentAdmissionYearProvider(db));
+            var science = await service.GetBySeatingNoAsync("2710001");
+            var mathematics = await service.GetBySeatingNoAsync("2510002");
+
+            Assert.NotNull(science);
+            Assert.NotNull(mathematics);
+            Assert.Equal("Science", science!.Track);
+            Assert.Equal("Mathematics", mathematics!.Track);
+            Assert.Equal(1, science.TrackRank);
+            Assert.Equal(1, mathematics.TrackRank);
+            Assert.Equal(1, science.TrackTotalStudents);
+            Assert.Equal(1, mathematics.TrackTotalStudents);
+        }
+    }
+
+    [Fact]
     public async Task GetBySeatingNoAsync_ranks_peers_with_persisted_track()
     {
         var (db, connection) = TestDbFactory.Create();

@@ -58,7 +58,7 @@ Returns app settings for the **published current** admission year.
 | `appName` | string | From configuration (`Tansekak:AppName`) |
 | `currentYear` | number | Current year number (not the year entity id) |
 | `maximumScore` | number | Max score for that year |
-| `tracks` | string[] | Always `["Science","Literature"]` |
+| `tracks` | string[] | Always `["Science","Mathematics","Literature"]` |
 
 No current year → `503` `NO_CURRENT_YEAR`.
 
@@ -70,7 +70,7 @@ Predict faculties the student can reach in the **current** year.
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `track` | string | Required. Canonical values: `Science`, `Literature`. Aliases such as `Mathematics`, `علمي`, `أدبي` are accepted and canonicalized (`Mathematics` → `Science`) |
+| `track` | string | Required. Values: `Science`, `Mathematics`, `Literature`. Arabic aliases `علمي علوم`, `علمي رياضة`, `أدبي` are accepted |
 | `score` | number | Required. Must be ≥ 0. Must not exceed the current year’s `maximumScore` |
 | `page` | number | Optional. Default `1` |
 | `pageSize` | number | Optional. Default `10`. Max `100` (`PaginationConstants`) |
@@ -93,11 +93,10 @@ Predict faculties the student can reach in the **current** year.
 Eligibility and ordering:
 
 1. Current published year only
-2. Cutoff track is in the requested **track bucket** (`Science` includes stored `Mathematics` rows; `Literature` is its own bucket)
+2. Cutoff track **equals** the requested track exactly
 3. `score >= cutoffScore`
-4. Faculty `AllowedTracks` includes the requested canonical track
-5. One row per university–faculty (Science preferred over leftover Mathematics, then lowest cutoff id)
-6. Sorted **closest first**: `abs(score − cutoffScore)` ascending
+4. Faculty `AllowedTracks` includes the requested track
+5. Sorted **closest first**: `abs(score − cutoffScore)` ascending
 
 No current year → `503` `NO_CURRENT_YEAR`. Score above max → `400` `SCORE_EXCEEDS_MAX` (Arabic message includes the max as `{0}`). Invalid track / paging → `400` `VALIDATION_FAILED`.
 
@@ -114,13 +113,13 @@ Lookup by seating number for the **current year only**.
 | `totalDegree` | number | |
 | `studentCaseDesc` | string | |
 | `year` | number | Current year number |
-| `track` | string? | `Science` or `Literature` when resolvable |
+| `track` | string? | `Science`, `Mathematics`, or `Literature` when resolvable |
 | `trackRank` | number? | Rank among the same track in the current year |
 | `trackTotalStudents` | number? | Count of students in that track in the current year |
 
 Missing result → `404` `STUDENT_RESULT_NOT_FOUND`. No current year → `503` `NO_CURRENT_YEAR`. Empty seating number is treated as not found.
 
-Track is resolved from stored track, then `studentCaseDesc`, then seating number. Rank is among peers in the same canonical track. **Ties** (same `totalDegree`) are broken by **lower seating number** (ordinal string compare) ranking higher.
+Track is resolved from stored track, then `studentCaseDesc`, then seating number. Rank is among peers in the **same exact track**. **Ties** (same `totalDegree`) are broken by **lower seating number** (ordinal string compare) ranking higher.
 
 ### `GET /health`
 
@@ -146,7 +145,7 @@ There is **no delete** on governorates, universities, faculties, or university�
 | `GET` | `/api/admin/universities/{id}` | — | Single university |
 | `POST` | `/api/admin/universities` | `{ nameAr, governorateId, type }` | Created university |
 | `PUT` | `/api/admin/universities/{id}` | `{ nameAr, governorateId, type }` | Updated university |
-| `GET` | `/api/admin/faculties` | `search` | `[{ id, nameAr, allowedTracks }]` where `allowedTracks` is `Science` / `Literature` |
+| `GET` | `/api/admin/faculties` | `search` | `[{ id, nameAr, allowedTracks }]` where `allowedTracks` is `Science` / `Mathematics` / `Literature` |
 | `GET` | `/api/admin/faculties/{id}` | — | Single faculty |
 | `POST` | `/api/admin/faculties` | `{ nameAr, allowedTracks }` | At least one allowed track required |
 | `PUT` | `/api/admin/faculties/{id}` | `{ nameAr, allowedTracks }` | Updated faculty |

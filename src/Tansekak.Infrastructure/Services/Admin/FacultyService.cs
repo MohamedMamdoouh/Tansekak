@@ -58,9 +58,8 @@ public class FacultyService(AppDbContext db, EntityIdAllocator idAllocator) : IF
         {
             if (!TrackHelper.TryParse(value, out var track))
                 throw new ValidationException(ApiErrorCodes.InvalidTrack);
-            var canonical = TrackHelper.Canonical(track);
-            if (!tracks.Contains(canonical))
-                tracks.Add(canonical);
+            if (!tracks.Contains(track))
+                tracks.Add(track);
         }
 
         return tracks;
@@ -71,8 +70,6 @@ public class FacultyService(AppDbContext db, EntityIdAllocator idAllocator) : IF
             entity.Id,
             entity.NameAr,
             entity.AllowedTracks
-                .Select(TrackHelper.Canonical)
-                .Distinct()
                 .Select(TrackHelper.ToDisplayName)
                 .ToList());
 }

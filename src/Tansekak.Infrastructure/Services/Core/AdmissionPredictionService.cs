@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Tansekak.Application.Common;
 using Tansekak.Application.DTOs;
 using Tansekak.Application.Interfaces;
-using Tansekak.Domain.Enums;
 using Tansekak.Infrastructure.Persistence;
 
 namespace Tansekak.Infrastructure.Services;
@@ -13,9 +12,6 @@ public class AdmissionPredictionService(AppDbContext db, CurrentAdmissionYearPro
     {
         if (!TrackHelper.TryParse(request.Track, out var track))
             throw new ValidationException(ApiErrorCodes.InvalidTrack);
-
-        track = TrackHelper.Canonical(track);
-        var bucketTracks = TrackHelper.TracksInBucket(track);
 
         var currentYear = await yearProvider.GetCurrentAsync(cancellationToken);
 
@@ -30,38 +26,26 @@ public class AdmissionPredictionService(AppDbContext db, CurrentAdmissionYearPro
 
         var matches = await db.AdmissionCutoffs.AsNoTracking()
             .Where(c => c.AdmissionYearId == currentYear.Id
-                && bucketTracks.Contains(c.Track)
+                && c.Track == track
                 && score >= c.CutoffScore)
             .Select(c => new
             {
-                c.Id,
-                c.UniversityFacultyId,
-                c.Track,
-                c.CutoffScore,
+                SortKey = Math.Abs(score - c.CutoffScore),
                 UniversityName = c.UniversityFaculty.University.NameAr,
                 FacultyName = c.UniversityFaculty.Faculty.NameAr,
                 AllowedTracks = c.UniversityFaculty.Faculty.AllowedTracks,
             })
             .ToListAsync(cancellationToken);
 
-        var deduped = matches
-            .Where(x => TrackHelper.AllowsTrack(x.AllowedTracks, track))
-            .GroupBy(x => x.UniversityFacultyId)
-            .Select(g => g
-                .OrderBy(x => x.Track == AcademicTrack.Science ? 0 : 1)
-                .ThenBy(x => x.Id)
-                .First())
-            .Select(x => new
-            {
-                SortKey = Math.Abs(score - x.CutoffScore),
-                x.UniversityName,
-                x.FacultyName,
-            })
+        var eligible = matches
+            .Where(x => FacultyTrackValidator.IsTrackAllowed(
+                new Tansekak.Domain.Entities.Faculty { AllowedTracks = x.AllowedTracks },
+                track))
             .OrderBy(x => x.SortKey)
             .ToList();
 
-        var totalCount = deduped.Count;
-        var pageItems = deduped
+        var totalCount = eligible.Count;
+        var pageItems = eligible
             .Skip(skip)
             .Take(pageSize)
             .Select(x => new AdmissionResultDto(

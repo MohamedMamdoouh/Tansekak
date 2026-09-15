@@ -16,7 +16,6 @@ public static class FacultySeedMapper
     public static List<AcademicTrack> MapAllowedTracks(IEnumerable<string>? allowedTracks) =>
         (allowedTracks ?? [])
             .Select(ParseTrack)
-            .Select(TrackHelper.Canonical)
             .Distinct()
             .ToList();
 

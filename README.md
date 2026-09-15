@@ -42,12 +42,13 @@ Results are **indicative only**. Egypt’s official coordination portal decides 
 
 **Tracks**
 
-| API value    | Arabic         |
-| ------------ | -------------- |
-| `Science`    | الشعبة العلمية |
-| `Literature` | الشعبة الأدبية |
+| API value     | Arabic       |
+| ------------- | ------------ |
+| `Science`     | علمي علوم    |
+| `Mathematics` | علمي رياضة   |
+| `Literature`  | أدبي         |
 
-`Mathematics` still exists on the domain enum for legacy rows and is canonicalized to `Science` everywhere.
+Each track is distinct for prediction, cutoffs, faculty eligibility, and track rank.
 
 Public brand is **Tansekak**. API `appName` is `tansekak`. Admin chrome is **لوحة الإدارة**.
 
@@ -60,10 +61,12 @@ Not linked from the public site. Sign in at `/admin/login`.
 | Dashboard              | `/admin`                | Current year plus catalog and student-result counts (`cutoffsCount` is returned by the API but not shown) |
 | Admission years        | `/admin/years`          | Create, edit, delete the single admission year                                                            |
 | Cutoffs                | `/admin/cutoffs`        | CRUD for the **current** year                                                                             |
-| Import cutoffs         | `/admin/import`         | Science and/or Literature Markdown; each file replaces that track for the current year                    |
+| Import cutoffs         | `/admin/import`         | One Markdown file per track (علمي علوم، علمي رياضة، أدبي); each import replaces that track for the current year |
 | Import student results | `/admin/import-results` | Excel for the **current** year (replaces all results for that year)                                       |
 
 Import pages block navigation with a progress overlay until the upload finishes or you confirm leaving.
+
+After deploying the 3-track model to production that previously ran the Mathematics→Science migration, follow [docs/PRODUCTION_REIMPORT.md](docs/PRODUCTION_REIMPORT.md).
 
 **Development admin** (rejected in Production): `admin@tansekak.local` / `Admin@12345`. Production uses `AdminSeed__Email` and `AdminSeed__Password`.
 

@@ -15,7 +15,7 @@ namespace Tansekak.Infrastructure.Tests;
 public class SeededCutoffImportTests
 {
     [Fact]
-    public async Task Science_and_literature_markdown_import_against_seed_catalog()
+    public async Task All_three_track_markdown_imports_against_seed_catalog()
     {
         var (db, connection) = TestDbFactory.Create();
         await using (connection)
@@ -35,7 +35,11 @@ public class SeededCutoffImportTests
 
             var science = await ImportFileAsync(service, "science-2026.md", "Science");
             Assert.True(science.Success, FormatErrors("science-2026.md", science));
-            Assert.True(science.ImportedCount >= 300, $"Expected many science cutoffs, got {science.ImportedCount}.");
+            Assert.True(science.ImportedCount >= 250, $"Expected many science cutoffs, got {science.ImportedCount}.");
+
+            var mathematics = await ImportFileAsync(service, "mathematics-2026.md", "Mathematics");
+            Assert.True(mathematics.Success, FormatErrors("mathematics-2026.md", mathematics));
+            Assert.True(mathematics.ImportedCount >= 80, $"Expected many mathematics cutoffs, got {mathematics.ImportedCount}.");
 
             var literature = await ImportFileAsync(service, "literature-2026.md", "Literature");
             Assert.True(literature.Success, FormatErrors("literature-2026.md", literature));
@@ -58,13 +62,23 @@ public class SeededCutoffImportTests
                 .ToListAsync();
             Assert.DoesNotContain("طب", vetAsMedicine);
 
+            var cairoEngineering = await db.AdmissionCutoffs
+                .Where(c => c.Track == AcademicTrack.Mathematics)
+                .Join(db.UniversityFaculties, c => c.UniversityFacultyId, uf => uf.Id, (c, uf) => new { c, uf })
+                .Join(db.Faculties, x => x.uf.FacultyId, f => f.Id, (x, f) => new { x.c, x.uf, f })
+                .Join(db.Universities, x => x.uf.UniversityId, u => u.Id, (x, u) => new { x.f, u, x.c.CutoffScore })
+                .FirstOrDefaultAsync(x => x.f.NameAr == "هندسة" && x.u.NameAr == "جامعة القاهرة");
+            Assert.NotNull(cairoEngineering);
+
             Assert.Equal(science.ImportedCount, await db.AdmissionCutoffs.CountAsync(c => c.Track == AcademicTrack.Science));
+            Assert.Equal(mathematics.ImportedCount, await db.AdmissionCutoffs.CountAsync(c => c.Track == AcademicTrack.Mathematics));
             Assert.Equal(literature.ImportedCount, await db.AdmissionCutoffs.CountAsync(c => c.Track == AcademicTrack.Literature));
         }
     }
 
     [Theory]
     [InlineData("science-2026.md", "Science")]
+    [InlineData("mathematics-2026.md", "Mathematics")]
     [InlineData("literature-2026.md", "Literature")]
     public void Seeded_markdown_parses_and_resolves_without_errors(string fileName, string trackName)
     {

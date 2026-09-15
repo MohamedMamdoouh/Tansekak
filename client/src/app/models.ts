@@ -129,12 +129,13 @@ export interface StudentResult {
 }
 
 export const TRACK_LABELS: Record<string, string> = {
-  Science: 'الشعبة العلمية',
-  Mathematics: 'الشعبة العلمية',
-  Literature: 'الشعبة الأدبية',
+  Science: 'علمي علوم',
+  Mathematics: 'علمي رياضة',
+  Literature: 'أدبي',
 };
 
 export const TRACK_OPTIONS = [
-  { value: 'Science', label: 'الشعبة العلمية' },
-  { value: 'Literature', label: 'الشعبة الأدبية' },
+  { value: 'Science', label: 'علمي علوم' },
+  { value: 'Mathematics', label: 'علمي رياضة' },
+  { value: 'Literature', label: 'أدبي' },
 ];

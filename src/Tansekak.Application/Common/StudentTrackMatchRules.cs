@@ -10,16 +10,14 @@ public static class StudentTrackMatchRules
         string? seatingNo,
         AcademicTrack target)
     {
-        var canonicalTarget = TrackHelper.Canonical(target);
-
         if (explicitTrack is not null)
-            return TrackHelper.Canonical(explicitTrack.Value) == canonicalTarget;
+            return explicitTrack.Value == target;
 
         var fromCase = StudentTrackInferrer.TryInferFromCaseDesc(caseDesc);
         if (fromCase is not null)
-            return TrackHelper.Canonical(fromCase.Value) == canonicalTarget;
+            return fromCase.Value == target;
 
         var fromSeating = SeatingNumberTrackInferrer.TryInferFromSeatingNo(seatingNo);
-        return fromSeating is not null && TrackHelper.Canonical(fromSeating.Value) == canonicalTarget;
+        return fromSeating is not null && fromSeating.Value == target;
     }
 }

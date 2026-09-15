@@ -45,8 +45,6 @@ public class AdmissionCutoffService(AppDbContext db, EntityIdAllocator idAllocat
         if (!TrackHelper.TryParse(dto.Track, out var track))
             throw new ValidationException(ApiErrorCodes.InvalidTrack);
 
-        track = TrackHelper.Canonical(track);
-
         await ValidateCutoffAsync(dto.AdmissionYearId, dto.UniversityFacultyId, track, dto.CutoffScore, null, cancellationToken);
 
         var entity = new AdmissionCutoff
@@ -66,8 +64,6 @@ public class AdmissionCutoffService(AppDbContext db, EntityIdAllocator idAllocat
     {
         if (!TrackHelper.TryParse(dto.Track, out var track))
             throw new ValidationException(ApiErrorCodes.InvalidTrack);
-
-        track = TrackHelper.Canonical(track);
 
         var entity = await db.AdmissionCutoffs.FindAsync([id], cancellationToken);
         ServiceGuards.NotFoundIfNull(entity);
@@ -97,10 +93,7 @@ public class AdmissionCutoffService(AppDbContext db, EntityIdAllocator idAllocat
 
         if (yearId.HasValue) query = query.Where(x => x.AdmissionYearId == yearId.Value);
         if (!string.IsNullOrWhiteSpace(track) && TrackHelper.TryParse(track, out var t))
-        {
-            var bucket = TrackHelper.TracksInBucket(t);
-            query = query.Where(x => bucket.Contains(x.Track));
-        }
+            query = query.Where(x => x.Track == t);
         if (!string.IsNullOrWhiteSpace(search))
             query = query.Where(x => x.UniversityFaculty.University.NameAr.Contains(search) || x.UniversityFaculty.Faculty.NameAr.Contains(search));
 
@@ -128,11 +121,10 @@ public class AdmissionCutoffService(AppDbContext db, EntityIdAllocator idAllocat
         if (cutoffScore < 0)
             throw new ValidationException(ApiErrorCodes.CutoffNegative);
 
-        var bucket = TrackHelper.TracksInBucket(track);
         var duplicate = await db.AdmissionCutoffs.AnyAsync(x =>
             x.AdmissionYearId == yearId
             && x.UniversityFacultyId == universityFacultyId
-            && bucket.Contains(x.Track)
+            && x.Track == track
             && (!excludeId.HasValue || x.Id != excludeId.Value),
             cancellationToken);
 

@@ -25,9 +25,6 @@ public class ImportService(AppDbContext db, EntityIdAllocator idAllocator, ILogg
         if (!TrackHelper.TryParse(selectedTrackName, out var selectedTrack))
             throw new ValidationException(ApiErrorCodes.InvalidTrack);
 
-        selectedTrack = TrackHelper.Canonical(selectedTrack);
-        var bucketTracks = TrackHelper.TracksInBucket(selectedTrack);
-
         var year = await db.AdmissionYears.FindAsync([yearId], cancellationToken)
             ?? throw new NotFoundException(ApiErrorCodes.AdmissionYearNotFound);
 
@@ -69,13 +66,13 @@ public class ImportService(AppDbContext db, EntityIdAllocator idAllocator, ILogg
             if (db.Database.IsRelational())
             {
                 await db.AdmissionCutoffs
-                    .Where(c => c.AdmissionYearId == yearId && bucketTracks.Contains(c.Track))
+                    .Where(c => c.AdmissionYearId == yearId && c.Track == selectedTrack)
                     .ExecuteDeleteAsync(cancellationToken);
             }
             else
             {
                 var existing = await db.AdmissionCutoffs
-                    .Where(c => c.AdmissionYearId == yearId && bucketTracks.Contains(c.Track))
+                    .Where(c => c.AdmissionYearId == yearId && c.Track == selectedTrack)
                     .ToListAsync(cancellationToken);
                 db.AdmissionCutoffs.RemoveRange(existing);
             }

@@ -9,7 +9,7 @@ namespace Tansekak.Infrastructure.Tests;
 public class AdmissionPredictionServiceTests
 {
     [Fact]
-    public async Task Science_request_includes_former_science_and_mathematics_faculties()
+    public async Task Science_request_includes_science_faculties_only()
     {
         var (db, connection) = await SeedAsync();
         await using (connection)
@@ -18,9 +18,23 @@ public class AdmissionPredictionServiceTests
             var service = new AdmissionPredictionService(db, new CurrentAdmissionYearProvider(db));
             var result = await service.PredictAsync(new PredictRequestDto("Science", 380));
 
-            Assert.Equal(2, result.TotalCount);
-            Assert.Contains(result.Results, r => r.Faculty.NameAr == "طب");
-            Assert.Contains(result.Results, r => r.Faculty.NameAr == "هندسة");
+            Assert.Single(result.Results);
+            Assert.Equal("طب", result.Results[0].Faculty.NameAr);
+        }
+    }
+
+    [Fact]
+    public async Task Mathematics_request_includes_mathematics_faculties_only()
+    {
+        var (db, connection) = await SeedAsync();
+        await using (connection)
+        await using (db)
+        {
+            var service = new AdmissionPredictionService(db, new CurrentAdmissionYearProvider(db));
+            var result = await service.PredictAsync(new PredictRequestDto("Mathematics", 380));
+
+            Assert.Single(result.Results);
+            Assert.Equal("هندسة", result.Results[0].Faculty.NameAr);
         }
     }
 
@@ -47,7 +61,7 @@ public class AdmissionPredictionServiceTests
         await using (db)
         {
             var service = new AdmissionPredictionService(db, new CurrentAdmissionYearProvider(db));
-            var result = await service.PredictAsync(new PredictRequestDto("Science", 300));
+            var result = await service.PredictAsync(new PredictRequestDto("Mathematics", 300));
 
             Assert.Single(result.Results);
             Assert.Equal("هندسة", result.Results[0].Faculty.NameAr);
@@ -57,7 +71,25 @@ public class AdmissionPredictionServiceTests
     [Theory]
     [InlineData("Mathematics")]
     [InlineData("علمي رياضة")]
-    public async Task Mathematics_aliases_match_science_results(string track)
+    public async Task Mathematics_aliases_match_mathematics_results(string track)
+    {
+        var (db, connection) = await SeedAsync();
+        await using (connection)
+        await using (db)
+        {
+            var service = new AdmissionPredictionService(db, new CurrentAdmissionYearProvider(db));
+            var mathematics = await service.PredictAsync(new PredictRequestDto("Mathematics", 380));
+            var aliased = await service.PredictAsync(new PredictRequestDto(track, 380));
+
+            Assert.Equal(mathematics.TotalCount, aliased.TotalCount);
+            Assert.Equal(
+                mathematics.Results.Select(r => r.Faculty.NameAr).OrderBy(x => x),
+                aliased.Results.Select(r => r.Faculty.NameAr).OrderBy(x => x));
+        }
+    }
+
+    [Fact]
+    public async Task Science_and_mathematics_requests_return_different_faculties()
     {
         var (db, connection) = await SeedAsync();
         await using (connection)
@@ -65,28 +97,12 @@ public class AdmissionPredictionServiceTests
         {
             var service = new AdmissionPredictionService(db, new CurrentAdmissionYearProvider(db));
             var science = await service.PredictAsync(new PredictRequestDto("Science", 380));
-            var aliased = await service.PredictAsync(new PredictRequestDto(track, 380));
+            var mathematics = await service.PredictAsync(new PredictRequestDto("Mathematics", 380));
 
-            Assert.Equal(science.TotalCount, aliased.TotalCount);
-            Assert.Equal(
-                science.Results.Select(r => r.Faculty.NameAr).OrderBy(x => x),
-                aliased.Results.Select(r => r.Faculty.NameAr).OrderBy(x => x));
-        }
-    }
-
-    [Fact]
-    public async Task Results_are_sorted_by_closest_cutoff_first()
-    {
-        var (db, connection) = await SeedAsync();
-        await using (connection)
-        await using (db)
-        {
-            var service = new AdmissionPredictionService(db, new CurrentAdmissionYearProvider(db));
-            var result = await service.PredictAsync(new PredictRequestDto("Science", 380));
-
-            Assert.Equal(2, result.TotalCount);
-            Assert.Equal("طب", result.Results[0].Faculty.NameAr);
-            Assert.Equal("هندسة", result.Results[1].Faculty.NameAr);
+            Assert.Contains(science.Results, r => r.Faculty.NameAr == "طب");
+            Assert.DoesNotContain(science.Results, r => r.Faculty.NameAr == "هندسة");
+            Assert.Contains(mathematics.Results, r => r.Faculty.NameAr == "هندسة");
+            Assert.DoesNotContain(mathematics.Results, r => r.Faculty.NameAr == "طب");
         }
     }
 
@@ -97,6 +113,23 @@ public class AdmissionPredictionServiceTests
         await using (connection)
         await using (db)
         {
+            db.Faculties.Add(new Faculty
+            {
+                Id = 3,
+                NameAr = "صيدلة",
+                AllowedTracks = [AcademicTrack.Science]
+            });
+            db.UniversityFaculties.Add(new UniversityFaculty { Id = 3, UniversityId = 1, FacultyId = 3 });
+            db.AdmissionCutoffs.Add(new AdmissionCutoff
+            {
+                Id = 3,
+                AdmissionYearId = 1,
+                UniversityFacultyId = 3,
+                Track = AcademicTrack.Science,
+                CutoffScore = 360
+            });
+            await db.SaveChangesAsync();
+
             var service = new AdmissionPredictionService(db, new CurrentAdmissionYearProvider(db));
             var result = await service.PredictAsync(new PredictRequestDto("Science", 380, Page: 1, PageSize: 1));
 
@@ -119,31 +152,6 @@ public class AdmissionPredictionServiceTests
                 () => service.PredictAsync(new PredictRequestDto("Science", 500)));
 
             Assert.Equal(ApiErrorCodes.ScoreExceedsMax, ex.ErrorCode);
-        }
-    }
-
-    [Fact]
-    public async Task Duplicate_science_and_mathematics_cutoffs_return_one_college()
-    {
-        var (db, connection) = await SeedAsync();
-        await using (connection)
-        await using (db)
-        {
-            db.AdmissionCutoffs.Add(new AdmissionCutoff
-            {
-                Id = 3,
-                AdmissionYearId = 1,
-                UniversityFacultyId = 1,
-                Track = AcademicTrack.Mathematics,
-                CutoffScore = 370
-            });
-            await db.SaveChangesAsync();
-
-            var service = new AdmissionPredictionService(db, new CurrentAdmissionYearProvider(db));
-            var result = await service.PredictAsync(new PredictRequestDto("Science", 380));
-
-            Assert.Equal(2, result.TotalCount);
-            Assert.Equal(1, result.Results.Count(r => r.Faculty.NameAr == "طب"));
         }
     }
 

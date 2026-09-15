@@ -7,10 +7,10 @@ public class StudentTrackMatchRulesTests
 {
     [Theory]
     [InlineData("علمي علوم", "2712345", AcademicTrack.Science)]
-    [InlineData("علمي رياضه", "2543210", AcademicTrack.Science)]
+    [InlineData("علمي رياضه", "2543210", AcademicTrack.Mathematics)]
     [InlineData("الادبي", "2012345", AcademicTrack.Literature)]
     [InlineData(null, "2789012", AcademicTrack.Science)]
-    [InlineData("", "2432109", AcademicTrack.Science)]
+    [InlineData("", "2432109", AcademicTrack.Mathematics)]
     public void MatchesTrack_uses_case_desc_or_seating_fallback(
         string? caseDesc,
         string seatingNo,
@@ -33,13 +33,19 @@ public class StudentTrackMatchRulesTests
     }
 
     [Fact]
-    public void MatchesTrack_treats_stored_mathematics_as_science()
+    public void MatchesTrack_distinguishes_science_and_mathematics()
     {
+        Assert.False(StudentTrackMatchRules.MatchesTrack(
+            AcademicTrack.Mathematics,
+            "علمي رياضة",
+            "2543210",
+            AcademicTrack.Science));
+
         Assert.True(StudentTrackMatchRules.MatchesTrack(
             AcademicTrack.Mathematics,
-            "الادبي",
-            "2012345",
-            AcademicTrack.Science));
+            "علمي رياضة",
+            "2543210",
+            AcademicTrack.Mathematics));
     }
 
     [Fact]
@@ -64,18 +70,18 @@ public class StudentTrackMatchRulesTests
     }
 
     [Fact]
-    public void ResolveTrack_canonicalizes_stored_mathematics()
+    public void ResolveTrack_preserves_stored_mathematics()
     {
         var entity = new Tansekak.Domain.Entities.StudentResult
         {
-            SeatingNo = "2012345",
-            StudentCaseDesc = "الادبي",
+            SeatingNo = "2543210",
+            StudentCaseDesc = "علمي رياضة",
             Track = AcademicTrack.Mathematics,
             TotalDegree = 300,
             ArabicName = "Test",
             AdmissionYearId = 1
         };
 
-        Assert.Equal(AcademicTrack.Science, StudentTrackRankCalculator.ResolveTrack(entity));
+        Assert.Equal(AcademicTrack.Mathematics, StudentTrackRankCalculator.ResolveTrack(entity));
     }
 }

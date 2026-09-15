@@ -90,8 +90,8 @@ Unknown paths redirect to `/`.
 
 1. Cutoff belongs to the current year.
 2. Student score **≥** cutoff score (eligible only).
-3. Cutoff track is in the student’s Science or Literature **bucket**.
-4. Faculty `AllowedTracks` matches the student’s canonical track.
+3. Cutoff track **equals** the student’s track exactly.
+4. Faculty `AllowedTracks` includes the student’s track.
 
 **Sort:** `abs(score − cutoff)` ascending (closest eligible cutoff first). Duplicate university–faculty rows are collapsed to one result.
 
@@ -110,9 +110,9 @@ Until cutoffs exist for the current year, prediction returns an empty list.
 
 Both `/thanaweya-result` and `/track-rank` look up `GET /api/thanaweya-results/{seatingNo}` for the **current** admission year.
 
-When a row exists, the API returns seating number, Arabic name, total degree, student case, inferred/canonical track, track rank, and track cohort size when rank can be computed.
+When a row exists, the API returns seating number, Arabic name, total degree, student case, inferred track, track rank, and track cohort size when rank can be computed.
 
-**Rank rule:** among students in the same canonical track, **higher score ranks better**; ties are broken by **lower seating number**.
+**Rank rule:** among students in the same exact track (علمي علوم، علمي رياضة، or أدبي), **higher score ranks better**; ties are broken by **lower seating number**.
 
 Lookup returns not found when the seating number is missing for the current year.
 
@@ -120,16 +120,15 @@ Lookup returns not found when the seating number is missing for the current year
 
 ## 7. Academic tracks
 
-Public UI and `GET /api/config` expose **two** tracks:
+Public UI and `GET /api/config` expose **three** tracks:
 
-| API value    | Arabic label   |
-| ------------ | -------------- |
-| `Science`    | الشعبة العلمية |
-| `Literature` | الشعبة الأدبية |
+| API value     | Arabic label |
+| ------------- | ------------ |
+| `Science`     | علمي علوم    |
+| `Mathematics` | علمي رياضة   |
+| `Literature`  | أدبي         |
 
-The domain enum still has `Mathematics = 2`. Mathematics is **canonicalized to Science everywhere** (prediction, import, rank, labels, `AllowedTracks` matching).
-
-The **Science bucket** includes stored `Science` and `Mathematics` cutoff/result rows. Literature is its own bucket.
+Each track is distinct end-to-end: prediction, cutoff import, faculty eligibility, student result storage, and track rank all use **exact track matching** (no bucketing).
 
 ---
 
@@ -143,7 +142,7 @@ Authentication is **cookie-based ASP.NET Core Identity** with the **Administrato
 | `/admin`                | Dashboard                                                            |
 | `/admin/years`          | Create, edit, and delete the single admission year                   |
 | `/admin/cutoffs`        | CRUD for the **current year only** (API may filter by `yearId`)      |
-| `/admin/import`         | Science and/or Literature `.md` for the **current year**             |
+| `/admin/import`         | One `.md` per track (Science, Mathematics, Literature) for the **current year** |
 | `/admin/import-results` | `.xlsx` for the **current year**; replaces all results for that year |
 
 Import pages show a progress overlay. Navigation away is **blocked** until the import finishes or the operator confirms leaving.
@@ -239,7 +238,7 @@ Student workbooks are not stored in the repo.
 
 Admin imports target the **current** admission year only. There is no preview step: a file is validated, then applied in full or rejected in full.
 
-- **Cutoffs:** Science and/or Literature Markdown (`.md`, max 10 MB). Pipe table with **الكلية** / **الحد الأدنى**. Each file replaces that track for the current year (Science import also clears legacy `Mathematics` rows).
+- **Cutoffs:** One Markdown (`.md`, max 10 MB) per track (`Science`, `Mathematics`, `Literature`). Pipe table with **الكلية** / **الحد الأدنى**. Each import replaces that track for the current year only.
 - **Student results:** Excel (`.xlsx`) with columns `seating_no`, `arabic_name`, `total_degree`, `student_case_desc`. Replaces all results for the current year. Direct upload ≤ 20 MB; larger files use Cloudflare R2 and an async job.
 
 Any validation error rejects the entire file. Import endpoints and error codes: **[docs/API.md](API.md)**.
@@ -302,7 +301,7 @@ The product is successful for this stage when:
 
 - A student can get an **eligible-only** faculty list for the published year, filtered by track and `AllowedTracks`, sorted by closest cutoff.
 - A student can look up an imported result by seating number and see track rank when data exists.
-- An operator can manage the admission year, import Science/Literature Markdown, import Excel results, and CRUD current-year cutoffs.
+- An operator can manage the admission year, import Science/Mathematics/Literature Markdown, import Excel results, and CRUD current-year cutoffs.
 - Failures return Arabic catalog messages and stable error codes; health is a raw probe; auth is cookies.
 - Fresh databases bootstrap catalog + 2027 current year + admin, and predictions stay empty until cutoffs are imported.
 

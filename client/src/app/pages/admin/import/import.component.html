@@ -13,7 +13,7 @@
           <p class="error">{{ yearLoadError }}</p>
         }
 
-        <form (ngSubmit)="upload()">
+        <form [formGroup]="form" (ngSubmit)="upload()">
           @if (currentYear) {
             <p class="note">
               سنة القبول الحالية:
@@ -22,38 +22,38 @@
             </p>
           }
 
-          <p class="note">
-            ارفع ملف Markdown لكل شعبة. ملف
-            <strong>{{ trackLabel('Science') }}</strong>
-            <strong> يستبدل</strong>
-            كل حدود القبول الحالية لهذه السنة في الشعبة العلمية، وملف
-            <strong>{{ trackLabel('Literature') }}</strong>
-            <strong> يستبدل</strong>
-            كل حدود الشعبة الأدبية. يمكن استيراد ملف واحد دون المساس بالشعبة الأخرى.
-          </p>
+          <div class="form-group">
+            <label>الشعبة</label>
+            <select formControlName="track">
+              @for (t of trackOptions; track t.value) {
+                <option [value]="t.value">{{ t.label }}</option>
+              }
+            </select>
+            @if (form.get('track')?.invalid && form.get('track')?.touched) {
+              <small class="field-error">يرجى اختيار الشعبة</small>
+            }
+          </div>
+
+          @if (form.value.track) {
+            <p class="note">
+              هذا الاستيراد خاص بشعبة
+              <strong>{{ trackLabel(form.value.track!) }}</strong> فقط، و<strong>يستبدل</strong>
+              كل حدود القبول الحالية لهذه السنة والشعبة.
+            </p>
+          }
 
           <p class="hint">
             صيغة الملف: جدول Markdown بعمودين —
             <code>الكلية | الحد الأدنى</code>
           </p>
 
-          @for (slot of slots; track slot.track) {
-            <div class="form-group">
-              <label>{{ slot.label }} (.md)</label>
-              <input
-                type="file"
-                accept=".md"
-                (change)="onFile($event, slot)"
-              />
-              @if (slot.file) {
-                <small class="text-muted">{{ slot.file.name }}</small>
-              }
-            </div>
-          }
-
-          @if (showMissingFileError()) {
-            <small class="field-error">يرجى اختيار ملف Markdown واحد على الأقل</small>
-          }
+          <div class="form-group">
+            <label>ملف Markdown (.md)</label>
+            <input type="file" (change)="onFile($event)" accept=".md" />
+            @if (fileTouched && !file) {
+              <small class="field-error">يرجى اختيار ملف Markdown</small>
+            }
+          </div>
 
           <button
             class="btn btn-primary"
@@ -64,56 +64,30 @@
           </button>
         </form>
 
+        @if (message) {
+          <p [class]="result?.success ? 'success' : 'error'">{{ message }}</p>
+        }
+        @if (result?.errors?.length) {
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>الصف</th>
+                  <th>العمود</th>
+                  <th>الرسالة</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (e of result!.errors!; track $index) {
+                  <tr>
+                    <td>{{ e.rowNumber }}</td>
+                    <td>{{ e.column }}</td>
+                    <td>{{ e.message }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
       </div>
     </div>
-
-    @if (resultDialog) {
-      <div class="dialog-backdrop">
-        <div
-          class="dialog"
-          (click)="$event.stopPropagation()"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div
-            class="dialog-icon"
-            [class.dialog-icon--success]="resultDialog.success"
-            [class.dialog-icon--error]="!resultDialog.success"
-          >
-            {{ resultDialog.success ? '✓' : '!' }}
-          </div>
-          <h3>{{ resultDialog.title }}</h3>
-          <p class="dialog-lead">{{ resultDialog.message }}</p>
-
-          @for (item of resultDialog.results; track item.track) {
-            @if (item.result?.errors?.length) {
-              <div class="dialog-card">
-                <strong>{{ item.label }}</strong>
-                <div class="table-scroll">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>الصف</th>
-                        <th>العمود</th>
-                        <th>الرسالة</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (e of item.result!.errors!; track $index) {
-                        <tr>
-                          <td>{{ e.rowNumber }}</td>
-                          <td>{{ e.column }}</td>
-                          <td>{{ e.message }}</td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            }
-          }
-
-          <p class="dialog-muted">سيتم إعادة تحميل الصفحة خلال 5 ثوانٍ...</p>
-        </div>
-      </div>
-    }
