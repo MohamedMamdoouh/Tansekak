@@ -252,25 +252,42 @@ public class ImportJobService(
             var result = await importService.ImportAsync(job.AdmissionYearId, stream, fileName, jobCts.Token);
 
             var completedAt = DateTime.UtcNow;
-            var status = result.Success ? ImportJobStatus.Completed : ImportJobStatus.Failed;
-            // Only Running → terminal: never overwrite an admin Cancelled row.
-            var updated = await db.ImportJobs
-                .Where(x => x.Id == jobId && x.Status == ImportJobStatus.Running)
-                .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(j => j.ImportedCount, result.ImportedCount)
-                    .SetProperty(j => j.Message, result.Message)
-                    .SetProperty(j => j.Status, status)
-                    .SetProperty(j => j.CompletedAtUtc, completedAt),
-                    cancellationToken);
-
-            if (updated == 0)
+            if (result.Success)
             {
-                userCancelled = true;
-                return;
+                // ImportAsync already committed the full-replace. If CancelAsync raced
+                // after that commit and wrote Cancelled, Completed must still win —
+                // otherwise the UI shows cancelled while the new results are live.
+                await db.ImportJobs
+                    .Where(x => x.Id == jobId
+                        && (x.Status == ImportJobStatus.Running
+                            || x.Status == ImportJobStatus.Cancelled))
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(j => j.ImportedCount, result.ImportedCount)
+                        .SetProperty(j => j.Message, result.Message)
+                        .SetProperty(j => j.Status, ImportJobStatus.Completed)
+                        .SetProperty(j => j.CompletedAtUtc, completedAt),
+                        cancellationToken);
             }
+            else
+            {
+                // Validation/parse failure did not write results — keep Cancelled if set.
+                var updated = await db.ImportJobs
+                    .Where(x => x.Id == jobId && x.Status == ImportJobStatus.Running)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(j => j.ImportedCount, result.ImportedCount)
+                        .SetProperty(j => j.Message, result.Message)
+                        .SetProperty(j => j.Status, ImportJobStatus.Failed)
+                        .SetProperty(j => j.CompletedAtUtc, completedAt),
+                        cancellationToken);
 
-            if (!result.Success)
+                if (updated == 0)
+                {
+                    userCancelled = true;
+                    return;
+                }
+
                 logger.LogWarning("Import job {JobId} failed validation.", jobId);
+            }
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
