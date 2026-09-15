@@ -112,7 +112,7 @@ public class ImportJobServiceTests
     }
 
     [Fact]
-    public async Task PrepareQueueAsync_fails_stale_running_job_when_newer_job_exists()
+    public async Task PrepareQueueAsync_fails_interrupted_running_job_when_newer_job_exists()
     {
         var (db, connection) = TestDbFactory.Create();
         await using (connection)
@@ -120,14 +120,14 @@ public class ImportJobServiceTests
         {
             SeedAdmissionYear(db);
             var queue = new ImportJobQueue();
-            var staleJobId = Guid.NewGuid();
+            var interruptedJobId = Guid.NewGuid();
             var newerJobId = Guid.NewGuid();
             var now = DateTime.UtcNow;
 
             db.ImportJobs.AddRange(
                 new ImportJob
                 {
-                    Id = staleJobId,
+                    Id = interruptedJobId,
                     AdmissionYearId = 1,
                     Status = ImportJobStatus.Running,
                     ObjectKey = "imports/1/old.xlsx",
@@ -150,9 +150,9 @@ public class ImportJobServiceTests
             var service = CreateService(db, queue, r2: r2);
             await service.PrepareQueueAsync();
 
-            var stale = await db.ImportJobs.AsNoTracking().SingleAsync(x => x.Id == staleJobId);
-            Assert.Equal(ImportJobStatus.Failed, stale.Status);
-            Assert.Contains("استُبدلت", stale.Message);
+            var interrupted = await db.ImportJobs.AsNoTracking().SingleAsync(x => x.Id == interruptedJobId);
+            Assert.Equal(ImportJobStatus.Failed, interrupted.Status);
+            Assert.Contains("استُبدلت", interrupted.Message);
             Assert.Contains("imports/1/old.xlsx", r2.DeletedKeys);
 
             using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
@@ -166,7 +166,7 @@ public class ImportJobServiceTests
     }
 
     [Fact]
-    public async Task PrepareQueueAsync_requeues_stale_running_job_when_no_newer_job()
+    public async Task PrepareQueueAsync_requeues_interrupted_running_job_when_no_newer_job()
     {
         var (db, connection) = TestDbFactory.Create();
         await using (connection)
@@ -174,12 +174,12 @@ public class ImportJobServiceTests
         {
             SeedAdmissionYear(db);
             var queue = new ImportJobQueue();
-            var staleJobId = Guid.NewGuid();
+            var interruptedJobId = Guid.NewGuid();
             var now = DateTime.UtcNow;
 
             db.ImportJobs.Add(new ImportJob
             {
-                Id = staleJobId,
+                Id = interruptedJobId,
                 AdmissionYearId = 1,
                 Status = ImportJobStatus.Running,
                 ObjectKey = "imports/1/old.xlsx",
@@ -191,15 +191,102 @@ public class ImportJobServiceTests
             var service = CreateService(db, queue);
             await service.PrepareQueueAsync();
 
-            var stale = await db.ImportJobs.AsNoTracking().SingleAsync(x => x.Id == staleJobId);
-            Assert.Equal(ImportJobStatus.Queued, stale.Status);
-            Assert.Null(stale.StartedAtUtc);
+            var interrupted = await db.ImportJobs.AsNoTracking().SingleAsync(x => x.Id == interruptedJobId);
+            Assert.Equal(ImportJobStatus.Queued, interrupted.Status);
+            Assert.Null(interrupted.StartedAtUtc);
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
             var enumerator = queue.ReadAllAsync(cts.Token).GetAsyncEnumerator(cts.Token);
             Assert.True(await enumerator.MoveNextAsync());
-            Assert.Equal(staleJobId, enumerator.Current);
+            Assert.Equal(interruptedJobId, enumerator.Current);
             await enumerator.DisposeAsync();
+        }
+    }
+
+    [Fact]
+    public async Task PrepareQueueAsync_requeues_recently_started_running_job_on_startup()
+    {
+        // Crash/redeploy mid-import leaves Status=Running with a fresh StartedAtUtc.
+        // PrepareQueueAsync only runs at startup, so age filters incorrectly left these
+        // jobs stuck Running forever (SPA poll never completes).
+        var (db, connection) = TestDbFactory.Create();
+        await using (connection)
+        await using (db)
+        {
+            SeedAdmissionYear(db);
+            var queue = new ImportJobQueue();
+            var jobId = Guid.NewGuid();
+            var now = DateTime.UtcNow;
+
+            db.ImportJobs.Add(new ImportJob
+            {
+                Id = jobId,
+                AdmissionYearId = 1,
+                Status = ImportJobStatus.Running,
+                ObjectKey = "imports/1/recent.xlsx",
+                CreatedAtUtc = now.AddMinutes(-15),
+                StartedAtUtc = now.AddMinutes(-10)
+            });
+            await db.SaveChangesAsync();
+
+            var service = CreateService(db, queue);
+            await service.PrepareQueueAsync();
+
+            var job = await db.ImportJobs.AsNoTracking().SingleAsync(x => x.Id == jobId);
+            Assert.Equal(ImportJobStatus.Queued, job.Status);
+            Assert.Null(job.StartedAtUtc);
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+            var enumerator = queue.ReadAllAsync(cts.Token).GetAsyncEnumerator(cts.Token);
+            Assert.True(await enumerator.MoveNextAsync());
+            Assert.Equal(jobId, enumerator.Current);
+            await enumerator.DisposeAsync();
+        }
+    }
+
+    [Fact]
+    public async Task PrepareQueueAsync_fails_recent_running_job_when_newer_completed_exists()
+    {
+        var (db, connection) = TestDbFactory.Create();
+        await using (connection)
+        await using (db)
+        {
+            SeedAdmissionYear(db);
+            var queue = new ImportJobQueue();
+            var interruptedJobId = Guid.NewGuid();
+            var newerJobId = Guid.NewGuid();
+            var now = DateTime.UtcNow;
+
+            db.ImportJobs.AddRange(
+                new ImportJob
+                {
+                    Id = interruptedJobId,
+                    AdmissionYearId = 1,
+                    Status = ImportJobStatus.Running,
+                    ObjectKey = "imports/1/old.xlsx",
+                    CreatedAtUtc = now.AddMinutes(-40),
+                    StartedAtUtc = now.AddMinutes(-30)
+                },
+                new ImportJob
+                {
+                    Id = newerJobId,
+                    AdmissionYearId = 1,
+                    Status = ImportJobStatus.Completed,
+                    ObjectKey = "imports/1/new.xlsx",
+                    CreatedAtUtc = now.AddMinutes(-10),
+                    CompletedAtUtc = now.AddMinutes(-5),
+                    ImportedCount = 10
+                });
+            await db.SaveChangesAsync();
+
+            var r2 = new FakeR2Storage();
+            var service = CreateService(db, queue, r2: r2);
+            await service.PrepareQueueAsync();
+
+            var interrupted = await db.ImportJobs.AsNoTracking().SingleAsync(x => x.Id == interruptedJobId);
+            Assert.Equal(ImportJobStatus.Failed, interrupted.Status);
+            Assert.Contains("استُبدلت", interrupted.Message);
+            Assert.Contains("imports/1/old.xlsx", r2.DeletedKeys);
         }
     }
 
