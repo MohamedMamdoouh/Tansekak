@@ -19,11 +19,20 @@
             >سنوات القبول</a
           >
           <a routerLink="/admin/cutoffs" routerLinkActive="active"
-            >حدود القبول</a
+            >تعديل حدود القبول</a
           >
           <a routerLink="/admin/import" routerLinkActive="active"
-            >استيراد حدود القبول</a
+            >رفع حدود القبول للكليات</a
           >
+          <!-- High school results upload — will be implemented later -->
+          <button
+            type="button"
+            class="nav-disabled"
+            disabled
+            aria-disabled="true"
+          >
+            رفع نتيجة الثانوية العامة
+          </button>
         </nav>
 
         <button type="button" class="logout-btn" (click)="logout()">

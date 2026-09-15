@@ -88,6 +88,9 @@
       }
 
       .nav-disabled {
+        border: none;
+        background: transparent;
+        font: inherit;
         color: rgba(255, 255, 255, 0.38);
         padding: 0.5rem 0.95rem;
         border-radius: 999px;

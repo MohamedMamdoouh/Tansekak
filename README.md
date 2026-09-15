@@ -4,7 +4,7 @@
 
 Tansekak is an admission eligibility checker for Egyptian Thanaweya Amma graduates. Students pick a track and total score; the app lists faculties they are eligible for against the **current published** admission year.
 
-Students can also look up an imported Thanaweya result by seating number and see their track rank among peers.
+Students can also look up a stored Thanaweya result by seating number and see their track rank among peers (when matching rows exist in the database).
 
 Results are **indicative only**. Egypt’s official coordination portal decides final placement.
 
@@ -27,36 +27,45 @@ Public chrome brand is **Tansekak**. API `appName` is `tansekak`. Admin chrome i
 | Feature            | Route               | Description                                       |
 | ------------------ | ------------------- | ------------------------------------------------- |
 | Landing            | `/`                 | Overview and entry points                         |
-| College prediction | `/predict`          | Track + score form                                |
+| College prediction | `/predict`          | Track + score form (navigates to `/results`)      |
 | Prediction results | `/results`          | Eligible faculties, client-side search, load-more |
 | Thanaweya lookup   | `/thanaweya-result` | Result by seating number (current year)           |
-| Track rank         | `/track-rank`       | Rank and percentile among the same track          |
+| Track rank         | `/track-rank`       | Rank among the same track (percentile in UI)      |
 | Coordination guide | `/guide`            | Static FAQ                                        |
 | Developer profile  | `/designer`         | Credits                                           |
 
 **Prediction**
 
+- `/predict` collects track + score and navigates to `/results?track=&score=`.
+- `/results` calls `POST /api/admission/predict` with `pageSize: 20`.
 - Eligible only: `student score >= cutoff`.
 - Current published year, matching track, and faculty `AllowedTracks`.
 - Sorted closest cutoff first (`abs(score − cutoff)`).
-- Frontend `pageSize: 20` with unlimited load-more. API default is 10, max 100.
+- Unlimited load-more. API default page size is 10, max 100.
 - Search filters **already loaded** university/faculty names (client-side).
 
 **Tracks:** `Science`, `Mathematics`, `Literature`. Each is distinct for prediction, cutoffs, faculty eligibility, and track rank.
+
+**Thanaweya lookup / track rank**
+
+- Both pages call `GET /api/thanaweya-results/{seatingNo}` for the current year.
+- There is **no admin import API** for student results at this stage. Rows must already exist in `StudentResults`.
+- Track rank percentile is computed in the Angular UI from `trackRank` and `trackTotalStudents`.
 
 ### Admin
 
 Sign in at `/admin/login` (not linked from the public site until an administrator is already signed in).
 
-| Page                   | Route                   | Description                                                                                          |
-| ---------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------- |
-| Dashboard              | `/admin`                | Current year plus governorate, faculty-type, and student-result counts                               |
-| Admission years        | `/admin/years`          | Create, edit, delete the single admission year                                                       |
-| Cutoffs                | `/admin/cutoffs`        | CRUD for the **current** year                                                                        |
-| Import cutoffs         | `/admin/import`         | One Markdown file per track (`Science`, `Mathematics`, `Literature`); each import replaces that track for the current year |
-| Import student results | *(disabled on dashboard)* | Placeholder only — Excel import will be implemented later |
+| Page             | Route           | Description                                                                                          |
+| ---------------- | --------------- | ---------------------------------------------------------------------------------------------------- |
+| Dashboard        | `/admin`        | Current year plus governorate, faculty-type, and student-result counts                               |
+| Admission years  | `/admin/years`  | Create, edit, delete the single admission year                                                       |
+| Cutoffs          | `/admin/cutoffs`| CRUD for the **current** year                                                                        |
+| Import cutoffs   | `/admin/import` | One Markdown file per track; each import replaces that track for the current year                    |
 
-Import pages block navigation with a progress overlay until the upload finishes or you confirm leaving.
+The dashboard also shows a **disabled** card for “استيراد نتائج الثانوية” (Excel student import). There is no `/admin/import-results` route and no backend import API — the card is a placeholder for a future feature.
+
+The cutoff import page blocks navigation with a progress overlay until the upload finishes or you confirm leaving.
 
 **Development admin** (rejected in Production): `admin@tansekak.local` / `Admin@12345`. Production uses `AdminSeed__Email` and `AdminSeed__Password`.
 
@@ -68,14 +77,16 @@ Import pages block navigation with a progress overlay until the upload finishes 
 
 | Layer         | Technology                                                       |
 | ------------- | ---------------------------------------------------------------- |
-| Backend       | ASP.NET Core 10, EF Core, PostgreSQL (Npgsql), Identity cookies  |
+| Backend       | ASP.NET Core 10, EF Core 10, PostgreSQL (Npgsql), Identity cookies |
 | Frontend      | Angular 19 standalone, RTL                                       |
 | Validation    | FluentValidation                                                 |
-| Tests         | xUnit                                                            |
+| Tests         | xUnit (70 tests across 3 projects)                               |
 | CI            | GitHub Actions (Angular production build + `dotnet test` solution) |
 | Deploy        | Docker monolith on Render, Neon Postgres                         |
 
 Clean Architecture: `Domain` → `Application` (services + DTOs, no MediatR, no repositories) → `Infrastructure` → `Api`. Integer business IDs use `EntityIdAllocator`; Identity tables use PostgreSQL identity columns.
+
+**Removed from current stage:** student Excel import, async `ImportJob` queue, Cloudflare R2 storage.
 
 ---
 
@@ -126,7 +137,7 @@ dotnet run
 - `http://localhost:5080`
 - Health: `/health` → `{ "status": "healthy" }`
 - OpenAPI (Development only): `/openapi/v1.json` (no Swagger UI)
-- Startup: production guards (non-Development), migrations, catalog seed if empty, faculty `AllowedTracks` repair, cutoff bootstrap for empty tracks, bootstrap year **2027** (max 320, current), admin user
+- Startup (non-test): production guards, EF migrations, catalog seed if empty, faculty `AllowedTracks` repair, Mathematics track repair on existing student rows, cutoff bootstrap for empty tracks, bootstrap year **2027** (max 320, current), admin user
 
 ### 3. Frontend
 
@@ -136,7 +147,7 @@ npm install
 npm start
 ```
 
-- `http://localhost:4200` (proxies `/api` to `:5080`)
+- `http://localhost:4200` (proxies `/api` and `/health` to `:5080`)
 
 ### 4. Cutoffs
 
@@ -177,8 +188,10 @@ Do **not** set `Frontend__Origin` in production — SPA and API share one origin
 | `Tansekak:AppName`                    | Returned by `/api/config`                             |
 | `AdminSeed:Email` / `Password`        | First-run admin                                       |
 | `Frontend:Origin`                     | CORS for local Angular (`http://localhost:4200`) only |
+| `Testing:SkipStartupSeed`             | Test host only — skips startup seeding                |
+| `Testing:UseSqlite`                   | Test host only — in-memory SQLite instead of Npgsql   |
 
-Production rejects localhost connection strings and the dev admin credentials.
+Production rejects localhost connection strings and the dev admin credentials. No object-storage env vars are required.
 
 ---
 
@@ -189,11 +202,14 @@ Seeded once when `Governorates` is empty: `Governorates.json`, `Universities.jso
 Every startup still:
 
 - Repairs `Faculties.AllowedTracks` from seed JSON when they diverge.
+- Repairs `StudentResults` rows whose Mathematics track was collapsed to Science (migration-era data fix).
 - Imports seed Markdown for any current-year track that has zero cutoffs.
 
 Entities: Governorate, University (`Public` / `Institute`), Faculty (`AllowedTracks`), UniversityFaculty, AdmissionYear, AdmissionCutoff, StudentResult, EntityIdSequence.
 
-EF migrations apply automatically on startup.
+EF migrations apply automatically on startup. Latest migrations include `CollapseMathematicsIntoScience` (data repair) and `DropImportJobs` (removes unused import-job table).
+
+Student results are **not seeded** and have **no admin write API** in the current stage.
 
 ---
 
@@ -202,6 +218,8 @@ EF migrations apply automatically on startup.
 Envelope: `{ success, message, errorCode?, data, errors? }`. Failures use a stable `errorCode` and Arabic `message`. Success default message is English. `/health` is not wrapped.
 
 Auth is **cookie Identity**, role `Administrator`.
+
+**Import (current stage):** Markdown cutoff import only — `POST /api/admin/admission-years/{yearId}/import`.
 
 Full contract: [docs/API.md](docs/API.md).
 
@@ -213,7 +231,7 @@ Full contract: [docs/API.md](docs/API.md).
 dotnet test Tansekak.sln --configuration Release
 ```
 
-CI runs an Angular production build, then that command. The solution includes **Application**, **Infrastructure**, and **Api** tests (track rules, prediction, admission year rules, seeded Markdown parse, connection resolution, HTTP integration). There are no E2E or Angular unit-test projects.
+CI runs an Angular production build, then that command. **70 tests** across Application, Infrastructure, and Api projects: track rules, prediction, admission year rules, Thanaweya lookup, Mathematics track repair, seeded Markdown parse, connection resolution, HTTP integration. There are no E2E or Angular unit-test projects.
 
 ---
 

@@ -13,7 +13,10 @@ import {
   hasTrackRank,
   predictQueryParams,
 } from '../../utils/student-result.util';
-import { scorePercentage } from '../../utils/thanaweya-score.util';
+import {
+  scorePercentage,
+  scoreProgress,
+} from '../../utils/thanaweya-score.util';
 import { getTrackLabel } from '../../utils/track-label.util';
 import { submitStudentLookup } from '../../utils/student-lookup.util';
 
@@ -91,6 +94,10 @@ export class TrackRankComponent {
 
   scorePercentage(totalDegree: number): string {
     return scorePercentage(totalDegree, this.thanaweyaMaxScore);
+  }
+
+  scoreProgress(totalDegree: number): number {
+    return scoreProgress(totalDegree, this.thanaweyaMaxScore);
   }
 
   predictQueryParams(): { score: number; track?: string } {

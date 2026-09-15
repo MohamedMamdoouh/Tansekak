@@ -64,15 +64,19 @@ Eligible when `score >= cutoffScore`, track matches exactly, and faculty `allowe
 
 `nameAr` is always Arabic. Score above max → `400` `SCORE_EXCEEDS_MAX`. Invalid track/paging → `400` `VALIDATION_FAILED` or `INVALID_TRACK`.
 
+The Angular `/predict` page only collects input; the client calls this endpoint from `/results`.
+
 ### `GET /api/thanaweya-results/{seatingNo}`
 
-Current year only. Also used by the track-rank page.
+Current year only. Used by `/thanaweya-result` and `/track-rank`.
 
 `data`: `{ seatingNo, arabicName, totalDegree, studentCaseDesc, year, maximumScore, track?, trackRank?, trackTotalStudents? }`
 
 `track` is `Science` / `Mathematics` / `Literature` when resolvable. Rank is among the same track; higher score wins; ties broken by lower seating number.
 
 Missing → `404` `STUDENT_RESULT_NOT_FOUND`. Empty seating number is treated as not found.
+
+**Read-only:** there is no admin API to create or import `StudentResult` rows in the current stage. Rows must already exist in the database (for example from a prior deployment or manual DB operations).
 
 ### `GET /health`
 
@@ -92,6 +96,8 @@ Catalog resources have no `DELETE`. Cutoffs and admission years do.
 | `POST` | `/api/admin/auth/logout` | Message `"Logged out successfully."` |
 | `GET` | `/api/admin/auth/me` | `{ email, role }` |
 | `GET` | `/api/admin/dashboard` | `{ governoratesCount, facultiesCount, studentResultsCount, currentYear }` |
+
+`studentResultsCount` counts existing `StudentResults` rows for the current year. It does not imply an import API exists.
 
 ### Catalog (GET list / GET by id / POST / PUT)
 
@@ -131,13 +137,15 @@ Item: `{ id, admissionYearId, universityFacultyId, track, cutoffScore, universit
 
 ### Imports
 
-Markdown cutoff import replaces that **year+track**. Failed import → `400` `VALIDATION_FAILED` with row `errors`. Success `data`: `{ success, message, importedCount?, errors? }`.
+**Current stage:** only Markdown cutoff import is implemented.
 
-Student-result Excel import is **not implemented** (admin UI shows a disabled placeholder).
+Markdown cutoff import replaces that **year+track**. Failed import → `400` `VALIDATION_FAILED` with row `errors`. Success `data`: `{ success, message, importedCount?, errors? }`.
 
 | Method | Path | Notes |
 | --- | --- | --- |
 | `POST` | `/api/admin/admission-years/{yearId}/import` | multipart `file` (`.md`, max 10 MB) + `track`. College / cutoff pipe table |
+
+**Removed (not part of the contract):** student Excel import (`import-results`), presigned R2 upload, async `ImportJob` polling/cancel. The admin dashboard shows a disabled placeholder card for future student import; there is no route or endpoint.
 
 ## Status codes
 

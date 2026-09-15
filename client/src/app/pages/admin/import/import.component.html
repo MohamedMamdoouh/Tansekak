@@ -1,6 +1,6 @@
 
     <div class="container">
-      <h1>استيراد حدود القبول</h1>
+      <h1>رفع حدود القبول للكليات</h1>
       <div class="card">
         @if (apiAvailable === false) {
           <p class="error">
@@ -99,7 +99,7 @@
 
     @if (showSuccessDialog) {
       <app-import-success-dialog
-        heading="تم استيراد حدود القبول"
+        heading="تم رفع حدود القبول للكليات"
         [message]="successMessage"
         [detailTitle]="successTrackLabel"
         [detailSubtitle]="successDetailSubtitle"

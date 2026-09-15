@@ -15,6 +15,8 @@ Related: [API.md](./API.md)
 
 No CORS setup on Render — API and SPA share one origin. Do **not** set `Frontend__Origin`.
 
+No object storage (R2/S3) is required. Student Excel import was removed from the current stage.
+
 There is no `render.yaml`. Create the web service in the Render dashboard.
 
 ---
@@ -56,11 +58,12 @@ Npgsql keyword format or a `postgresql://…` URI both work. The app rejects `lo
 On boot the app:
 
 1. Rejects localhost DB strings and the development admin credentials.
-2. Runs EF migrations.
+2. Runs EF migrations (including `DropImportJobs`, which removes the unused import-job table).
 3. Seeds the catalog from JSON if `Governorates` is empty, and creates admission year **2027** (max 320, current).
 4. Repairs `Faculties.AllowedTracks` from seed JSON when they diverge.
-5. Imports seed Markdown for any current-year track that has **zero** cutoffs (does not overwrite existing rows).
-6. Creates the admin user from `AdminSeed__*`.
+5. Repairs Mathematics tracks on existing `StudentResults` rows when case/seating inference indicates علمي رياضة.
+6. Imports seed Markdown for any current-year track that has **zero** cutoffs (does not overwrite existing rows).
+7. Creates the admin user from `AdminSeed__*`.
 
 Catalog JSON is copied into the image as `SeedData/*.json`. Cutoff Markdown is copied by the API project when those files are in the Docker build context (`SeededData/cutoffs/*.md` → `SeedData/cutoffs/`). `.dockerignore` excludes `*.md` globally, so production images often skip cutoff bootstrap and log that seed cutoff files were not found.
 
@@ -74,7 +77,13 @@ If prediction is empty after first boot, sign in at `/admin/login`, confirm the 
 
 The `2026` in filenames is the official source cycle; rows attach to the current year (**2027** on bootstrap). Each import replaces that track only.
 
-Student results are never seeded. Excel import for Thanaweya results is **not implemented yet** (admin dashboard shows a disabled placeholder). Lookup and track rank work only when `StudentResults` rows already exist in the database.
+### Student results
+
+Student results are **never seeded**. Excel import was **removed** from the backend; the admin dashboard shows a disabled placeholder card only.
+
+- `/thanaweya-result` and `/track-rank` are **read-only** and work when `StudentResults` rows already exist (for example from a prior deployment or manual database work).
+- There is no `/admin/import-results` route and no import API.
+- Deleting the admission year cascades student results for that year.
 
 ---
 
@@ -83,7 +92,9 @@ Student results are never seeded. Excel import for Thanaweya results is **not im
 | Check | Expected |
 | --- | --- |
 | `GET /health` | `{ "status": "healthy" }` |
-| `/predict` | SPA loads |
+| `/predict` | SPA loads; submitting navigates to `/results` |
 | `/admin/login` → sign in | Cookie auth works |
 | `GET /api/config` | Current year, max score, tracks `Science` / `Mathematics` / `Literature` |
 | Predict after cutoffs exist | Science vs Mathematics with the same score return different faculty lists |
+| `/admin/import` | Markdown upload works for one track |
+| `/thanaweya-result` | Returns `404` / not-found UI when no row exists; shows data when rows exist |
