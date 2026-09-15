@@ -11,6 +11,11 @@ interface StatCard {
   label: string;
 }
 
+interface TrackCutoffStat {
+  key: 'scienceCutoffsCount' | 'mathematicsCutoffsCount' | 'literatureCutoffsCount';
+  label: string;
+}
+
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
@@ -32,6 +37,20 @@ export class AdminDashboardComponent implements OnInit {
     { key: 'universityFacultiesCount', label: 'كليات بكل جامعة ومعهد' },
     { key: 'studentResultsCount', label: 'نتائج الثانوية' },
   ];
+
+  trackCutoffStats: TrackCutoffStat[] = [
+    { key: 'scienceCutoffsCount', label: 'حدود علمي علوم' },
+    { key: 'mathematicsCutoffsCount', label: 'حدود علمي رياضة' },
+    { key: 'literatureCutoffsCount', label: 'حدود أدبي' },
+  ];
+
+  hasMissingTrackCutoffs(data: Dashboard): boolean {
+    return (
+      data.scienceCutoffsCount === 0 ||
+      data.mathematicsCutoffsCount === 0 ||
+      data.literatureCutoffsCount === 0
+    );
+  }
 
   ngOnInit(): void {
     this.load();

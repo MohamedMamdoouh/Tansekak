@@ -37,22 +37,26 @@
               formControlName="score"
               [attr.max]="config?.maximumScore ?? defaultMaximumScore"
             />
-            <small class="text-muted"
-              >الحد الأقصى: {{ config?.maximumScore }}</small
-            >
-            @if (form.get('score')?.invalid && form.get('score')?.touched) {
-              @if (form.get('score')?.errors?.['required']) {
-                <small class="field-error">يرجى إدخال المجموع</small>
-              } @else if (form.get('score')?.errors?.['min']) {
-                <small class="field-error">المجموع لا يمكن أن يكون سالبا</small>
-              } @else if (form.get('score')?.errors?.['max']) {
-                <small class="field-error"
-                  >المجموع يتجاوز الحد الأقصى ({{
-                    config?.maximumScore
-                  }})</small
-                >
+            <div class="field-meta">
+              <small class="field-hint"
+                >الحد الأقصى: {{ config?.maximumScore }}</small
+              >
+              @if (form.get('score')?.invalid && form.get('score')?.touched) {
+                @if (form.get('score')?.errors?.['required']) {
+                  <small class="field-error">يرجى إدخال المجموع</small>
+                } @else if (form.get('score')?.errors?.['min']) {
+                  <small class="field-error"
+                    >المجموع لا يمكن أن يكون سالبا</small
+                  >
+                } @else if (form.get('score')?.errors?.['max']) {
+                  <small class="field-error"
+                    >المجموع يتجاوز الحد الأقصى ({{
+                      config?.maximumScore
+                    }})</small
+                  >
+                }
               }
-            }
+            </div>
           </div>
 
           @if (error) {

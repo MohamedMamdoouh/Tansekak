@@ -64,6 +64,8 @@ public static class DependencyInjection
         services.AddScoped<EntityIdAllocator>();
         services.AddScoped<CurrentAdmissionYearProvider>();
         services.AddScoped<IDataSeeder, JsonSeedService>();
+        services.AddScoped<FacultyAllowedTracksRepairService>();
+        services.AddScoped<CutoffBootstrapService>();
         services.AddScoped<IConfigService, ConfigService>();
         services.AddScoped<IAdmissionPredictionService, AdmissionPredictionService>();
         services.AddScoped<IGovernorateService, GovernorateService>();
@@ -103,6 +105,12 @@ public static class DependencyInjection
 
         var seeder = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
         await seeder.SeedAsync();
+
+        var facultyRepair = scope.ServiceProvider.GetRequiredService<FacultyAllowedTracksRepairService>();
+        await facultyRepair.RepairAsync();
+
+        var cutoffBootstrap = scope.ServiceProvider.GetRequiredService<CutoffBootstrapService>();
+        await cutoffBootstrap.BootstrapMissingTracksAsync();
 
         await SeedAdminUserAsync(scope.ServiceProvider);
     }

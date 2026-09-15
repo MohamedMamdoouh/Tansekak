@@ -53,6 +53,9 @@ export interface Dashboard {
   facultiesCount: number;
   universityFacultiesCount: number;
   cutoffsCount: number;
+  scienceCutoffsCount: number;
+  mathematicsCutoffsCount: number;
+  literatureCutoffsCount: number;
   studentResultsCount: number;
   currentYear: number | null;
 }

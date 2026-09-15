@@ -79,10 +79,12 @@ public sealed class TansekakWebApplicationFactory : WebApplicationFactory<Progra
         });
         db.Faculties.AddRange(
             new Faculty { Id = 1, NameAr = "طب", AllowedTracks = [AcademicTrack.Science] },
-            new Faculty { Id = 2, NameAr = "هندسة", AllowedTracks = [AcademicTrack.Mathematics] });
+            new Faculty { Id = 2, NameAr = "هندسة", AllowedTracks = [AcademicTrack.Mathematics] },
+            new Faculty { Id = 3, NameAr = "صيدلة", AllowedTracks = [AcademicTrack.Science] });
         db.UniversityFaculties.AddRange(
             new UniversityFaculty { Id = 1, UniversityId = 1, FacultyId = 1 },
-            new UniversityFaculty { Id = 2, UniversityId = 1, FacultyId = 2 });
+            new UniversityFaculty { Id = 2, UniversityId = 1, FacultyId = 2 },
+            new UniversityFaculty { Id = 3, UniversityId = 1, FacultyId = 3 });
         db.AdmissionCutoffs.AddRange(
             new AdmissionCutoff
             {
@@ -99,6 +101,14 @@ public sealed class TansekakWebApplicationFactory : WebApplicationFactory<Progra
                 UniversityFacultyId = 2,
                 Track = AcademicTrack.Mathematics,
                 CutoffScore = 280,
+            },
+            new AdmissionCutoff
+            {
+                Id = 3,
+                AdmissionYearId = 1,
+                UniversityFacultyId = 3,
+                Track = AcademicTrack.Science,
+                CutoffScore = 360,
             });
         db.StudentResults.AddRange(
             new StudentResult

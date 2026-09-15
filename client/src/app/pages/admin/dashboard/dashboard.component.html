@@ -44,6 +44,33 @@
           }
         </section>
 
+        <section class="cutoffs-section card" aria-label="حدود القبول حسب الشعبة">
+          <div class="cutoffs-header">
+            <h2>حدود القبول حسب الشعبة</h2>
+            <span class="cutoffs-total">الإجمالي: {{ data.cutoffsCount | number }}</span>
+          </div>
+
+          @if (hasMissingTrackCutoffs(data)) {
+            <p class="cutoffs-warning" role="status">
+              في شعبة بدون حدود قبول — التنبؤ لن يعمل لها حتى تستورد ملف
+              Markdown من
+              <a routerLink="/admin/import">استيراد حدود القبول</a>.
+            </p>
+          }
+
+          <div class="cutoffs-grid">
+            @for (track of trackCutoffStats; track track.key) {
+              <article
+                class="cutoff-track-card"
+                [class.cutoff-track-card--empty]="data[track.key] === 0"
+              >
+                <span class="cutoff-track-value">{{ data[track.key] | number }}</span>
+                <h3 class="cutoff-track-label">{{ track.label }}</h3>
+              </article>
+            }
+          </div>
+        </section>
+
         <section class="actions-section" aria-label="إجراءات سريعة">
           <h2 class="actions-title">ماذا تريد أن تفعل؟</h2>
           <div class="actions-grid">

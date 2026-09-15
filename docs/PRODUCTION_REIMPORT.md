@@ -2,6 +2,13 @@
 
 If production already ran migration `20260914220000_CollapseMathematicsIntoScience`, code deploy alone is not enough. Re-sync data using the steps below.
 
+On startup, the backend now:
+
+- Repairs `Faculties.AllowedTracks` from seed JSON when they diverge.
+- Auto-imports seed cutoff Markdown for any track that has **zero** cutoffs in the current admission year (does not overwrite existing cutoffs).
+
+Fresh deploys and empty Mathematics rows are repaired automatically when seed files are present. If production cutoffs were customized, follow the manual steps below instead of relying on bootstrap alone.
+
 ## 1. Deploy the 3-track code
 
 Deploy the backend and frontend build that restores distinct `Science`, `Mathematics`, and `Literature` handling.

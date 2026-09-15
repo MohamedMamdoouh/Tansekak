@@ -27,5 +27,8 @@ public record DashboardDto(
     int FacultiesCount,
     int UniversityFacultiesCount,
     int CutoffsCount,
+    int ScienceCutoffsCount,
+    int MathematicsCutoffsCount,
+    int LiteratureCutoffsCount,
     int StudentResultsCount,
     int? CurrentYear);

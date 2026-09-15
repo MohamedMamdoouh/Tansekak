@@ -28,6 +28,7 @@ public class ApiIntegrationTests : IClassFixture<TansekakWebApplicationFactory>
         Assert.True(envelope!.Success);
         Assert.Equal(2026, envelope.Data!.CurrentYear);
         Assert.Equal(410, envelope.Data.MaximumScore);
+        Assert.Equal(["Science", "Mathematics", "Literature"], envelope.Data.Tracks);
     }
 
     [Fact]
@@ -46,7 +47,24 @@ public class ApiIntegrationTests : IClassFixture<TansekakWebApplicationFactory>
         Assert.Equal(2, envelope.Data!.TotalCount);
         Assert.Single(envelope.Data.Results);
         Assert.True(envelope.Data.HasMore);
-        Assert.Equal("طب", envelope.Data.Results[0].Faculty.NameAr);
+        Assert.Equal("صيدلة", envelope.Data.Results[0].Faculty.NameAr);
+    }
+
+    [Fact]
+    public async Task Predict_mathematics_returns_engineering_only()
+    {
+        var client = _factory.CreateClient();
+        var response = await client.PostAsJsonAsync(
+            "/api/admission/predict",
+            new PredictRequestDto("Mathematics", 380));
+
+        response.EnsureSuccessStatusCode();
+        var envelope = await response.Content.ReadFromJsonAsync<ApiResponse<PredictResponseDto>>();
+
+        Assert.NotNull(envelope);
+        Assert.True(envelope!.Success);
+        Assert.Single(envelope.Data!.Results);
+        Assert.Equal("هندسة", envelope.Data.Results[0].Faculty.NameAr);
     }
 
     [Fact]

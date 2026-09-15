@@ -3,6 +3,27 @@
         max-width: 640px;
         margin: 0 auto;
       }
+
+      .field-meta {
+        display: grid;
+        gap: 0.2rem;
+        margin-top: 0.35rem;
+      }
+
+      .field-hint,
+      .field-error {
+        display: block;
+      }
+
+      .field-hint {
+        color: var(--color-text-muted);
+        font-size: 0.84rem;
+      }
+
+      .field-error {
+        text-align: inherit;
+        margin: 0;
+      }
       @media (max-width: 640px) {
         .predict-card .btn-primary {
           width: 100%;
