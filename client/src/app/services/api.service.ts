@@ -255,6 +255,12 @@ export class ApiService {
       .pipe(map((r) => r.data));
   }
 
+  cancelImportJob(jobId: string): Observable<ImportJob> {
+    return this.http
+      .post<ApiResponse<ImportJob>>(`/api/admin/import-jobs/${jobId}/cancel`, {})
+      .pipe(map((r) => r.data));
+  }
+
   private async importLargeStudentResults(
     yearId: number,
     file: File,
@@ -264,15 +270,27 @@ export class ApiService {
     const form = new FormData();
     form.append('file', file);
 
-    const jobId = await uploadStagedImportFile(
-      this.http,
-      `/api/admin/admission-years/${yearId}/import-results/from-upload`,
-      form,
-      onProgress,
-      signal,
-    );
+    let jobId: string | null = null;
+    try {
+      jobId = await uploadStagedImportFile(
+        this.http,
+        `/api/admin/admission-years/${yearId}/import-results/from-upload`,
+        form,
+        onProgress,
+        signal,
+      );
 
-    return this.pollImportJob(jobId, onProgress, signal);
+      return await this.pollImportJob(jobId, onProgress, signal);
+    } catch (err) {
+      if (jobId && isAbortedImportError(err)) {
+        try {
+          await firstValueFrom(this.cancelImportJob(jobId));
+        } catch {
+          // Best-effort: UI already treats the op as cancelled.
+        }
+      }
+      throw err;
+    }
   }
 
   private async pollImportJob(
@@ -306,6 +324,10 @@ export class ApiService {
         };
       }
 
+      if (job.status === 'cancelled') {
+        throw { status: 0, aborted: true } satisfies ImportUploadError;
+      }
+
       processingPercent = Math.min(98, processingPercent + 1);
       onProgress({ phase: 'processing', percent: processingPercent });
       await new Promise((resolve) => setTimeout(resolve, 2500));
@@ -318,6 +340,15 @@ export class ApiService {
     form.append('track', track);
     return form;
   }
+}
+
+function isAbortedImportError(err: unknown): err is ImportUploadError {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'aborted' in err &&
+    (err as ImportUploadError).aborted === true
+  );
 }
 
 export type { ImportUploadError, ImportUploadProgress };

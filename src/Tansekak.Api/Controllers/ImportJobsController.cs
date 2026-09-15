@@ -19,4 +19,13 @@ public class ImportJobsController(IImportJobService importJobService) : Controll
             ? ControllerResponses.NotFoundResponse<ImportJobDto>()
             : Ok(ApiResponse<ImportJobDto>.Ok(job));
     }
+
+    [HttpPost("{jobId:guid}/cancel")]
+    public async Task<ActionResult<ApiResponse<ImportJobDto>>> Cancel(Guid jobId, CancellationToken ct)
+    {
+        var job = await importJobService.CancelAsync(jobId, ct);
+        return job is null
+            ? ControllerResponses.NotFoundResponse<ImportJobDto>()
+            : Ok(ApiResponse<ImportJobDto>.Ok(job, job.Message ?? "Cancelled."));
+    }
 }

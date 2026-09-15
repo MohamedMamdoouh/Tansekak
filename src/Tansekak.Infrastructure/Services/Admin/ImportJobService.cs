@@ -14,6 +14,7 @@ public class ImportJobService(
     IR2Storage r2Storage,
     IStudentResultImportService importService,
     ImportJobQueue queue,
+    ImportJobCancellationRegistry cancellationRegistry,
     ILogger<ImportJobService> logger) : IImportJobService
 {
     public async Task<ImportJobDto> CreateQueuedJobAsync(
@@ -50,6 +51,45 @@ public class ImportJobService(
         var job = await db.ImportJobs.AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == jobId, cancellationToken);
         return job is null ? null : ToDto(job);
+    }
+
+    public async Task<ImportJobDto?> CancelAsync(Guid jobId, CancellationToken cancellationToken = default)
+    {
+        var job = await db.ImportJobs.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == jobId, cancellationToken);
+        if (job is null)
+            return null;
+
+        if (job.Status is ImportJobStatus.Cancelled
+            or ImportJobStatus.Completed
+            or ImportJobStatus.Failed)
+        {
+            return ToDto(job);
+        }
+
+        // Signal any in-flight worker first so claim races still observe cancel.
+        cancellationRegistry.RequestCancel(jobId);
+
+        var cancelledMessage = ArabicErrorCatalog.GetMessage(ApiErrorCodes.ImportJobCancelled);
+        var completedAt = DateTime.UtcNow;
+        var cancelled = await db.ImportJobs
+            .Where(x => x.Id == jobId && x.Status == ImportJobStatus.Queued)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(j => j.Status, ImportJobStatus.Cancelled)
+                .SetProperty(j => j.Message, cancelledMessage)
+                .SetProperty(j => j.CompletedAtUtc, completedAt),
+                cancellationToken);
+
+        if (cancelled > 0)
+        {
+            cancellationRegistry.TakePendingCancel(jobId);
+            await TryDeleteObjectAsync(job.ObjectKey, jobId, cancellationToken);
+            return await GetAsync(jobId, cancellationToken);
+        }
+
+        // Already Running (or just claimed): cooperative cancel via registry.
+        // ProcessJobAsync will persist Cancelled when it observes the signal.
+        return await GetAsync(jobId, cancellationToken);
     }
 
     public async Task PrepareQueueAsync(CancellationToken cancellationToken = default)
@@ -150,6 +190,9 @@ public class ImportJobService(
         if (claimed == 0)
             return;
 
+        using var jobCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        using var registration = cancellationRegistry.RegisterRunning(jobId, jobCts);
+
         // AsNoTracking: StudentResultImportService.ImportAsync calls ChangeTracker.Clear()
         // after each batch on this same scoped DbContext, which would detach a tracked job
         // and make a later SaveChangesAsync silently skip the Completed/Failed write —
@@ -160,8 +203,16 @@ public class ImportJobService(
             return;
 
         var objectKey = job.ObjectKey;
+        var userCancelled = false;
         try
         {
+            if (cancellationRegistry.TakePendingCancel(jobId) || jobCts.IsCancellationRequested)
+            {
+                await MarkCancelledAsync(jobId, cancellationToken);
+                userCancelled = true;
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(objectKey))
                 throw new ValidationException(ApiErrorCodes.ImportJobMissingKey);
 
@@ -190,9 +241,9 @@ public class ImportJobService(
                 return;
             }
 
-            await using var stream = await r2Storage.OpenReadAsync(objectKey, cancellationToken);
+            await using var stream = await r2Storage.OpenReadAsync(objectKey, jobCts.Token);
             var fileName = Path.GetFileName(objectKey);
-            var result = await importService.ImportAsync(job.AdmissionYearId, stream, fileName, cancellationToken);
+            var result = await importService.ImportAsync(job.AdmissionYearId, stream, fileName, jobCts.Token);
 
             var completedAt = DateTime.UtcNow;
             var status = result.Success ? ImportJobStatus.Completed : ImportJobStatus.Failed;
@@ -207,6 +258,12 @@ public class ImportJobService(
 
             if (!result.Success)
                 logger.LogWarning("Import job {JobId} failed validation.", jobId);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            userCancelled = true;
+            await MarkCancelledAsync(jobId, CancellationToken.None);
+            logger.LogInformation("Import job {JobId} cancelled by admin.", jobId);
         }
         catch (Exception ex)
         {
@@ -223,8 +280,28 @@ public class ImportJobService(
         }
         finally
         {
-            await TryDeleteObjectAsync(objectKey, jobId, cancellationToken);
+            // Always delete the staged object once the job reaches a terminal outcome.
+            // User-cancel and normal completion/failure all land here after status is set.
+            if (userCancelled
+                || !cancellationToken.IsCancellationRequested)
+            {
+                await TryDeleteObjectAsync(objectKey, jobId, CancellationToken.None);
+            }
         }
+    }
+
+    private async Task MarkCancelledAsync(Guid jobId, CancellationToken cancellationToken)
+    {
+        var cancelledMessage = ArabicErrorCatalog.GetMessage(ApiErrorCodes.ImportJobCancelled);
+        var completedAt = DateTime.UtcNow;
+        await db.ImportJobs
+            .Where(x => x.Id == jobId
+                && (x.Status == ImportJobStatus.Queued || x.Status == ImportJobStatus.Running))
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(j => j.Status, ImportJobStatus.Cancelled)
+                .SetProperty(j => j.Message, cancelledMessage)
+                .SetProperty(j => j.CompletedAtUtc, completedAt),
+                cancellationToken);
     }
 
     private async Task TryDeleteObjectAsync(
