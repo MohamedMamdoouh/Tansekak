@@ -1,0 +1,28 @@
+<div class="dialog-backdrop" (click)="dismiss()"></div>
+<div
+  class="dialog"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="import-success-title"
+  aria-describedby="import-success-lead"
+>
+  <div class="dialog-icon dialog-icon--success" aria-hidden="true">✓</div>
+  <h3 id="import-success-title">{{ heading }}</h3>
+  <p id="import-success-lead" class="dialog-lead">{{ message }}</p>
+  @if (detailTitle) {
+    <div class="dialog-card">
+      <div>
+        <strong>{{ detailTitle }}</strong>
+      </div>
+      @if (detailSubtitle) {
+        <div class="dialog-muted">{{ detailSubtitle }}</div>
+      }
+    </div>
+  }
+  <p class="dialog-timeout">{{ countdownLabel }}</p>
+  <div class="dialog-actions">
+    <button type="button" class="btn btn-primary" (click)="dismiss()">
+      حسناً
+    </button>
+  </div>
+</div>

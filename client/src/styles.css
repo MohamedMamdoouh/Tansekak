@@ -634,7 +634,7 @@ td {
   }
 }
 
-.result-card {
+.results-grid .result-card {
   display: flex;
   gap: 1rem;
   align-items: flex-start;
@@ -649,7 +649,7 @@ td {
     border-color 0.2s ease;
 }
 
-.result-card:hover {
+.results-grid .result-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
   border-color: rgba(37, 99, 235, 0.2);
@@ -1108,7 +1108,7 @@ td {
   }
 
   .step-card:hover,
-  .result-card:hover {
+  .results-grid .result-card:hover {
     transform: none;
   }
 

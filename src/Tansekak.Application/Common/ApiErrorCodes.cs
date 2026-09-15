@@ -54,6 +54,10 @@ public static class ApiErrorCodes
     public const string WorksheetEmpty = "WORKSHEET_EMPTY";
     public const string FileNoDataRows = "FILE_NO_DATA_ROWS";
     public const string UnresolvedCollege = "UNRESOLVED_COLLEGE";
+    public const string FieldTooLong = "FIELD_TOO_LONG";
+    public const string ImportFileInvalid = "IMPORT_FILE_INVALID";
+    public const string ImportJobMemoryFailed = "IMPORT_JOB_MEMORY_FAILED";
+    public const string ImportJobTimeout = "IMPORT_JOB_TIMEOUT";
 
     public static readonly IReadOnlyCollection<string> All =
     [
@@ -108,5 +112,9 @@ public static class ApiErrorCodes
         WorksheetEmpty,
         FileNoDataRows,
         UnresolvedCollege,
+        FieldTooLong,
+        ImportFileInvalid,
+        ImportJobMemoryFailed,
+        ImportJobTimeout,
     ];
 }

@@ -32,19 +32,29 @@ public class StudentResultImportService(
         _ = await db.AdmissionYears.FindAsync([yearId], cancellationToken)
             ?? throw new NotFoundException(ApiErrorCodes.AdmissionYearNotFound);
 
-        var (parsedRows, parseErrors) = StudentResultExcelParser.Parse(fileStream);
-        if (parseErrors.Count > 0)
+        var (seekableStream, tempStream) = await EnsureSeekableStreamAsync(fileStream, cancellationToken);
+        await using (tempStream)
         {
-            logger.LogWarning("Excel parse failed for year {YearId} with {Count} errors.", yearId, parseErrors.Count);
-            return new ImportResultDto(false, ValidationFailedMessage, Errors: parseErrors);
+            return await ImportValidatedStreamAsync(yearId, seekableStream, cancellationToken);
+        }
+    }
+
+    private async Task<ImportResultDto> ImportValidatedStreamAsync(
+        int yearId,
+        Stream seekableStream,
+        CancellationToken cancellationToken)
+    {
+        var validation = StudentResultExcelParser.Validate(seekableStream);
+        if (validation.Errors.Count > 0)
+        {
+            logger.LogWarning(
+                "Excel parse failed for year {YearId} with {Count} errors.",
+                yearId,
+                validation.Errors.Count);
+            return new ImportResultDto(false, ValidationFailedMessage, Errors: validation.Errors.ToList());
         }
 
-        var validationErrors = ValidateRows(parsedRows);
-        if (validationErrors.Count > 0)
-        {
-            logger.LogWarning("Import validation failed for year {YearId} with {Count} errors.", yearId, validationErrors.Count);
-            return new ImportResultDto(false, ValidationFailedMessage, Errors: validationErrors);
-        }
+        seekableStream.Position = 0;
 
         await using var transaction = db.Database.IsRelational()
             ? await db.Database.BeginTransactionAsync(cancellationToken)
@@ -64,53 +74,46 @@ public class StudentResultImportService(
                     .Where(x => x.AdmissionYearId == yearId)
                     .ToListAsync(cancellationToken);
                 db.StudentResults.RemoveRange(existing);
+                await db.SaveChangesAsync(cancellationToken);
             }
+
+            db.ChangeTracker.Clear();
 
             var (startId, _) = await idAllocator.AllocateRangeAsync(
                 EntityIdAllocator.StudentResults,
-                parsedRows.Count,
+                validation.ValidRowCount,
                 cancellationToken);
 
-            for (var offset = 0; offset < parsedRows.Count; offset += BatchSize)
+            var nextId = startId;
+            var importedCount = 0;
+            var batch = new List<ParsedStudentResultRow>(BatchSize);
+
+            foreach (var row in StudentResultExcelParser.EnumerateRows(seekableStream))
             {
-                var batch = parsedRows.Skip(offset).Take(BatchSize).ToList();
-                var nextId = startId + offset;
+                batch.Add(row);
+                if (batch.Count < BatchSize)
+                    continue;
 
-                foreach (var row in batch)
-                {
-                    db.StudentResults.Add(new StudentResult
-                    {
-                        Id = nextId++,
-                        AdmissionYearId = yearId,
-                        SeatingNo = row.SeatingNo,
-                        ArabicName = row.ArabicName,
-                        TotalDegree = row.TotalDegree,
-                        StudentCaseDesc = row.StudentCaseDesc,
-                        Track = StudentTrackRankCalculator.ResolveTrack(new StudentResult
-                        {
-                            SeatingNo = row.SeatingNo,
-                            StudentCaseDesc = row.StudentCaseDesc,
-                        })
-                    });
-                }
-
-                await db.SaveChangesAsync(cancellationToken);
-                db.ChangeTracker.Clear();
+                nextId = await InsertBatchAsync(yearId, batch, nextId, cancellationToken);
+                importedCount += batch.Count;
+                batch.Clear();
             }
 
-            // Honor cancel before commit so we never leave Cancelled status with
-            // replaced rows. Once we commit, use an uncancellable token — a CT
-            // abort mid-Commit can commit on the server then throw, which would
-            // look like a cancelled import while new results are already live.
+            if (batch.Count > 0)
+            {
+                nextId = await InsertBatchAsync(yearId, batch, nextId, cancellationToken);
+                importedCount += batch.Count;
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
             if (transaction is not null)
                 await transaction.CommitAsync(CancellationToken.None);
 
-            logger.LogInformation("Imported {Count} student results for year {YearId}.", parsedRows.Count, yearId);
+            logger.LogInformation("Imported {Count} student results for year {YearId}.", importedCount, yearId);
             return new ImportResultDto(
                 true,
-                $"تم استيراد {parsedRows.Count} نتيجة طالب (استبدال كامل للسنة).",
-                parsedRows.Count);
+                $"تم استيراد {importedCount} نتيجة طالب (استبدال كامل للسنة).",
+                importedCount);
         }
         catch
         {
@@ -120,23 +123,69 @@ public class StudentResultImportService(
         }
     }
 
-    private static List<ImportValidationErrorDto> ValidateRows(List<ParsedStudentResultRow> rows)
+    private async Task<int> InsertBatchAsync(
+        int yearId,
+        IReadOnlyList<ParsedStudentResultRow> batch,
+        int startId,
+        CancellationToken cancellationToken)
     {
-        var errors = new List<ImportValidationErrorDto>();
-        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var nextId = startId;
 
-        foreach (var row in rows)
+        foreach (var row in batch)
         {
-            if (!seen.Add(row.SeatingNo))
-                errors.Add(Err(row.RowNumber, "seating_no", ApiErrorCodes.Duplicate));
+            db.StudentResults.Add(new StudentResult
+            {
+                Id = nextId++,
+                AdmissionYearId = yearId,
+                SeatingNo = row.SeatingNo,
+                ArabicName = row.ArabicName,
+                TotalDegree = row.TotalDegree,
+                StudentCaseDesc = row.StudentCaseDesc,
+                Track = StudentTrackRankCalculator.ResolveTrack(new StudentResult
+                {
+                    SeatingNo = row.SeatingNo,
+                    StudentCaseDesc = row.StudentCaseDesc,
+                })
+            });
         }
 
-        return errors;
+        await db.SaveChangesAsync(cancellationToken);
+        db.ChangeTracker.Clear();
+        return nextId;
+    }
+
+    private static async Task<(Stream Stream, FileStream? TempStream)> EnsureSeekableStreamAsync(
+        Stream fileStream,
+        CancellationToken cancellationToken)
+    {
+        if (fileStream.CanSeek)
+            return (fileStream, null);
+
+        var tempPath = Path.Combine(
+            Path.GetTempPath(),
+            $"tansekak-import-{Guid.NewGuid():N}.xlsx");
+
+        await using (var tempWrite = new FileStream(
+                         tempPath,
+                         FileMode.Create,
+                         FileAccess.Write,
+                         FileShare.None,
+                         81920,
+                         FileOptions.Asynchronous))
+        {
+            await fileStream.CopyToAsync(tempWrite, cancellationToken);
+        }
+
+        var tempStream = new FileStream(
+            tempPath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            4096,
+            FileOptions.DeleteOnClose);
+        return (tempStream, tempStream);
     }
 
     private static ImportResultDto Fail(string errorCode) =>
         new(false, ArabicErrorCatalog.GetMessage(errorCode));
-
-    private static ImportValidationErrorDto Err(int row, string col, string code, string? message = null) =>
-        new(row, col, code, message ?? ArabicErrorCatalog.GetMessage(code));
 }

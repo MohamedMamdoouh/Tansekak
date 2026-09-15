@@ -11,12 +11,14 @@ export const unauthorizedInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((error: unknown) => {
       if (error instanceof HttpErrorResponse && error.status === 401) {
-        const isAdminRoute =
-          req.url.includes('/api/admin/') && !req.url.includes('/api/admin/auth/login');
+        const isAdminApi =
+          req.url.includes('/api/admin/') &&
+          !req.url.includes('/api/admin/auth/login') &&
+          !req.url.includes('/api/admin/auth/me');
 
         auth.clearSession();
 
-        if (isAdminRoute && !router.url.startsWith('/admin/login')) {
+        if (isAdminApi && !router.url.startsWith('/admin/login')) {
           void router.navigate(['/admin/login']);
         }
       }

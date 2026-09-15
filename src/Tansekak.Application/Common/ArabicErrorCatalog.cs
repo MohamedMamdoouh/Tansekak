@@ -55,6 +55,10 @@ public static class ArabicErrorCatalog
         [ApiErrorCodes.WorksheetEmpty] = "ورقة العمل لا تحتوي على بيانات.",
         [ApiErrorCodes.FileNoDataRows] = "الملف لا يحتوي على صفوف بيانات.",
         [ApiErrorCodes.UnresolvedCollege] = "تعذر مطابقة \"{0}\" مع جامعة/كلية في النظام.",
+        [ApiErrorCodes.FieldTooLong] = "القيمة في {0} أطول من الحد المسموح ({1} حرف).",
+        [ApiErrorCodes.ImportFileInvalid] = "الملف تالف أو بصيغة غير مدعومة. تأكد أنه ملف Excel (.xlsx) صالح.",
+        [ApiErrorCodes.ImportJobMemoryFailed] = "نفدت ذاكرة الخادم أثناء معالجة الملف. جرّب تقسيم الملف إلى أجزاء أصغر.",
+        [ApiErrorCodes.ImportJobTimeout] = "انتهت مهلة معالجة الاستيراد. حاول مرة أخرى أو قسّم الملف.",
     };
 
     public static string GetMessage(string errorCode) =>

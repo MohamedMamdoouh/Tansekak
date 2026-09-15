@@ -34,7 +34,12 @@
 
       <div class="form-group">
         <label>ملف Excel (.xlsx)</label>
-        <input type="file" (change)="onFile($event)" accept=".xlsx" />
+        <input
+          #fileInput
+          type="file"
+          (change)="onFile($event)"
+          accept=".xlsx"
+        />
         @if (fileTouched && !file) {
           <small class="field-error">يرجى اختيار ملف Excel</small>
         }
@@ -76,3 +81,13 @@
     }
   </div>
 </div>
+
+@if (showSuccessDialog) {
+  <app-import-success-dialog
+    heading="تم استيراد النتائج"
+    [message]="successMessage"
+    [detailTitle]="successDetailTitle"
+    [detailSubtitle]="successDetailSubtitle"
+    (closed)="closeSuccessDialog()"
+  />
+}

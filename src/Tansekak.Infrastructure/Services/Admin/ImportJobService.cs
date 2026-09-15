@@ -1,5 +1,7 @@
+using DocumentFormat.OpenXml.Packaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 using Tansekak.Application.Common;
 using Tansekak.Application.DTOs;
 using Tansekak.Application.Interfaces;
@@ -297,8 +299,12 @@ public class ImportJobService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Import job {JobId} failed.", jobId);
-            var failedMessage = ArabicErrorCatalog.GetMessage(ApiErrorCodes.InternalError);
+            var (failedMessage, errorCode) = ResolveImportJobFailure(ex);
+            logger.LogError(
+                ex,
+                "Import job {JobId} failed with {ErrorCode}.",
+                jobId,
+                errorCode);
             var completedAt = DateTime.UtcNow;
             await db.ImportJobs
                 .Where(x => x.Id == jobId && x.Status == ImportJobStatus.Running)
@@ -354,4 +360,39 @@ public class ImportJobService(
 
     private static ImportJobDto ToDto(ImportJob job) =>
         new(job.Id, job.Status, job.ImportedCount, job.Message, job.CreatedAtUtc, job.CompletedAtUtc);
+
+    private static (string Message, string ErrorCode) ResolveImportJobFailure(Exception exception)
+    {
+        for (var current = exception; current is not null; current = current.InnerException)
+        {
+            switch (current)
+            {
+                case OutOfMemoryException:
+                    return (
+                        ArabicErrorCatalog.GetMessage(ApiErrorCodes.ImportJobMemoryFailed),
+                        ApiErrorCodes.ImportJobMemoryFailed);
+                case TimeoutException:
+                    return (
+                        ArabicErrorCatalog.GetMessage(ApiErrorCodes.ImportJobTimeout),
+                        ApiErrorCodes.ImportJobTimeout);
+                case OpenXmlPackageException or FileFormatException or InvalidDataException:
+                    return (
+                        ArabicErrorCatalog.GetMessage(ApiErrorCodes.ImportFileInvalid),
+                        ApiErrorCodes.ImportFileInvalid);
+                case PostgresException postgres when postgres.SqlState == PostgresErrorCodes.QueryCanceled:
+                    return (
+                        ArabicErrorCatalog.GetMessage(ApiErrorCodes.ImportJobTimeout),
+                        ApiErrorCodes.ImportJobTimeout);
+                case PostgresException postgres when postgres.SqlState == PostgresErrorCodes.StringDataRightTruncation:
+                    return (
+                        ArabicErrorCatalog.GetMessage(ApiErrorCodes.ValidationFailed),
+                        ApiErrorCodes.ValidationFailed);
+                case DbUpdateException dbUpdate:
+                    var (_, code) = DbUpdateExceptionMapper.Map(dbUpdate);
+                    return (ArabicErrorCatalog.GetMessage(code), code);
+            }
+        }
+
+        return (ArabicErrorCatalog.GetMessage(ApiErrorCodes.InternalError), ApiErrorCodes.InternalError);
+    }
 }

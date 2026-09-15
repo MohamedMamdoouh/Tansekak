@@ -62,91 +62,94 @@
       </section>
 
       @if (result) {
-        <section class="result-card" aria-label="نتيجة الطالب">
-          <div class="result-profile">
-            <div class="result-avatar" aria-hidden="true">
+        <section class="thanaweya-sheet" aria-label="نتيجة الطالب">
+          <header class="sheet-id">
+            <div class="sheet-avatar" aria-hidden="true">
               {{ studentInitial(result.arabicName) }}
             </div>
-            <div class="result-profile-body">
-              <p class="result-eyebrow">
+            <div class="sheet-id-body">
+              <p class="sheet-eyebrow">
                 الثانوية العامة
-                <span class="result-year-badge num">{{ result.year }}</span>
+                <span class="sheet-year num">{{ result.year }}</span>
               </p>
-              <h2 class="result-name">{{ result.arabicName }}</h2>
-              <p class="result-seating">
-                <span class="result-seating-label">رقم الجلوس</span>
-                <span class="result-seating-no num">{{
-                  result.seatingNo
-                }}</span>
+              <h2 class="sheet-name">{{ result.arabicName }}</h2>
+              <p class="sheet-seating">
+                <span class="sheet-seating-label">رقم الجلوس</span>
+                <span class="sheet-seating-no num">{{ result.seatingNo }}</span>
               </p>
             </div>
-          </div>
+          </header>
 
           <div
-            class="result-score"
+            class="sheet-grade"
             [attr.aria-label]="
-              'المجموع الكلي ' +
+              'النسبة المئوية ' +
+              resultPercentage(result.totalDegree) +
+              '%، المجموع الكلي ' +
               result.totalDegree +
               ' من ' +
-              thanaweyaMaxScore +
-              '، النسبة ' +
-              resultPercentage(result.totalDegree) +
-              '%'
+              thanaweyaMaxScore
             "
           >
             <div
-              class="result-score-ring"
+              class="sheet-seal"
               [style.--score-pct]="scoreProgress(result.totalDegree)"
             >
-              <div class="result-score-ring-inner">
-                <span class="result-score-value num">{{
-                  result.totalDegree
-                }}</span>
-                <span class="result-score-max"
-                  >/ {{ thanaweyaMaxScore }}</span
-                >
+              <div class="sheet-seal-face">
+                <span class="sheet-pct num">
+                  {{ resultPercentage(result.totalDegree)
+                  }}<span class="sheet-pct-mark">%</span>
+                </span>
+                <span class="sheet-pct-caption">النسبة المئوية</span>
               </div>
             </div>
-            <div class="result-score-meta">
-              <div class="result-score-head">
-                <span class="result-score-label">المجموع الكلي</span>
-                <span class="result-score-pct num"
-                  >{{ resultPercentage(result.totalDegree) }}%</span
-                >
-              </div>
-              <div class="result-score-bar" aria-hidden="true">
-                <div
-                  class="result-score-bar-fill"
-                  [style.width.%]="scoreProgress(result.totalDegree)"
-                ></div>
-              </div>
-            </div>
+            <p class="sheet-total">
+              <span class="sheet-total-label">المجموع الكلي</span>
+              <span class="sheet-total-value num">{{
+                result.totalDegree
+              }}</span>
+              <span class="sheet-total-max">/ {{ thanaweyaMaxScore }}</span>
+            </p>
           </div>
 
-          <div class="result-details">
-            <div class="result-detail">
-              <span class="result-detail-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <div class="sheet-facts">
+            <div class="sheet-fact">
+              <span class="sheet-fact-icon" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               </span>
-              <div class="result-detail-text">
-                <span class="result-detail-label">حالة الطالب</span>
-                <span class="result-detail-value">{{
+              <div class="sheet-fact-text">
+                <span class="sheet-fact-label">حالة الطالب</span>
+                <span class="sheet-fact-value">{{
                   result.studentCaseDesc
                 }}</span>
               </div>
             </div>
             @if (result.track) {
-              <div class="result-detail">
-                <span class="result-detail-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              <div class="sheet-fact">
+                <span class="sheet-fact-icon" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                    />
                   </svg>
                 </span>
-                <div class="result-detail-text">
-                  <span class="result-detail-label">الشعبة</span>
-                  <span class="result-detail-value">{{
+                <div class="sheet-fact-text">
+                  <span class="sheet-fact-label">الشعبة</span>
+                  <span class="sheet-fact-value">{{
                     trackLabel(result.track)
                   }}</span>
                 </div>
@@ -155,47 +158,46 @@
           </div>
 
           @if (hasTrackRank(result)) {
-            <div class="result-rank">
-              <div class="result-rank-head">
-                <span class="result-rank-label">الترتيب على الشعبة</span>
+            <div class="sheet-rank">
+              <div class="sheet-rank-head">
+                <span class="sheet-rank-label">الترتيب على الشعبة</span>
                 @if (result.track) {
-                  <span class="result-rank-track">{{
+                  <span class="sheet-rank-track">{{
                     trackLabel(result.track)
                   }}</span>
                 }
               </div>
-              <div class="result-rank-stats">
-                <div class="result-rank-stat result-rank-stat--primary">
-                  <span class="result-rank-stat-value num">{{
+              <div class="sheet-rank-stats">
+                <div class="sheet-rank-stat sheet-rank-stat--primary">
+                  <span class="sheet-rank-stat-value num">{{
                     fmt(result.trackRank)
                   }}</span>
-                  <span class="result-rank-stat-label">ترتيبك</span>
+                  <span class="sheet-rank-stat-label">ترتيبك</span>
                 </div>
-                <span class="result-rank-sep" aria-hidden="true">من</span>
-                <div class="result-rank-stat">
-                  <span class="result-rank-stat-value num">{{
+                <span class="sheet-rank-sep" aria-hidden="true">من</span>
+                <div class="sheet-rank-stat">
+                  <span class="sheet-rank-stat-value num">{{
                     fmt(result.trackTotalStudents)
                   }}</span>
-                  <span class="result-rank-stat-label">طالب</span>
+                  <span class="sheet-rank-stat-label">طالب</span>
                 </div>
               </div>
-              <a class="result-rank-link" routerLink="/track-rank"
+              <a class="sheet-rank-link" routerLink="/track-rank"
                 >تفاصيل الترتيب ←</a
               >
             </div>
           }
 
-          <footer class="result-footer">
+          <footer class="sheet-footer">
             <a
-              class="result-cta"
+              class="sheet-cta"
               [routerLink]="['/predict']"
               [queryParams]="predictQueryParams()"
             >
               <span>اعرف الكليات المتاحة لمجموعك</span>
-              <span class="result-cta-arrow" aria-hidden="true">←</span>
+              <span class="sheet-cta-arrow" aria-hidden="true">←</span>
             </a>
           </footer>
         </section>
       }
     </div>
-  

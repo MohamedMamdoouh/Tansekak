@@ -1,4 +1,4 @@
-import { Component, DestroyRef, NgZone, inject } from '@angular/core';
+import { Component, DestroyRef, ElementRef, NgZone, ViewChild, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
@@ -12,11 +12,12 @@ import { resolveApiError } from '../../../utils/api-error.util';
 import { ImportUploadService } from '../../../services/import-upload.service';
 import { AdmissionYearStore } from '../../../services/admission-year.store';
 import { AdmissionYear, ImportResult } from '../../../models';
+import { ImportSuccessDialogComponent } from '../../../components/import-success-dialog/import-success-dialog.component';
 
 @Component({
   selector: 'app-admin-import-results',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ImportSuccessDialogComponent],
   templateUrl: './import-results.component.html',
   styleUrl: './import-results.component.scss',
 })
@@ -28,6 +29,8 @@ export class AdminImportResultsComponent {
   private ngZone = inject(NgZone);
   private destroyRef = inject(DestroyRef);
 
+  @ViewChild('fileInput') private fileInput?: ElementRef<HTMLInputElement>;
+
   currentYear?: AdmissionYear;
   apiAvailable: boolean | null = null;
   yearLoadError = '';
@@ -36,6 +39,17 @@ export class AdminImportResultsComponent {
   uploading = false;
   message = '';
   result: ImportResult | null = null;
+  showSuccessDialog = false;
+  successMessage = '';
+  importedCount?: number;
+
+  get successDetailTitle(): string {
+    return this.currentYear ? String(this.currentYear.year) : '';
+  }
+
+  get successDetailSubtitle(): string {
+    return this.importedCount != null ? `${this.importedCount} نتيجة طالب` : '';
+  }
 
   form = this.fb.group({});
 
@@ -92,10 +106,14 @@ export class AdminImportResultsComponent {
       )
       .then((res) => {
         this.ngZone.run(() => {
-          this.result = res;
-          this.message = res.message;
           this.uploading = false;
           this.importUpload.finish();
+          if (res.success) {
+            this.openSuccessDialog(res);
+            return;
+          }
+          this.result = res;
+          this.message = res.message;
         });
       })
       .catch((err: ImportUploadError) => {
@@ -114,5 +132,28 @@ export class AdminImportResultsComponent {
           });
         });
       });
+  }
+
+  closeSuccessDialog(): void {
+    this.showSuccessDialog = false;
+    this.successMessage = '';
+    this.importedCount = undefined;
+  }
+
+  private openSuccessDialog(result: ImportResult): void {
+    this.successMessage = result.message;
+    this.importedCount = result.importedCount;
+    this.showSuccessDialog = true;
+    this.resetForm();
+  }
+
+  private resetForm(): void {
+    this.file = null;
+    this.fileTouched = false;
+    this.message = '';
+    this.result = null;
+    if (this.fileInput) {
+      this.fileInput.nativeElement.value = '';
+    }
   }
 }

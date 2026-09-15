@@ -46,6 +46,52 @@ public class StudentResultExcelParserTests
         Assert.Contains(errors, e => e.ErrorCode == ApiErrorCodes.TotalDegreeInvalid);
     }
 
+    [Fact]
+    public void Validate_rejects_arabic_name_longer_than_max_length()
+    {
+        using var stream = CreateWorkbook([
+            ("2410001", new string('أ', StudentResultExcelParser.MaxArabicNameLength + 1), "390", "علمي علوم"),
+        ]);
+
+        var validation = StudentResultExcelParser.Validate(stream);
+
+        Assert.Contains(validation.Errors, e => e.ErrorCode == ApiErrorCodes.FieldTooLong);
+        Assert.Equal(0, validation.ValidRowCount);
+    }
+
+    [Fact]
+    public void Validate_and_enumerate_rows_return_same_data()
+    {
+        using var stream = CreateWorkbook([
+            ("2410001", "طالب أ", "390", "علمي علوم"),
+            ("2410002", "طالب ب", "380.5", "علمي علوم"),
+        ]);
+
+        var validation = StudentResultExcelParser.Validate(stream);
+        Assert.Empty(validation.Errors);
+        Assert.Equal(2, validation.ValidRowCount);
+
+        stream.Position = 0;
+        var enumerated = StudentResultExcelParser.EnumerateRows(stream).ToList();
+
+        Assert.Equal(2, enumerated.Count);
+        Assert.Equal("2410001", enumerated[0].SeatingNo);
+        Assert.Equal(380.5m, enumerated[1].TotalDegree);
+    }
+
+    [Fact]
+    public void Validate_detects_duplicate_seating_numbers()
+    {
+        using var stream = CreateWorkbook([
+            ("2410001", "طالب أ", "390", "علمي علوم"),
+            ("2410001", "طالب ب", "380", "علمي علوم"),
+        ]);
+
+        var validation = StudentResultExcelParser.Validate(stream);
+
+        Assert.Contains(validation.Errors, e => e.ErrorCode == ApiErrorCodes.Duplicate);
+    }
+
     private static MemoryStream CreateWorkbook(IEnumerable<(string SeatingNo, string Name, string Total, string CaseDesc)> rows)
     {
         using var workbook = new XLWorkbook();

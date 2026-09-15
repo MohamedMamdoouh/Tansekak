@@ -1,4 +1,4 @@
-import { Component, DestroyRef, NgZone, inject } from '@angular/core';
+import { Component, DestroyRef, ElementRef, NgZone, ViewChild, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -13,11 +13,12 @@ import { ImportUploadService } from '../../../services/import-upload.service';
 import { AdmissionYearStore } from '../../../services/admission-year.store';
 import { AdmissionYear, ImportResult, TRACK_OPTIONS } from '../../../models';
 import { getTrackLabel } from '../../../utils/track-label.util';
+import { ImportSuccessDialogComponent } from '../../../components/import-success-dialog/import-success-dialog.component';
 
 @Component({
   selector: 'app-admin-import',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ImportSuccessDialogComponent],
   templateUrl: './import.component.html',
   styleUrl: './import.component.scss',
 })
@@ -29,6 +30,8 @@ export class AdminImportComponent {
   private ngZone = inject(NgZone);
   private destroyRef = inject(DestroyRef);
 
+  @ViewChild('fileInput') private fileInput?: ElementRef<HTMLInputElement>;
+
   currentYear?: AdmissionYear;
   apiAvailable: boolean | null = null;
   yearLoadError = '';
@@ -38,6 +41,17 @@ export class AdminImportComponent {
   message = '';
   result: ImportResult | null = null;
   trackOptions = TRACK_OPTIONS;
+  showSuccessDialog = false;
+  successMessage = '';
+  importedCount?: number;
+  successTrackLabel = '';
+
+  get successDetailSubtitle(): string {
+    const year = this.currentYear ? String(this.currentYear.year) : '';
+    const count =
+      this.importedCount != null ? `${this.importedCount} حد قبول` : '';
+    return [year, count].filter(Boolean).join(' — ');
+  }
 
   form = this.fb.group({
     track: ['Science', Validators.required],
@@ -102,10 +116,14 @@ export class AdminImportComponent {
       )
       .then((res) => {
         this.ngZone.run(() => {
-          this.result = res;
-          this.message = res.message;
           this.uploading = false;
           this.importUpload.finish();
+          if (res.success) {
+            this.openSuccessDialog(res, track);
+            return;
+          }
+          this.result = res;
+          this.message = res.message;
         });
       })
       .catch((err: ImportUploadError) => {
@@ -122,5 +140,30 @@ export class AdminImportComponent {
           this.message = importErrorMessage(err.status, err.error);
         });
       });
+  }
+
+  closeSuccessDialog(): void {
+    this.showSuccessDialog = false;
+    this.successMessage = '';
+    this.importedCount = undefined;
+    this.successTrackLabel = '';
+  }
+
+  private openSuccessDialog(result: ImportResult, track: string): void {
+    this.successMessage = result.message;
+    this.importedCount = result.importedCount;
+    this.successTrackLabel = this.trackLabel(track);
+    this.showSuccessDialog = true;
+    this.resetForm();
+  }
+
+  private resetForm(): void {
+    this.file = null;
+    this.fileTouched = false;
+    this.message = '';
+    this.result = null;
+    if (this.fileInput) {
+      this.fileInput.nativeElement.value = '';
+    }
   }
 }

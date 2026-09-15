@@ -70,13 +70,28 @@ public class R2StorageService(IOptions<R2Options> options) : IR2Storage
             throw new ServiceUnavailableException(ApiErrorCodes.R2NotConfigured);
 
         ValidateObjectKey(objectKey);
+        var tempPath = Path.Combine(
+            Path.GetTempPath(),
+            $"tansekak-r2-{Guid.NewGuid():N}.xlsx");
+
         using var client = CreateClient();
         using var response = await client.GetObjectAsync(_options.BucketName, objectKey, cancellationToken);
-        var memory = new MemoryStream();
-        await response.ResponseStream.CopyToAsync(memory, cancellationToken);
-        memory.Position = 0;
-        return memory;
+        await using (var tempWrite = new FileStream(
+                         tempPath,
+                         FileMode.Create,
+                         FileAccess.Write,
+                         FileShare.None,
+                         81920,
+                         FileOptions.Asynchronous))
+        {
+            await response.ResponseStream.CopyToAsync(tempWrite, cancellationToken);
+        }
+
+        return OpenDeleteOnCloseReadStream(tempPath);
     }
+
+    private static FileStream OpenDeleteOnCloseReadStream(string path) =>
+        new(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.DeleteOnClose);
 
     public async Task DeleteAsync(string objectKey, CancellationToken cancellationToken = default)
     {

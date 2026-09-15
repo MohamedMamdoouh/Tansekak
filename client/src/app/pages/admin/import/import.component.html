@@ -49,7 +49,12 @@
 
           <div class="form-group">
             <label>ملف Markdown (.md)</label>
-            <input type="file" (change)="onFile($event)" accept=".md" />
+            <input
+              #fileInput
+              type="file"
+              (change)="onFile($event)"
+              accept=".md"
+            />
             @if (fileTouched && !file) {
               <small class="field-error">يرجى اختيار ملف Markdown</small>
             }
@@ -91,3 +96,13 @@
         }
       </div>
     </div>
+
+    @if (showSuccessDialog) {
+      <app-import-success-dialog
+        heading="تم استيراد حدود القبول"
+        [message]="successMessage"
+        [detailTitle]="successTrackLabel"
+        [detailSubtitle]="successDetailSubtitle"
+        (closed)="closeSuccessDialog()"
+      />
+    }

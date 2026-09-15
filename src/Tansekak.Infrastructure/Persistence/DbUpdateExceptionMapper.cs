@@ -14,6 +14,7 @@ public static class DbUpdateExceptionMapper
         {
             PostgresErrorCodes.UniqueViolation => (HttpStatusCode.BadRequest, ApiErrorCodes.Duplicate),
             PostgresErrorCodes.ForeignKeyViolation => (HttpStatusCode.BadRequest, ApiErrorCodes.ValidationFailed),
+            PostgresErrorCodes.StringDataRightTruncation => (HttpStatusCode.BadRequest, ApiErrorCodes.ValidationFailed),
             _ => (HttpStatusCode.InternalServerError, ApiErrorCodes.InternalError)
         };
     }
