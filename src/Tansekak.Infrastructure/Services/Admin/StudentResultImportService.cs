@@ -98,8 +98,13 @@ public class StudentResultImportService(
                 db.ChangeTracker.Clear();
             }
 
+            // Honor cancel before commit so we never leave Cancelled status with
+            // replaced rows. Once we commit, use an uncancellable token — a CT
+            // abort mid-Commit can commit on the server then throw, which would
+            // look like a cancelled import while new results are already live.
+            cancellationToken.ThrowIfCancellationRequested();
             if (transaction is not null)
-                await transaction.CommitAsync(cancellationToken);
+                await transaction.CommitAsync(CancellationToken.None);
 
             logger.LogInformation("Imported {Count} student results for year {YearId}.", parsedRows.Count, yearId);
             return new ImportResultDto(
@@ -110,7 +115,7 @@ public class StudentResultImportService(
         catch
         {
             if (transaction is not null)
-                await transaction.RollbackAsync(cancellationToken);
+                await transaction.RollbackAsync(CancellationToken.None);
             throw;
         }
     }
