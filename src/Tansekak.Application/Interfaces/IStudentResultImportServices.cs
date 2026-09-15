@@ -20,6 +20,12 @@ public interface IR2Storage
         string fileName,
         CancellationToken cancellationToken = default);
 
+    Task UploadAsync(
+        string objectKey,
+        Stream stream,
+        string contentType,
+        CancellationToken cancellationToken = default);
+
     Task<Stream> OpenReadAsync(string objectKey, CancellationToken cancellationToken = default);
 
     Task DeleteAsync(string objectKey, CancellationToken cancellationToken = default);

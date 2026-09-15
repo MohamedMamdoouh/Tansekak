@@ -4,11 +4,7 @@ import { normalizeImportResult } from '../utils/import-error.util';
 
 export type ImportUploadPhase = 'uploading' | 'processing';
 
-export type ImportUploadFailureKind =
-  | 'api_unreachable'
-  | 'r2_upload'
-  | 'aborted'
-  | 'http';
+export type ImportUploadFailureKind = 'api_unreachable' | 'aborted' | 'http';
 
 export interface ImportUploadProgress {
   phase: ImportUploadPhase;
@@ -29,10 +25,44 @@ export function uploadImportFile(
   onProgress: (progress: ImportUploadProgress) => void,
   signal?: AbortSignal,
 ): Promise<ImportResult> {
+  return uploadMultipart(http, url, formData, onProgress, signal, (body) => {
+    const payload = extractImportPayload(body as ApiResponse<ImportResult> | null);
+    return payload ? normalizeImportResult(payload) : null;
+  });
+}
+
+export function uploadStagedImportFile(
+  http: HttpClient,
+  url: string,
+  formData: FormData,
+  onProgress: (progress: ImportUploadProgress) => void,
+  signal?: AbortSignal,
+): Promise<string> {
+  return uploadMultipart(
+    http,
+    url,
+    formData,
+    onProgress,
+    signal,
+    extractJobId,
+    { completePercent: 90 },
+  );
+}
+
+function uploadMultipart<T>(
+  http: HttpClient,
+  url: string,
+  formData: FormData,
+  onProgress: (progress: ImportUploadProgress) => void,
+  signal: AbortSignal | undefined,
+  extract: (body: ApiResponse<unknown> | null | undefined) => T | null,
+  options?: { completePercent?: number },
+): Promise<T> {
   return new Promise((resolve, reject) => {
     let processingTimer: ReturnType<typeof setInterval> | null = null;
     let processingPercent = 90;
     let processingStarted = false;
+    const completePercent = options?.completePercent ?? 100;
 
     const stopProcessingTimer = () => {
       if (processingTimer !== null) {
@@ -61,7 +91,7 @@ export function uploadImportFile(
     };
 
     const subscription = http
-      .post<ApiResponse<ImportResult>>(url, formData, {
+      .post<ApiResponse<unknown>>(url, formData, {
         reportProgress: true,
         observe: 'events',
         ...(signal ? { signal } : {}),
@@ -85,8 +115,8 @@ export function uploadImportFile(
           if (event.type === HttpEventType.Response) {
             stopProcessingTimer();
             if (event.status >= 200 && event.status < 300) {
-              const payload = extractImportPayload(event.body);
-              if (!payload) {
+              const payload = extract(event.body);
+              if (payload === null) {
                 fail({
                   status: event.status,
                   error: event.body,
@@ -94,8 +124,8 @@ export function uploadImportFile(
                 });
                 return;
               }
-              onProgress({ phase: 'processing', percent: 100 });
-              resolve(normalizeImportResult(payload));
+              onProgress({ phase: 'processing', percent: completePercent });
+              resolve(payload);
               return;
             }
 
@@ -148,68 +178,13 @@ function extractImportPayload(
   return envelope.data ?? envelope.Data ?? null;
 }
 
-export function uploadToPresignedUrl(
-  uploadUrl: string,
-  file: File,
-  onProgress: (percent: number) => void,
-  signal?: AbortSignal,
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('PUT', uploadUrl);
-    xhr.setRequestHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    );
-    xhr.timeout = 0;
+function extractJobId(body: ApiResponse<unknown> | null | undefined): string | null {
+  if (!body) return null;
 
-    const abort = () => {
-      if (xhr.readyState !== XMLHttpRequest.DONE) {
-        xhr.abort();
-      }
-    };
-
-    signal?.addEventListener('abort', abort);
-
-    xhr.upload.addEventListener('progress', (event) => {
-      if (!event.lengthComputable) return;
-      const percent = Math.min(85, Math.round((event.loaded / event.total) * 85));
-      onProgress(Math.max(percent, 1));
-    });
-
-    xhr.addEventListener('load', () => {
-      signal?.removeEventListener('abort', abort);
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve();
-        return;
-      }
-      reject({
-        status: xhr.status,
-        kind: 'r2_upload',
-      } satisfies ImportUploadError);
-    });
-
-    xhr.addEventListener('error', () => {
-      signal?.removeEventListener('abort', abort);
-      reject({
-        status: 0,
-        kind: 'r2_upload',
-      } satisfies ImportUploadError);
-    });
-
-    xhr.addEventListener('timeout', () => {
-      signal?.removeEventListener('abort', abort);
-      reject({
-        status: 0,
-        kind: 'r2_upload',
-      } satisfies ImportUploadError);
-    });
-
-    xhr.addEventListener('abort', () => {
-      signal?.removeEventListener('abort', abort);
-      reject({ status: 0, aborted: true, kind: 'aborted' } satisfies ImportUploadError);
-    });
-
-    xhr.send(file);
-  });
+  const envelope = body as ApiResponse<{ jobId?: string; JobId?: string }> & {
+    Data?: { jobId?: string; JobId?: string };
+  };
+  const data = envelope.data ?? envelope.Data;
+  const jobId = data?.jobId ?? data?.JobId;
+  return jobId ? String(jobId) : null;
 }

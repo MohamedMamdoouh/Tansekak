@@ -40,6 +40,30 @@ public class R2StorageService(IOptions<R2Options> options) : IR2Storage
         return Task.FromResult((uploadUrl, objectKey));
     }
 
+    public async Task UploadAsync(
+        string objectKey,
+        Stream stream,
+        string contentType,
+        CancellationToken cancellationToken = default)
+    {
+        if (!IsConfigured)
+            throw new ServiceUnavailableException(ApiErrorCodes.R2NotConfigured);
+
+        ValidateObjectKey(objectKey);
+        using var client = CreateClient();
+        var request = new PutObjectRequest
+        {
+            BucketName = _options.BucketName,
+            Key = objectKey,
+            InputStream = stream,
+            ContentType = contentType,
+            AutoCloseStream = false,
+            DisablePayloadSigning = true
+        };
+
+        await client.PutObjectAsync(request, cancellationToken);
+    }
+
     public async Task<Stream> OpenReadAsync(string objectKey, CancellationToken cancellationToken = default)
     {
         if (!IsConfigured)

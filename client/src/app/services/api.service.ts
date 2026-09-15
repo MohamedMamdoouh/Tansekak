@@ -13,7 +13,7 @@ import {
   ImportUploadError,
   ImportUploadProgress,
   uploadImportFile,
-  uploadToPresignedUrl,
+  uploadStagedImportFile,
 } from './import-file-upload';
 import {
   AdmissionCutoff,
@@ -28,8 +28,8 @@ import {
   PagedCutoffs,
   PredictRequest,
   PredictResponse,
+  STAGED_STUDENT_IMPORT_LIMIT_BYTES,
   StudentResult,
-  UploadUrlResponse,
   UniversityFaculty,
 } from '../models';
 
@@ -234,6 +234,18 @@ export class ApiService {
       );
     }
 
+    if (file.size > STAGED_STUDENT_IMPORT_LIMIT_BYTES) {
+      return Promise.reject({
+        status: 413,
+        kind: 'http',
+        error: {
+          success: false,
+          message: 'حجم الملف يتجاوز 100 ميجابايت.',
+          data: null,
+        },
+      } satisfies ImportUploadError);
+    }
+
     return this.importLargeStudentResults(yearId, file, onProgress, signal);
   }
 
@@ -249,54 +261,18 @@ export class ApiService {
     onProgress: (progress: ImportUploadProgress) => void,
     signal?: AbortSignal,
   ): Promise<ImportResult> {
-    const uploadInfo = await firstValueFrom(
-      this.http.post<ApiResponse<UploadUrlResponse>>(
-        `/api/admin/admission-years/${yearId}/import-results/upload-url`,
-        { fileName: file.name },
-      ),
+    const form = new FormData();
+    form.append('file', file);
+
+    const jobId = await uploadStagedImportFile(
+      this.http,
+      `/api/admin/admission-years/${yearId}/import-results/from-upload`,
+      form,
+      onProgress,
+      signal,
     );
 
-    if (!uploadInfo.success || !uploadInfo.data) {
-      throw {
-        status: 503,
-        error: uploadInfo,
-      } satisfies ImportUploadError;
-    }
-
-    try {
-      await uploadToPresignedUrl(
-        uploadInfo.data.uploadUrl,
-        file,
-        (percent) => onProgress({ phase: 'uploading', percent }),
-        signal,
-      );
-    } catch (error) {
-      const uploadError = error as ImportUploadError;
-      throw {
-        status: uploadError.status ?? 0,
-        kind: uploadError.kind ?? 'r2_upload',
-        aborted: uploadError.aborted,
-        error: uploadError.error ?? null,
-      } satisfies ImportUploadError;
-    }
-
-    onProgress({ phase: 'processing', percent: 90 });
-
-    const startResponse = await firstValueFrom(
-      this.http.post<ApiResponse<{ jobId: string }>>(
-        `/api/admin/admission-years/${yearId}/import-results/from-storage`,
-        { objectKey: uploadInfo.data.objectKey },
-      ),
-    );
-
-    if (!startResponse.success || !startResponse.data?.jobId) {
-      throw {
-        status: 500,
-        error: startResponse,
-      } satisfies ImportUploadError;
-    }
-
-    return this.pollImportJob(startResponse.data.jobId, onProgress, signal);
+    return this.pollImportJob(jobId, onProgress, signal);
   }
 
   private async pollImportJob(

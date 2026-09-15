@@ -130,6 +130,13 @@ public class ImportJobServiceTests
             CancellationToken cancellationToken = default) =>
             Task.FromResult(("https://example.com", "imports/1/test.xlsx"));
 
+        public Task UploadAsync(
+            string objectKey,
+            Stream stream,
+            string contentType,
+            CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
         public Task<Stream> OpenReadAsync(string objectKey, CancellationToken cancellationToken = default)
         {
             var stream = new MemoryStream();

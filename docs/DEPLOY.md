@@ -73,24 +73,11 @@ The `2026` in filenames is the official source cycle; rows attach to the current
 
 Skip this section if all imports are ≤ 20 MB.
 
+The admin UI uploads files over 20 MB to the API (same origin, max **100 MB**). The API streams the file to R2 and runs the existing async import job. **Browser CORS on the R2 bucket is not required** for `/admin/import-results`.
+
 1. Create bucket `tansekak-imports` in [Cloudflare R2](https://dash.cloudflare.com).
 2. Create an API token with **Object Read & Write** on that bucket.
 3. Set `R2__AccountId`, `R2__AccessKeyId`, `R2__SecretAccessKey` on Render (`R2__BucketName` defaults to `tansekak-imports`).
-4. Add bucket CORS so the browser can PUT uploads:
-
-```json
-[
-  {
-    "AllowedOrigins": ["https://<your-render-domain>.onrender.com", "http://localhost:4200"],
-    "AllowedMethods": ["PUT"],
-    "AllowedHeaders": ["Content-Type"],
-    "ExposeHeaders": ["ETag"],
-    "MaxAgeSeconds": 3600
-  }
-]
-```
-
-Replace `<your-render-domain>` exactly (include `https://`).
 
 ---
 

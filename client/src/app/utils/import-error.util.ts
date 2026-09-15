@@ -83,10 +83,6 @@ export function importErrorMessage(
     return 'تم إلغاء الاستيراد.';
   }
 
-  if (options?.kind === 'r2_upload') {
-    return 'فشل رفع الملف إلى Cloudflare R2. للملفات أكبر من 20 ميجابايت، تأكد من إعداد R2 وCORS للنطاق الحالي.';
-  }
-
   if (status === 0 || options?.kind === 'api_unreachable') {
     return 'تعذر الاتصال بالخادم. شغّل الـ API على localhost:5080 (أو npm start مع dotnet run)، أو تحقق من أن نشر Render يعمل عبر /health.';
   }

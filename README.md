@@ -2,7 +2,7 @@
 
 **Vibe coded project** — built iteratively with AI-assisted development.
 
-Tansekak (تنسيقك) is an admission eligibility checker for Egyptian Thanaweya Amma graduates. Students pick a track and total score; the app lists faculties they are eligible for against the **current published** admission year.
+Tansekak is an admission eligibility checker for Egyptian Thanaweya Amma graduates. Students pick a track and total score; the app lists faculties they are eligible for against the **current published** admission year.
 
 Students can also look up an imported Thanaweya result by seating number and see their track rank among peers.
 
@@ -10,10 +10,10 @@ Results are **indicative only**. Egypt’s official coordination portal decides 
 
 **Current-stage docs**
 
-| Document | Role |
-| --- | --- |
-| [docs/PRD.md](docs/PRD.md) | As-built product spec |
-| [docs/API.md](docs/API.md) | HTTP contract, error codes |
+| Document                         | Role                         |
+| -------------------------------- | ---------------------------- |
+| [docs/PRD.md](docs/PRD.md)       | As-built product spec        |
+| [docs/API.md](docs/API.md)       | HTTP contract, error codes   |
 | [docs/DEPLOY.md](docs/DEPLOY.md) | Render + Neon + R2 checklist |
 
 ---
@@ -22,15 +22,15 @@ Results are **indicative only**. Egypt’s official coordination portal decides 
 
 ### Public (RTL Arabic)
 
-| Feature | Route | Description |
-| --- | --- | --- |
-| Landing | `/` | Overview and entry points |
-| College prediction | `/predict` | Track + score form |
-| Prediction results | `/results` | Eligible faculties, client-side search, load-more |
-| Thanaweya lookup | `/thanaweya-result` | Result by seating number (current year) |
-| Track rank | `/track-rank` | Rank and percentile among the same track |
-| Coordination guide | `/guide` | Static FAQ |
-| Developer profile | `/designer` | Credits |
+| Feature            | Route               | Description                                       |
+| ------------------ | ------------------- | ------------------------------------------------- |
+| Landing            | `/`                 | Overview and entry points                         |
+| College prediction | `/predict`          | Track + score form                                |
+| Prediction results | `/results`          | Eligible faculties, client-side search, load-more |
+| Thanaweya lookup   | `/thanaweya-result` | Result by seating number (current year)           |
+| Track rank         | `/track-rank`       | Rank and percentile among the same track          |
+| Coordination guide | `/guide`            | Static FAQ                                        |
+| Developer profile  | `/designer`         | Credits                                           |
 
 **Prediction**
 
@@ -42,26 +42,26 @@ Results are **indicative only**. Egypt’s official coordination portal decides 
 
 **Tracks**
 
-| API value | Arabic | Notes |
-| --- | --- | --- |
-| `Science` | الشعبة العلمية | علوم and رياضة share this bucket |
-| `Literature` | الشعبة الأدبية | |
+| API value    | Arabic         |
+| ------------ | -------------- |
+| `Science`    | الشعبة العلمية |
+| `Literature` | الشعبة الأدبية |
 
 `Mathematics` still exists on the domain enum for legacy rows and is canonicalized to `Science` everywhere.
 
-Public brand is **تنسيقك**. API `appName` is `tansekak`. Admin chrome is **لوحة الإدارة**.
+Public brand is **Tansekak**. API `appName` is `tansekak`. Admin chrome is **لوحة الإدارة**.
 
 ### Admin
 
 Not linked from the public site. Sign in at `/admin/login`.
 
-| Page | Route | Description |
-| --- | --- | --- |
-| Dashboard | `/admin` | Current year plus catalog and student-result counts (`cutoffsCount` is returned by the API but not shown) |
-| Admission years | `/admin/years` | Create, edit, delete the single admission year |
-| Cutoffs | `/admin/cutoffs` | CRUD for the **current** year |
-| Import cutoffs | `/admin/import` | Science and/or Literature Markdown; each file replaces that track for the current year |
-| Import student results | `/admin/import-results` | Excel for the **current** year (replaces all results for that year) |
+| Page                   | Route                   | Description                                                                                               |
+| ---------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------- |
+| Dashboard              | `/admin`                | Current year plus catalog and student-result counts (`cutoffsCount` is returned by the API but not shown) |
+| Admission years        | `/admin/years`          | Create, edit, delete the single admission year                                                            |
+| Cutoffs                | `/admin/cutoffs`        | CRUD for the **current** year                                                                             |
+| Import cutoffs         | `/admin/import`         | Science and/or Literature Markdown; each file replaces that track for the current year                    |
+| Import student results | `/admin/import-results` | Excel for the **current** year (replaces all results for that year)                                       |
 
 Import pages block navigation with a progress overlay until the upload finishes or you confirm leaving.
 
@@ -73,16 +73,16 @@ Import pages block navigation with a progress overlay until the upload finishes 
 
 ## Tech stack
 
-| Layer | Technology |
-| --- | --- |
-| Backend | ASP.NET Core 10, EF Core, PostgreSQL (Npgsql), Identity cookies |
-| Frontend | Angular 19 standalone, RTL |
-| Validation | FluentValidation |
-| Excel | ClosedXML |
-| Large uploads | Cloudflare R2 (presigned PUT) |
-| Tests | xUnit |
-| CI | GitHub Actions (build + test) |
-| Deploy | Docker monolith on Render, Neon Postgres |
+| Layer         | Technology                                                      |
+| ------------- | --------------------------------------------------------------- |
+| Backend       | ASP.NET Core 10, EF Core, PostgreSQL (Npgsql), Identity cookies |
+| Frontend      | Angular 19 standalone, RTL                                      |
+| Validation    | FluentValidation                                                |
+| Excel         | ClosedXML                                                       |
+| Large uploads | Cloudflare R2 (API streams files >20 MB, max 100 MB)            |
+| Tests         | xUnit                                                           |
+| CI            | GitHub Actions (build + test)                                   |
+| Deploy        | Docker monolith on Render, Neon Postgres                        |
 
 Clean Architecture: `Domain` → `Application` (services + DTOs, no MediatR, no repositories) → `Infrastructure` → `Api`. Integer business IDs use `EntityIdAllocator`; Identity tables use PostgreSQL identity columns.
 
@@ -162,11 +162,11 @@ Cutoffs are **not** seeded. From a **local clone**, open `/admin/login`, confirm
 
 See [docs/DEPLOY.md](docs/DEPLOY.md).
 
-| Layer | Provider |
-| --- | --- |
-| App + SPA | Render Docker web service (`0.0.0.0:$PORT`) |
-| Database | Neon (`ConnectionStrings__DefaultConnection` or `DATABASE_URL`) |
-| Storage | Cloudflare R2 for Excel **>20 MB** |
+| Layer     | Provider                                                        |
+| --------- | --------------------------------------------------------------- |
+| App + SPA | Render Docker web service (`0.0.0.0:$PORT`)                     |
+| Database  | Neon (`ConnectionStrings__DefaultConnection` or `DATABASE_URL`) |
+| Storage   | Cloudflare R2 for Excel **>20 MB**                              |
 
 Do **not** set `Frontend__Origin` in production — SPA and API share one origin.
 
@@ -176,13 +176,13 @@ Prefer Render **Starter** if large imports must not be interrupted by free-tier 
 
 ## Configuration
 
-| Key | Purpose |
-| --- | --- |
-| `ConnectionStrings:DefaultConnection` | Npgsql keyword string, or use `DATABASE_URL` |
-| `Tansekak:AppName` | Returned by `/api/config` |
-| `AdminSeed:Email` / `Password` | First-run admin |
-| `Frontend:Origin` | CORS for local Angular (`http://localhost:4200`) only |
-| `R2:*` | Large Excel uploads |
+| Key                                   | Purpose                                               |
+| ------------------------------------- | ----------------------------------------------------- |
+| `ConnectionStrings:DefaultConnection` | Npgsql keyword string, or use `DATABASE_URL`          |
+| `Tansekak:AppName`                    | Returned by `/api/config`                             |
+| `AdminSeed:Email` / `Password`        | First-run admin                                       |
+| `Frontend:Origin`                     | CORS for local Angular (`http://localhost:4200`) only |
+| `R2:*`                                | Large Excel uploads                                   |
 
 Env vars use `__` (`R2__AccountId`). Production rejects localhost connection strings and the dev admin credentials. Missing R2 logs a warning; uploads over 20 MB then return HTTP 503.
 

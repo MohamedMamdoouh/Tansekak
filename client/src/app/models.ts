@@ -114,6 +114,7 @@ export interface UploadUrlResponse {
 }
 
 export const DIRECT_STUDENT_IMPORT_LIMIT_BYTES = 20 * 1024 * 1024;
+export const STAGED_STUDENT_IMPORT_LIMIT_BYTES = 100 * 1024 * 1024;
 
 export interface StudentResult {
   seatingNo: string;

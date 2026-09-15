@@ -167,7 +167,8 @@ There is **no delete** on governorates, universities, faculties, or university�
 | `DELETE` | `/api/admin/admission-cutoffs/{id}` | — | Empty object. Message: `"Deleted successfully."` |
 | `POST` | `/api/admin/admission-years/{yearId}/import` | multipart: `file` (`.md`), `track` | Cutoff markdown import, max **10 MB**. Empty file → `FILE_REQUIRED`. Missing track → `TRACK_REQUIRED`. Non-`.md` → `ONLY_MD_FILES` |
 | `POST` | `/api/admin/admission-years/{yearId}/import-results` | multipart: `file` (`.xlsx`) | Direct student-result import, max **20 MB**. Over that → `413` `FILE_TOO_LARGE`. Non-`.xlsx` → `ONLY_XLSX_FILES` |
-| `POST` | `/api/admin/admission-years/{yearId}/import-results/upload-url` | `{ fileName }` | `{ uploadUrl, objectKey }` for a 15-minute R2 PUT. R2 missing → `503` `R2_NOT_CONFIGURED`. Empty name → `FILE_NAME_REQUIRED`. Must be `.xlsx` |
+| `POST` | `/api/admin/admission-years/{yearId}/import-results/from-upload` | multipart: `file` (`.xlsx`) | Same-origin staged upload for files **> 20 MB** and **≤ 100 MB**. Streams the file to R2 then starts an async job. `data`: `{ jobId }`. Message: `"Import started."`. Over 100 MB → `413` `FILE_TOO_LARGE`. R2 missing → `503` `R2_NOT_CONFIGURED`. Non-`.xlsx` → `ONLY_XLSX_FILES` |
+| `POST` | `/api/admin/admission-years/{yearId}/import-results/upload-url` | `{ fileName }` | `{ uploadUrl, objectKey }` for a 15-minute R2 PUT (API compatibility; the admin UI uses `from-upload`). R2 missing → `503` `R2_NOT_CONFIGURED`. Empty name → `FILE_NAME_REQUIRED`. Must be `.xlsx` |
 | `POST` | `/api/admin/admission-years/{yearId}/import-results/from-storage` | `{ objectKey }` | Starts an async job. `data`: `{ jobId }`. Message: `"Import started."`. `objectKey` must start with `imports/{yearId}/` |
 | `GET` | `/api/admin/import-jobs/{id}` | `id` is a GUID | `{ id, status, importedCount, message, createdAtUtc, completedAtUtc }`. `status`: `queued` \| `running` \| `completed` \| `failed` |
 
@@ -181,7 +182,7 @@ Successful import envelopes put `ImportResultDto` in `data`: `{ success, message
 | `401` | Not signed in (`NOT_AUTHENTICATED`) or failed login (`INVALID_CREDENTIALS`) |
 | `403` | Signed in but missing the `Administrator` role (`FORBIDDEN`) |
 | `404` | Missing entity (`NOT_FOUND`, `STUDENT_RESULT_NOT_FOUND`, `ADMISSION_YEAR_NOT_FOUND`, `UNIVERSITY_FACULTY_NOT_FOUND`) |
-| `413` | Direct student-result upload over 20 MB (`FILE_TOO_LARGE`) |
+| `413` | Direct student-result upload over 20 MB, or staged `from-upload` over 100 MB (`FILE_TOO_LARGE`) |
 | `500` | Unexpected exception (`INTERNAL_ERROR`) |
 | `503` | R2 not configured (`R2_NOT_CONFIGURED`) or no published current year (`NO_CURRENT_YEAR`) |
 

@@ -17,6 +17,9 @@ public class ImportResultsController(
     IImportJobService importJobService) : ControllerBase
 {
     private const long DirectUploadLimitBytes = 20_971_520;
+    private const long StagedUploadLimitBytes = 104_857_600;
+    private const string ExcelContentType =
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
     [HttpPost]
     [RequestSizeLimit(DirectUploadLimitBytes)]
@@ -58,6 +61,41 @@ public class ImportResultsController(
 
         var (uploadUrl, objectKey) = await r2Storage.CreatePresignedUploadAsync(yearId, request.FileName, ct);
         return Ok(ApiResponse<UploadUrlDto>.Ok(new UploadUrlDto(uploadUrl, objectKey)));
+    }
+
+    [HttpPost("from-upload")]
+    [RequestSizeLimit(StagedUploadLimitBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = StagedUploadLimitBytes)]
+    public async Task<ActionResult<ApiResponse<StartImportJobDto>>> ImportFromUpload(
+        int yearId,
+        IFormFile file,
+        CancellationToken ct)
+    {
+        if (!r2Storage.IsConfigured)
+            return StatusCode(
+                StatusCodes.Status503ServiceUnavailable,
+                ApiResponse<StartImportJobDto>.Fail(ApiErrorCodes.R2NotConfigured));
+
+        if (file is null || file.Length == 0)
+            return BadRequest(ApiResponse<StartImportJobDto>.Fail(ApiErrorCodes.FileRequired));
+
+        if (file.Length > StagedUploadLimitBytes)
+            return StatusCode(
+                StatusCodes.Status413PayloadTooLarge,
+                ApiResponse<StartImportJobDto>.Fail(
+                    ApiErrorCodes.FileTooLarge,
+                    "حجم الملف يتجاوز 100 ميجابايت."));
+
+        var ext = Path.GetExtension(file.FileName);
+        if (!ext.Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(ApiResponse<StartImportJobDto>.Fail(ApiErrorCodes.OnlyXlsxFiles));
+
+        var objectKey = $"imports/{yearId}/{Guid.NewGuid():N}{ext}";
+        await using var stream = file.OpenReadStream();
+        await r2Storage.UploadAsync(objectKey, stream, ExcelContentType, ct);
+
+        var job = await importJobService.CreateQueuedJobAsync(yearId, objectKey, ct);
+        return Ok(ApiResponse<StartImportJobDto>.Ok(new StartImportJobDto(job.Id), "Import started."));
     }
 
     [HttpPost("from-storage")]
