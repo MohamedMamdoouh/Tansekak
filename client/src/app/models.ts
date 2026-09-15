@@ -49,13 +49,7 @@ export interface PredictResponse {
 
 export interface Dashboard {
   governoratesCount: number;
-  universitiesCount: number;
   facultiesCount: number;
-  universityFacultiesCount: number;
-  cutoffsCount: number;
-  scienceCutoffsCount: number;
-  mathematicsCutoffsCount: number;
-  literatureCutoffsCount: number;
   studentResultsCount: number;
   currentYear: number | null;
 }

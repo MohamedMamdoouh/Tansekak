@@ -16,59 +16,25 @@
         </div>
       } @else if (data) {
         <section class="hero-band" aria-labelledby="dashboard-title">
-          <div class="hero-copy">
-            <h1 id="dashboard-title">نظرة عامة على بيانات القبول</h1>
-          </div>
-
-          @if (data.currentYear) {
-            <a routerLink="/admin/years" class="year-anchor" aria-label="سنة القبول الحالية">
-              <span class="year-anchor-label">سنة القبول النشطة</span>
-              <span class="year-anchor-value">{{ data.currentYear }}</span>
-            </a>
-          } @else {
-            <a routerLink="/admin/years" class="year-anchor year-anchor--empty">
-              <span class="year-anchor-label">لا توجد سنة قبول نشطة</span>
-              <span class="year-anchor-meta"
-                >راجع بيانات السنوات قبل الاستيراد</span
-              >
-            </a>
-          }
+          <h1 id="dashboard-title">نظرة عامة على بيانات القبول</h1>
         </section>
 
         <section class="stats-grid" aria-label="إحصائيات النظام">
           @for (stat of statCards; track stat.key) {
             <article class="stat-card card">
-              <span class="stat-value">{{ data[stat.key] | number }}</span>
-              <h3 class="stat-label">{{ stat.label }}</h3>
+              <span class="stat-value" [attr.aria-describedby]="'stat-hint-' + stat.key">
+                @if (stat.key === 'currentYear') {
+                  {{ data.currentYear ?? '—' }}
+                } @else {
+                  {{ data[stat.key] | number }}
+                }
+              </span>
+              <div class="stat-copy">
+                <h3 class="stat-label">{{ stat.label }}</h3>
+                <p class="stat-hint" [id]="'stat-hint-' + stat.key">{{ stat.hint }}</p>
+              </div>
             </article>
           }
-        </section>
-
-        <section class="cutoffs-section card" aria-label="حدود القبول حسب الشعبة">
-          <div class="cutoffs-header">
-            <h2>حدود القبول حسب الشعبة</h2>
-            <span class="cutoffs-total">الإجمالي: {{ data.cutoffsCount | number }}</span>
-          </div>
-
-          @if (hasMissingTrackCutoffs(data)) {
-            <p class="cutoffs-warning" role="status">
-              في شعبة بدون حدود قبول — التنبؤ لن يعمل لها حتى تستورد ملف
-              Markdown من
-              <a routerLink="/admin/import">استيراد حدود القبول</a>.
-            </p>
-          }
-
-          <div class="cutoffs-grid">
-            @for (track of trackCutoffStats; track track.key) {
-              <article
-                class="cutoff-track-card"
-                [class.cutoff-track-card--empty]="data[track.key] === 0"
-              >
-                <span class="cutoff-track-value">{{ data[track.key] | number }}</span>
-                <h3 class="cutoff-track-label">{{ track.label }}</h3>
-              </article>
-            }
-          </div>
         </section>
 
         <section class="actions-section" aria-label="إجراءات سريعة">

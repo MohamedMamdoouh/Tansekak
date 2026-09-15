@@ -9,11 +9,7 @@ import { Dashboard } from '../../../models';
 interface StatCard {
   key: keyof Dashboard;
   label: string;
-}
-
-interface TrackCutoffStat {
-  key: 'scienceCutoffsCount' | 'mathematicsCutoffsCount' | 'literatureCutoffsCount';
-  label: string;
+  hint: string;
 }
 
 @Component({
@@ -31,26 +27,27 @@ export class AdminDashboardComponent implements OnInit {
   loadError = '';
 
   statCards: StatCard[] = [
-    { key: 'governoratesCount', label: 'المحافظات' },
-    { key: 'universitiesCount', label: 'الجامعات والمعاهد' },
-    { key: 'facultiesCount', label: 'الكليات' },
-    { key: 'universityFacultiesCount', label: 'كليات بكل جامعة ومعهد' },
-    { key: 'studentResultsCount', label: 'نتائج الثانوية' },
+    {
+      key: 'governoratesCount',
+      label: 'المحافظات',
+      hint: 'عدد المحافظات في مصر',
+    },
+    {
+      key: 'facultiesCount',
+      label: 'الكليات',
+      hint: 'أنواع الكليات وليس عددها',
+    },
+    {
+      key: 'currentYear',
+      label: 'سنة القبول النشطة',
+      hint: 'السنة المستخدمة حاليًا',
+    },
+    {
+      key: 'studentResultsCount',
+      label: 'نتائج الثانوية',
+      hint: 'عدد نتائج الطلاب الحالية',
+    },
   ];
-
-  trackCutoffStats: TrackCutoffStat[] = [
-    { key: 'scienceCutoffsCount', label: 'حدود علمي علوم' },
-    { key: 'mathematicsCutoffsCount', label: 'حدود علمي رياضة' },
-    { key: 'literatureCutoffsCount', label: 'حدود أدبي' },
-  ];
-
-  hasMissingTrackCutoffs(data: Dashboard): boolean {
-    return (
-      data.scienceCutoffsCount === 0 ||
-      data.mathematicsCutoffsCount === 0 ||
-      data.literatureCutoffsCount === 0
-    );
-  }
 
   ngOnInit(): void {
     this.load();

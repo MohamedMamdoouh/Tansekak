@@ -6,10 +6,6 @@
       }
 
       .hero-band {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
         width: 100%;
         padding: 0.75rem 1.1rem;
         border-radius: 14px;
@@ -23,10 +19,6 @@
         box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16);
       }
 
-      .hero-copy {
-        min-width: 0;
-      }
-
       .hero-band h1 {
         font-family: var(--font-display);
         margin: 0;
@@ -35,57 +27,10 @@
         overflow-wrap: anywhere;
       }
 
-      .year-anchor {
-        display: flex;
-        align-items: baseline;
-        gap: 0.55rem;
-        flex-shrink: 0;
-        min-width: 0;
-        padding: 0.4rem 0.8rem;
-        border-radius: 10px;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.16);
-      }
-
-      a.year-anchor {
-        color: inherit;
-        text-decoration: none;
-      }
-
-      a.year-anchor:hover {
-        background: rgba(255, 255, 255, 0.16);
-      }
-
-      .year-anchor--empty {
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 0.15rem;
-        text-align: right;
-      }
-
-      .year-anchor-label {
-        font-size: 0.78rem;
-        opacity: 0.82;
-        white-space: nowrap;
-      }
-
-      .year-anchor-value {
-        font-family: var(--font-display);
-        font-size: 1.25rem;
-        font-weight: 800;
-        line-height: 1;
-        color: var(--color-accent-light);
-      }
-
-      .year-anchor-meta {
-        font-size: 0.85rem;
-        opacity: 0.78;
-      }
-
       .stats-grid {
         display: grid;
         gap: 1rem;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
       }
 
       .stat-card {
@@ -112,6 +57,10 @@
         margin-bottom: 0.5rem;
       }
 
+      .stat-copy {
+        min-width: 0;
+      }
+
       .stat-label {
         margin: 0;
         font-size: 0.98rem;
@@ -120,85 +69,12 @@
         overflow-wrap: anywhere;
       }
 
-      .cutoffs-section {
-        padding: 1.25rem;
-        border: 1px solid rgba(30, 58, 138, 0.08);
-      }
-
-      .cutoffs-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
-        margin-bottom: 1rem;
-      }
-
-      .cutoffs-header h2 {
-        margin: 0;
-        font-family: var(--font-display);
-        font-size: 1.05rem;
-        color: var(--color-primary);
-      }
-
-      .cutoffs-total {
-        font-size: 0.9rem;
-        color: var(--color-text-muted);
-        white-space: nowrap;
-      }
-
-      .cutoffs-warning {
-        margin: 0 0 1rem;
-        padding: 0.75rem 0.9rem;
-        border-radius: 10px;
-        background: #fff7ed;
-        border: 1px solid #fdba74;
-        color: #9a3412;
-        font-size: 0.92rem;
-        line-height: 1.6;
-      }
-
-      .cutoffs-warning a {
-        color: inherit;
-        font-weight: 700;
-      }
-
-      .cutoffs-grid {
-        display: grid;
-        gap: 0.85rem;
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
-      }
-
-      .cutoff-track-card {
-        padding: 1rem;
-        border-radius: 12px;
-        background: var(--color-surface-alt);
-        border: 1px solid rgba(30, 58, 138, 0.08);
-      }
-
-      .cutoff-track-card--empty {
-        background: #fff7ed;
-        border-color: #fdba74;
-      }
-
-      .cutoff-track-value {
-        display: block;
-        font-family: var(--font-display);
-        font-size: 1.6rem;
-        font-weight: 800;
-        color: var(--color-primary);
-        line-height: 1;
-        margin-bottom: 0.35rem;
-      }
-
-      .cutoff-track-card--empty .cutoff-track-value {
-        color: #c2410c;
-      }
-
-      .cutoff-track-label {
-        margin: 0;
-        font-size: 0.92rem;
-        color: var(--color-text);
+      .stat-hint {
+        margin: 0.3rem 0 0;
+        font-size: 0.8rem;
         line-height: 1.45;
+        color: var(--color-text-muted);
+        overflow-wrap: anywhere;
       }
 
       .actions-title {
@@ -304,7 +180,7 @@
       }
 
       .skeleton-card {
-        height: 120px;
+        height: 140px;
         border-radius: 16px;
         background: linear-gradient(
           90deg,
@@ -351,28 +227,13 @@
         }
 
         .hero-band {
-          flex-wrap: wrap;
           padding: 0.7rem 0.85rem;
           border-radius: 12px;
-          gap: 0.65rem;
           box-shadow: 0 6px 16px rgba(15, 23, 42, 0.14);
         }
 
         .hero-band h1 {
           font-size: 1.05rem;
-        }
-
-        .year-anchor {
-          padding: 0.35rem 0.7rem;
-        }
-
-        .year-anchor-value {
-          font-size: 1.15rem;
-        }
-
-        .year-anchor--empty {
-          align-items: flex-start;
-          text-align: right;
         }
 
         .stats-grid,
@@ -394,8 +255,12 @@
           font-size: 0.82rem;
         }
 
+        .stat-hint {
+          font-size: 0.74rem;
+        }
+
         .skeleton-card {
-          height: 96px;
+          height: 118px;
         }
 
         .actions-section {
@@ -465,20 +330,10 @@
         }
 
         .stat-card {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 0.75rem;
           padding: 0.85rem 1rem;
         }
 
-        .stat-value {
-          margin-bottom: 0;
-          flex-shrink: 0;
-        }
-
         .stat-label {
-          text-align: left;
           font-size: 0.86rem;
         }
       }
