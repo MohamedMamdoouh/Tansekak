@@ -33,6 +33,8 @@ public static class ArabicErrorCatalog
         [ApiErrorCodes.InvalidObjectKey] = "مفتاح الملف غير صالح.",
         [ApiErrorCodes.ImportJobMissingKey] = "مهمة الاستيراد لا تحتوي على مفتاح ملف.",
         [ApiErrorCodes.ImportJobSuperseded] = "تم إلغاء مهمة الاستيراد لأنها استُبدلت باستيراد أحدث.",
+        [ApiErrorCodes.ImportJobCancelled] = "تم إلغاء الاستيراد.",
+        [ApiErrorCodes.ImportJobNotCancellable] = "لا يمكن إلغاء مهمة الاستيراد في حالتها الحالية.",
         [ApiErrorCodes.AllowedTracksRequired] = "يجب تحديد شعبة واحدة على الأقل.",
         [ApiErrorCodes.FacultyTrackNotAllowed] = "الكلية غير متاحة للشعبة المحددة.",
         [ApiErrorCodes.Required] = "هذا الحقل مطلوب.",

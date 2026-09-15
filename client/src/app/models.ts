@@ -101,7 +101,7 @@ export interface ImportResult {
 
 export interface ImportJob {
   id: string;
-  status: 'queued' | 'running' | 'completed' | 'failed';
+  status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
   importedCount?: number | null;
   message?: string | null;
   createdAtUtc: string;

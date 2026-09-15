@@ -170,7 +170,8 @@ There is **no delete** on governorates, universities, faculties, or university�
 | `POST` | `/api/admin/admission-years/{yearId}/import-results/from-upload` | multipart: `file` (`.xlsx`) | Same-origin staged upload for files **> 20 MB** and **≤ 100 MB**. Streams the file to R2 then starts an async job. `data`: `{ jobId }`. Message: `"Import started."`. Over 100 MB → `413` `FILE_TOO_LARGE`. R2 missing → `503` `R2_NOT_CONFIGURED`. Non-`.xlsx` → `ONLY_XLSX_FILES` |
 | `POST` | `/api/admin/admission-years/{yearId}/import-results/upload-url` | `{ fileName }` | `{ uploadUrl, objectKey }` for a 15-minute R2 PUT (API compatibility; the admin UI uses `from-upload`). R2 missing → `503` `R2_NOT_CONFIGURED`. Empty name → `FILE_NAME_REQUIRED`. Must be `.xlsx` |
 | `POST` | `/api/admin/admission-years/{yearId}/import-results/from-storage` | `{ objectKey }` | Starts an async job. `data`: `{ jobId }`. Message: `"Import started."`. `objectKey` must start with `imports/{yearId}/` |
-| `GET` | `/api/admin/import-jobs/{id}` | `id` is a GUID | `{ id, status, importedCount, message, createdAtUtc, completedAtUtc }`. `status`: `queued` \| `running` \| `completed` \| `failed` |
+| `GET` | `/api/admin/import-jobs/{id}` | `id` is a GUID | `{ id, status, importedCount, message, createdAtUtc, completedAtUtc }`. `status`: `queued` \| `running` \| `completed` \| `failed` \| `cancelled` |
+| `POST` | `/api/admin/import-jobs/{id}/cancel` | — | Cancels a `queued` job immediately, or cooperatively stops a `running` job before it commits a full student-result replace. Idempotent for terminal statuses. Missing id → `404` |
 
 Successful import envelopes put `ImportResultDto` in `data`: `{ success, message, importedCount?, errors? }`. Failed imports return `400` `VALIDATION_FAILED` with row `errors`.
 

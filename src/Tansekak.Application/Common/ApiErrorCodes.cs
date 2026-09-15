@@ -31,6 +31,8 @@ public static class ApiErrorCodes
     public const string InvalidObjectKey = "INVALID_OBJECT_KEY";
     public const string ImportJobMissingKey = "IMPORT_JOB_MISSING_KEY";
     public const string ImportJobSuperseded = "IMPORT_JOB_SUPERSEDED";
+    public const string ImportJobCancelled = "IMPORT_JOB_CANCELLED";
+    public const string ImportJobNotCancellable = "IMPORT_JOB_NOT_CANCELLABLE";
     public const string AllowedTracksRequired = "ALLOWED_TRACKS_REQUIRED";
     public const string FacultyTrackNotAllowed = "FACULTY_TRACK_NOT_ALLOWED";
 
@@ -84,6 +86,8 @@ public static class ApiErrorCodes
         InvalidObjectKey,
         ImportJobMissingKey,
         ImportJobSuperseded,
+        ImportJobCancelled,
+        ImportJobNotCancellable,
         AllowedTracksRequired,
         FacultyTrackNotAllowed,
         Required,

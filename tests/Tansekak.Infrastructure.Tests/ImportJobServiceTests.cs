@@ -291,6 +291,106 @@ public class ImportJobServiceTests
     }
 
     [Fact]
+    public async Task CancelAsync_marks_queued_job_cancelled_and_skips_import()
+    {
+        var (db, connection) = TestDbFactory.Create();
+        await using (connection)
+        await using (db)
+        {
+            SeedAdmissionYear(db);
+            var queue = new ImportJobQueue();
+            var registry = new ImportJobCancellationRegistry();
+            var jobId = Guid.NewGuid();
+            db.ImportJobs.Add(new ImportJob
+            {
+                Id = jobId,
+                AdmissionYearId = 1,
+                Status = ImportJobStatus.Queued,
+                ObjectKey = "imports/1/test.xlsx",
+                CreatedAtUtc = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+
+            var importService = new FakeImportService();
+            var r2 = new FakeR2Storage();
+            var service = new ImportJobService(
+                db,
+                r2,
+                importService,
+                queue,
+                registry,
+                NullLogger<ImportJobService>.Instance);
+
+            var cancelled = await service.CancelAsync(jobId);
+            Assert.NotNull(cancelled);
+            Assert.Equal(ImportJobStatus.Cancelled, cancelled!.Status);
+
+            await service.ProcessJobAsync(jobId);
+
+            Assert.Equal(0, importService.CallCount);
+            var job = await db.ImportJobs.AsNoTracking().SingleAsync(x => x.Id == jobId);
+            Assert.Equal(ImportJobStatus.Cancelled, job.Status);
+            Assert.Contains("imports/1/test.xlsx", r2.DeletedKeys);
+        }
+    }
+
+    [Fact]
+    public async Task CancelAsync_stops_running_import_before_results_are_replaced()
+    {
+        var (db, connection) = TestDbFactory.Create();
+        await using (connection)
+        await using (db)
+        {
+            SeedAdmissionYear(db);
+            db.StudentResults.Add(new StudentResult
+            {
+                Id = 1,
+                AdmissionYearId = 1,
+                SeatingNo = "1",
+                ArabicName = "موجود",
+                TotalDegree = 300,
+                StudentCaseDesc = "ناجح"
+            });
+            var queue = new ImportJobQueue();
+            var registry = new ImportJobCancellationRegistry();
+            var jobId = Guid.NewGuid();
+            db.ImportJobs.Add(new ImportJob
+            {
+                Id = jobId,
+                AdmissionYearId = 1,
+                Status = ImportJobStatus.Queued,
+                ObjectKey = "imports/1/test.xlsx",
+                CreatedAtUtc = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+
+            var importStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var importService = new BlockingImportService(importStarted);
+            var service = new ImportJobService(
+                db,
+                new FakeR2Storage(),
+                importService,
+                queue,
+                registry,
+                NullLogger<ImportJobService>.Instance);
+
+            var processTask = service.ProcessJobAsync(jobId);
+            await importStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+            var cancelResult = await service.CancelAsync(jobId);
+            Assert.NotNull(cancelResult);
+
+            await processTask.WaitAsync(TimeSpan.FromSeconds(5));
+
+            var job = await db.ImportJobs.AsNoTracking().SingleAsync(x => x.Id == jobId);
+            Assert.Equal(ImportJobStatus.Cancelled, job.Status);
+            Assert.Equal(0, importService.CallCountAfterCancel);
+            Assert.Equal(1, await db.StudentResults.CountAsync());
+            Assert.Equal("1", await db.StudentResults.Select(x => x.SeatingNo).SingleAsync());
+        }
+    }
+
+    [Fact]
     public async Task ProcessJobAsync_skips_import_when_newer_job_exists()
     {
         var (db, connection) = TestDbFactory.Create();
@@ -351,6 +451,7 @@ public class ImportJobServiceTests
             r2 ?? new FakeR2Storage(),
             importService ?? new FakeImportService(),
             queue,
+            new ImportJobCancellationRegistry(),
             NullLogger<ImportJobService>.Instance);
     }
 
@@ -394,6 +495,23 @@ public class ImportJobServiceTests
         {
             CallCount++;
             return Task.FromResult(new ImportResultDto(true, "ok", 1));
+        }
+    }
+
+    private sealed class BlockingImportService(TaskCompletionSource started) : IStudentResultImportService
+    {
+        public int CallCountAfterCancel { get; private set; }
+
+        public async Task<ImportResultDto> ImportAsync(
+            int yearId,
+            Stream fileStream,
+            string fileName,
+            CancellationToken cancellationToken = default)
+        {
+            started.TrySetResult();
+            await Task.Delay(Timeout.Infinite, cancellationToken);
+            CallCountAfterCancel++;
+            return new ImportResultDto(true, "should-not-complete", 1);
         }
     }
 

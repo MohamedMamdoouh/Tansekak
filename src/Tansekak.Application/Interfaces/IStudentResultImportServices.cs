@@ -40,6 +40,8 @@ public interface IImportJobService
 
     Task<ImportJobDto?> GetAsync(Guid jobId, CancellationToken cancellationToken = default);
 
+    Task<ImportJobDto?> CancelAsync(Guid jobId, CancellationToken cancellationToken = default);
+
     Task PrepareQueueAsync(CancellationToken cancellationToken = default);
 
     Task ProcessJobAsync(Guid jobId, CancellationToken cancellationToken = default);

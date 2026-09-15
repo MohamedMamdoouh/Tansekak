@@ -78,6 +78,7 @@ public static class DependencyInjection
         services.AddScoped<IImportJobService, ImportJobService>();
         services.AddSingleton<IR2Storage, R2StorageService>();
         services.AddSingleton<ImportJobQueue>();
+        services.AddSingleton<ImportJobCancellationRegistry>();
         services.AddHostedService<ImportJobBackgroundService>();
 
         return services;
