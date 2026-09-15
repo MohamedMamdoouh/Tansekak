@@ -5,5 +5,10 @@
     "changeOrigin": true,
     "timeout": 600000,
     "proxyTimeout": 600000
+  },
+  "/health": {
+    "target": "http://localhost:5080",
+    "secure": false,
+    "changeOrigin": true
   }
 }

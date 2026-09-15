@@ -162,6 +162,48 @@ public class AdmissionYearServiceTests
         }
     }
 
+    [Fact]
+    public async Task DeleteAsync_promotes_remaining_year_when_current_deleted()
+    {
+        var (db, connection) = TestDbFactory.Create();
+        await using (connection)
+        await using (db)
+        {
+            // Legacy multi-year state from before single-year + delete replaced publish.
+            db.AdmissionYears.AddRange(
+                new AdmissionYear { Id = 1, Year = 2025, MaximumScore = 320, IsCurrent = true },
+                new AdmissionYear { Id = 2, Year = 2026, MaximumScore = 320, IsCurrent = false });
+            await db.SaveChangesAsync();
+
+            var service = CreateService(db);
+            var deleted = await service.DeleteAsync(1);
+
+            Assert.True(deleted);
+            var remaining = await db.AdmissionYears.AsNoTracking().SingleAsync();
+            Assert.Equal(2, remaining.Id);
+            Assert.True(remaining.IsCurrent);
+        }
+    }
+
+    [Fact]
+    public async Task UpdateAsync_sets_is_current_when_none_current()
+    {
+        var (db, connection) = TestDbFactory.Create();
+        await using (connection)
+        await using (db)
+        {
+            db.AdmissionYears.Add(new AdmissionYear { Id = 1, Year = 2026, MaximumScore = 320, IsCurrent = false });
+            await db.SaveChangesAsync();
+
+            var service = CreateService(db);
+            var updated = await service.UpdateAsync(1, new UpdateAdmissionYearDto(2026, 410));
+
+            Assert.NotNull(updated);
+            Assert.True(updated.IsCurrent);
+            Assert.True((await db.AdmissionYears.SingleAsync()).IsCurrent);
+        }
+    }
+
     private static AdmissionYearService CreateService(AppDbContext db) =>
         new(db, new EntityIdAllocator(db), new FakeR2Storage(), NullLogger<AdmissionYearService>.Instance);
 

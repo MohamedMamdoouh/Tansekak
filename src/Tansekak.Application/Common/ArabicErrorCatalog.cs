@@ -32,6 +32,7 @@ public static class ArabicErrorCatalog
         [ApiErrorCodes.R2NotConfigured] = "رفع الملفات الكبيرة غير متاح. يرجى ضبط Cloudflare R2.",
         [ApiErrorCodes.InvalidObjectKey] = "مفتاح الملف غير صالح.",
         [ApiErrorCodes.ImportJobMissingKey] = "مهمة الاستيراد لا تحتوي على مفتاح ملف.",
+        [ApiErrorCodes.ImportJobSuperseded] = "تم إلغاء مهمة الاستيراد لأنها استُبدلت باستيراد أحدث.",
         [ApiErrorCodes.AllowedTracksRequired] = "يجب تحديد شعبة واحدة على الأقل.",
         [ApiErrorCodes.FacultyTrackNotAllowed] = "الكلية غير متاحة للشعبة المحددة.",
         [ApiErrorCodes.Required] = "هذا الحقل مطلوب.",
