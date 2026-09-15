@@ -129,4 +129,87 @@ public class StudentMathematicsTrackRepairTests
                 (await db.StudentResults.SingleAsync()).Track);
         }
     }
+
+    [Fact]
+    public async Task RepairAsync_case_desc_science_wins_over_math_seating()
+    {
+        var (db, connection) = TestDbFactory.Create();
+        await using (connection)
+        await using (db)
+        {
+            db.AdmissionYears.Add(new AdmissionYear
+            {
+                Id = 1,
+                Year = 2026,
+                MaximumScore = 410,
+                IsCurrent = true
+            });
+            // Prefilter may load this (Math seating), but CaseDesc must keep Science.
+            db.StudentResults.Add(new StudentResult
+            {
+                Id = 1,
+                AdmissionYearId = 1,
+                SeatingNo = "2519999",
+                ArabicName = "طالب علوم بمقعد رياضة",
+                TotalDegree = 390,
+                StudentCaseDesc = "علمي علوم",
+                Track = AcademicTrack.Science
+            });
+            await db.SaveChangesAsync();
+
+            var repair = new StudentMathematicsTrackRepairService(
+                db,
+                NullLogger<StudentMathematicsTrackRepairService>.Instance);
+
+            Assert.Equal(0, await repair.RepairAsync());
+            Assert.Equal(
+                AcademicTrack.Science,
+                (await db.StudentResults.SingleAsync()).Track);
+        }
+    }
+
+    [Fact]
+    public async Task RepairAsync_does_not_touch_large_true_science_cohort()
+    {
+        var (db, connection) = TestDbFactory.Create();
+        await using (connection)
+        await using (db)
+        {
+            db.AdmissionYears.Add(new AdmissionYear
+            {
+                Id = 1,
+                Year = 2026,
+                MaximumScore = 410,
+                IsCurrent = true
+            });
+
+            // Many true Science rows with Science seating — must not be rewritten.
+            var scienceRows = Enumerable.Range(0, 250)
+                .Select(i => new StudentResult
+                {
+                    Id = i + 1,
+                    AdmissionYearId = 1,
+                    SeatingNo = $"27{i:D5}",
+                    ArabicName = $"طالب {i}",
+                    TotalDegree = 300 + (i % 50),
+                    StudentCaseDesc = "علمي علوم",
+                    Track = AcademicTrack.Science
+                })
+                .ToList();
+            db.StudentResults.AddRange(scienceRows);
+            await db.SaveChangesAsync();
+
+            var repair = new StudentMathematicsTrackRepairService(
+                db,
+                NullLogger<StudentMathematicsTrackRepairService>.Instance);
+
+            Assert.Equal(0, await repair.RepairAsync());
+            Assert.Equal(
+                250,
+                await db.StudentResults.CountAsync(r => r.Track == AcademicTrack.Science));
+            Assert.Equal(
+                0,
+                await db.StudentResults.CountAsync(r => r.Track == AcademicTrack.Mathematics));
+        }
+    }
 }
