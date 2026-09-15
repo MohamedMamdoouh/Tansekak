@@ -16,6 +16,8 @@ Related: [API.md](./API.md)
 
 No CORS setup on Render — API and SPA share one origin. Do **not** set `Frontend__Origin`.
 
+There is no `render.yaml`. Create the web service in the Render dashboard.
+
 ---
 
 ## 1. Neon
@@ -57,15 +59,28 @@ Npgsql keyword format or a `postgresql://…` URI both work. The app rejects `lo
 
 ## 3. After first deploy
 
-On boot the app runs migrations, seeds the catalog from JSON, creates admission year **2027** (max 320), and creates the admin user from `AdminSeed__*`.
+On boot the app:
 
-**Cutoffs are not seeded.** From a local clone:
+1. Rejects localhost DB strings and the development admin credentials.
+2. Runs EF migrations.
+3. Seeds the catalog from JSON if `Governorates` is empty, and creates admission year **2027** (max 320, current).
+4. Repairs `Faculties.AllowedTracks` from seed JSON when they diverge.
+5. Imports seed Markdown for any current-year track that has **zero** cutoffs (does not overwrite existing rows).
+6. Creates the admin user from `AdminSeed__*`.
 
-1. Sign in at `/admin/login`.
-2. Confirm the year on `/admin/years`.
-3. Upload `SeededData/cutoffs/science-2026.md` and `literature-2026.md` at `/admin/import`.
+Catalog JSON is copied into the image as `SeedData/*.json`. Cutoff Markdown is copied by the API project when those files are in the Docker build context (`SeededData/cutoffs/*.md` → `SeedData/cutoffs/`). `.dockerignore` excludes `*.md` globally, so production images often skip cutoff bootstrap and log that seed cutoff files were not found.
 
-The `2026` in filenames is the official source cycle; rows attach to the current year (**2027** on bootstrap).
+If prediction is empty after first boot, sign in at `/admin/login`, confirm the year on `/admin/years`, then upload from a local clone at `/admin/import`:
+
+| Track | Seed file |
+| --- | --- |
+| `Science` | `SeededData/cutoffs/science-2026.md` |
+| `Mathematics` | `SeededData/cutoffs/mathematics-2026.md` |
+| `Literature` | `SeededData/cutoffs/literature-2026.md` |
+
+The `2026` in filenames is the official source cycle; rows attach to the current year (**2027** on bootstrap). Each import replaces that track only.
+
+Student results are never seeded. Upload the Thanaweya Excel at `/admin/import-results` when you want lookup and track rank.
 
 ---
 
@@ -79,6 +94,8 @@ The admin UI uploads files over 20 MB to the API (same origin, max **100 MB**). 
 2. Create an API token with **Object Read & Write** on that bucket.
 3. Set `R2__AccountId`, `R2__AccessKeyId`, `R2__SecretAccessKey` on Render (`R2__BucketName` defaults to `tansekak-imports`).
 
+Temp files during import live on Render’s ephemeral disk and are deleted when the job finishes. Durable data is Neon (including ASP.NET Data Protection keys) and R2 object storage.
+
 ---
 
 ## 5. Smoke test
@@ -89,4 +106,4 @@ The admin UI uploads files over 20 MB to the API (same origin, max **100 MB**). 
 | `/predict` | SPA loads |
 | `/admin/login` → sign in | Cookie auth works |
 | `GET /api/config` | Current year, max score, tracks `Science` / `Mathematics` / `Literature` |
-| `/admin/import` (after cutoffs uploaded) | Prediction returns results |
+| Predict after cutoffs exist | Science vs Mathematics with the same score return different faculty lists |

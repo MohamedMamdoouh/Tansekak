@@ -35,15 +35,19 @@ JSON is camelCase. Unless noted, every controller response is wrapped in the env
 
 ## Auth
 
-Admin APIs use **cookie ASP.NET Core Identity** (not JWT). Send cookies with the request (`credentials: include`). Login sets a persistent cookie.
+Admin APIs use **cookie ASP.NET Core Identity** (not JWT). Send cookies with the request (`credentials: include`). Login sets a persistent cookie (`.AspNetCore.Identity.Application`). There is **no CSRF/antiforgery** token.
+
+Outside Development: cookie `SecurePolicy = Always`, `SameSite = Lax`. CORS is enabled only when `Frontend:Origin` is set (local Angular). Production is same-origin and does not enable CORS.
 
 | Rule | Behavior |
 | --- | --- |
 | Role | Admin routes require role `Administrator` |
-| Unauthenticated admin call | `401` `NOT_AUTHENTICATED` — Arabic: يجب تسجيل الدخول للمتابعة. |
-| Authenticated but not Administrator | `403` `FORBIDDEN` — Arabic: ليس لديك صلاحية لتنفيذ هذا الإجراء. |
+| Unauthenticated admin call | `401` `NOT_AUTHENTICATED` — يجب تسجيل الدخول للمتابعة. |
+| Authenticated but not Administrator | `403` `FORBIDDEN` — ليس لديك صلاحية لتنفيذ هذا الإجراء. |
 | Login | Public. Wrong email/password, lockout, or a non-Administrator account → `401` `INVALID_CREDENTIALS` (non-Administrator is signed out immediately) |
 | `POST /api/admin/auth/logout` and `GET /api/admin/auth/me` | Require an authenticated cookie (`[Authorize]`). `/me` still returns `401` `NOT_AUTHENTICATED` if the user is not an Administrator |
+
+Password minimum is 8 characters. Lockout: 5 failed attempts, 15 minutes.
 
 ## Public endpoints
 
@@ -70,7 +74,7 @@ Predict faculties the student can reach in the **current** year.
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `track` | string | Required. Values: `Science`, `Mathematics`, `Literature`. Arabic aliases `علمي علوم`, `علمي رياضة`, `أدبي` are accepted |
+| `track` | string | Required. Values: `Science`, `Mathematics`, `Literature`. Arabic aliases `علمي علوم`, `علمي رياضة` / `علمي رياضه`, `أدبي` / `ادبي` / `الادبي` are accepted |
 | `score` | number | Required. Must be ≥ 0. Must not exceed the current year’s `maximumScore` |
 | `page` | number | Optional. Default `1` |
 | `pageSize` | number | Optional. Default `10`. Max `100` (`PaginationConstants`) |
@@ -98,11 +102,11 @@ Eligibility and ordering:
 4. Faculty `AllowedTracks` includes the requested track
 5. Sorted **closest first**: `abs(score − cutoffScore)` ascending
 
-No current year → `503` `NO_CURRENT_YEAR`. Score above max → `400` `SCORE_EXCEEDS_MAX` (Arabic message includes the max as `{0}`). Invalid track / paging → `400` `VALIDATION_FAILED`.
+No current year → `503` `NO_CURRENT_YEAR`. Score above max → `400` `SCORE_EXCEEDS_MAX` (Arabic message includes the max as `{0}`). Invalid track / paging → `400` `VALIDATION_FAILED` or `INVALID_TRACK`.
 
 ### `GET /api/thanaweya-results/{seatingNo}`
 
-Lookup by seating number for the **current year only**.
+Lookup by seating number for the **current year only**. Rank is included here; there is no separate rank route. Both `/thanaweya-result` and `/track-rank` call this endpoint.
 
 **`data`**
 
@@ -113,6 +117,7 @@ Lookup by seating number for the **current year only**.
 | `totalDegree` | number | |
 | `studentCaseDesc` | string | |
 | `year` | number | Current year number |
+| `maximumScore` | number | Current year’s maximum score |
 | `track` | string? | `Science`, `Mathematics`, or `Literature` when resolvable |
 | `trackRank` | number? | Rank among the same track in the current year |
 | `trackTotalStudents` | number? | Count of students in that track in the current year |
@@ -136,7 +141,7 @@ There is **no delete** on governorates, universities, faculties, or university�
 | `POST` | `/api/admin/auth/login` | `{ email, password }` | `{ email, role }` with `role` = `"Administrator"` |
 | `POST` | `/api/admin/auth/logout` | — | Empty object. Message: `"Logged out successfully."` |
 | `GET` | `/api/admin/auth/me` | — | `{ email, role }` |
-| `GET` | `/api/admin/dashboard` | — | Counts: `governoratesCount`, `universitiesCount`, `facultiesCount`, `universityFacultiesCount`, **`cutoffsCount`** (API returns it even though the admin UI hides it), `studentResultsCount`, `currentYear` (`null` if none published) |
+| `GET` | `/api/admin/dashboard` | — | `{ governoratesCount, facultiesCount, studentResultsCount, currentYear }` (`currentYear` is `null` if none published) |
 | `GET` | `/api/admin/governorates` | — | `[{ id, nameAr }]` |
 | `GET` | `/api/admin/governorates/{id}` | — | `{ id, nameAr }` |
 | `POST` | `/api/admin/governorates` | `{ nameAr }` | Created governorate |
@@ -157,22 +162,24 @@ There is **no delete** on governorates, universities, faculties, or university�
 | `GET` | `/api/admin/admission-years/current` | — | Current year, or `404` `NOT_FOUND` if none published |
 | `GET` | `/api/admin/admission-years/{id}` | — | Single year |
 | `POST` | `/api/admin/admission-years` | `{ year, maximumScore }` | Created with `isCurrent: true`. **Only one year may exist** — if any year is already stored → `400` `ADMISSION_YEAR_LIMIT_REACHED`. Year must be 2000–2100; `maximumScore` > 0 and ≤ 1000 |
-| `PUT` | `/api/admin/admission-years/{id}` | `{ year, maximumScore }` | Updates year number and max score. Does not change `isCurrent` |
+| `PUT` | `/api/admin/admission-years/{id}` | `{ year, maximumScore }` | Updates year number and max score. Does not change `isCurrent` unless no current year exists |
 | `DELETE` | `/api/admin/admission-years/{id}` | — | Deletes the year and cascades cutoffs, student results, and import jobs (best-effort R2 cleanup). Missing id → `404` `NOT_FOUND`. To add a different year, delete the current one first |
-| `GET` | `/api/admin/admission-cutoffs` | `yearId`, `search`, `track`, `page`, `pageSize` | Paged `{ items, totalCount, page, pageSize }`. `page` default `1`, `pageSize` default `10`, max `100`. `search` matches university or faculty Arabic name. `track` uses the same bucket as predict |
+| `GET` | `/api/admin/admission-cutoffs` | `yearId`, `search`, `track`, `page`, `pageSize` | Paged `{ items, totalCount, page, pageSize }`. `page` default `1`, `pageSize` default `10`, max `100`. `search` matches university or faculty Arabic name. `track` uses the same parser as predict. The admin UI does not send `track` |
 | `GET` | `/api/admin/admission-cutoffs/{id}` | — | `{ id, admissionYearId, universityFacultyId, track, cutoffScore, universityName?, facultyName? }` |
-| `POST` | `/api/admin/admission-cutoffs` | `{ admissionYearId, universityFacultyId, track, cutoffScore }` | Duplicate year+faculty+track bucket → `CUTOFF_DUPLICATE`. Faculty must allow the track |
+| `POST` | `/api/admin/admission-cutoffs` | `{ admissionYearId, universityFacultyId, track, cutoffScore }` | Duplicate year+faculty+track → `CUTOFF_DUPLICATE`. Faculty must allow the track |
 | `PUT` | `/api/admin/admission-cutoffs/{id}` | `{ admissionYearId, universityFacultyId, track, cutoffScore }` | Same rules as create |
 | `DELETE` | `/api/admin/admission-cutoffs/{id}` | — | Empty object. Message: `"Deleted successfully."` |
-| `POST` | `/api/admin/admission-years/{yearId}/import` | multipart: `file` (`.md`), `track` | Cutoff markdown import, max **10 MB**. Empty file → `FILE_REQUIRED`. Missing track → `TRACK_REQUIRED`. Non-`.md` → `ONLY_MD_FILES` |
-| `POST` | `/api/admin/admission-years/{yearId}/import-results` | multipart: `file` (`.xlsx`) | Direct student-result import, max **20 MB**. Over that → `413` `FILE_TOO_LARGE`. Non-`.xlsx` → `ONLY_XLSX_FILES` |
-| `POST` | `/api/admin/admission-years/{yearId}/import-results/from-upload` | multipart: `file` (`.xlsx`) | Same-origin staged upload for files **> 20 MB** and **≤ 100 MB**. Streams the file to R2 then starts an async job. `data`: `{ jobId }`. Message: `"Import started."`. Over 100 MB → `413` `FILE_TOO_LARGE`. R2 missing → `503` `R2_NOT_CONFIGURED`. Non-`.xlsx` → `ONLY_XLSX_FILES` |
+| `POST` | `/api/admin/admission-years/{yearId}/import` | multipart: `file` (`.md`), `track` | Cutoff markdown import, max **10 MB**. Pipe table columns **الكلية** / **الحد الأدنى**. Replaces all cutoffs for that year+track. Empty file → `FILE_REQUIRED`. Missing track → `TRACK_REQUIRED`. Non-`.md` → `ONLY_MD_FILES` |
+| `POST` | `/api/admin/admission-years/{yearId}/import-results` | multipart: `file` (`.xlsx`) | Direct student-result import, max **20 MB**. Replaces all results for that year. Over that → `413` `FILE_TOO_LARGE`. Non-`.xlsx` → `ONLY_XLSX_FILES` |
+| `POST` | `/api/admin/admission-years/{yearId}/import-results/from-upload` | multipart: `file` (`.xlsx`) | Same-origin staged upload for files **> 20 MB** and **≤ 100 MB**. Streams the file to R2 then starts an async job. `data`: `{ jobId }`. Message: `"Import started."`. Over 100 MB → `413` `FILE_TOO_LARGE`. R2 missing → `503` `R2_NOT_CONFIGURED`. Client abort after upload → `499` `IMPORT_JOB_CANCELLED` |
 | `POST` | `/api/admin/admission-years/{yearId}/import-results/upload-url` | `{ fileName }` | `{ uploadUrl, objectKey }` for a 15-minute R2 PUT (API compatibility; the admin UI uses `from-upload`). R2 missing → `503` `R2_NOT_CONFIGURED`. Empty name → `FILE_NAME_REQUIRED`. Must be `.xlsx` |
 | `POST` | `/api/admin/admission-years/{yearId}/import-results/from-storage` | `{ objectKey }` | Starts an async job. `data`: `{ jobId }`. Message: `"Import started."`. `objectKey` must start with `imports/{yearId}/` |
 | `GET` | `/api/admin/import-jobs/{id}` | `id` is a GUID | `{ id, status, importedCount, message, createdAtUtc, completedAtUtc }`. `status`: `queued` \| `running` \| `completed` \| `failed` \| `cancelled` |
-| `POST` | `/api/admin/import-jobs/{id}/cancel` | — | Cancels a `queued` job immediately, or cooperatively stops a `running` job before it commits a full student-result replace. Idempotent for terminal statuses. Missing id → `404` |
+| `POST` | `/api/admin/import-jobs/{id}/cancel` | — | Cancels a `queued` job immediately, or cooperatively stops a `running` job before it commits a full student-result replace. Idempotent for terminal statuses. Message is `"Cancelled."` or the existing job message. Missing id → `404` |
 
 Successful import envelopes put `ImportResultDto` in `data`: `{ success, message, importedCount?, errors? }`. Failed imports return `400` `VALIDATION_FAILED` with row `errors`.
+
+Excel required headers: `seating_no`, `arabic_name`, `total_degree`, `student_case_desc`.
 
 ## Status codes
 
@@ -183,6 +190,7 @@ Successful import envelopes put `ImportResultDto` in `data`: `{ success, message
 | `403` | Signed in but missing the `Administrator` role (`FORBIDDEN`) |
 | `404` | Missing entity (`NOT_FOUND`, `STUDENT_RESULT_NOT_FOUND`, `ADMISSION_YEAR_NOT_FOUND`, `UNIVERSITY_FACULTY_NOT_FOUND`) |
 | `413` | Direct student-result upload over 20 MB, or staged `from-upload` over 100 MB (`FILE_TOO_LARGE`) |
+| `499` | Client aborted a staged import after the file reached R2 (`IMPORT_JOB_CANCELLED`) |
 | `500` | Unexpected exception (`INTERNAL_ERROR`) |
 | `503` | R2 not configured (`R2_NOT_CONFIGURED`) or no published current year (`NO_CURRENT_YEAR`) |
 
@@ -190,7 +198,7 @@ Successful import envelopes put `ImportResultDto` in `data`: `{ success, message
 
 Fail `message` is the Arabic catalog string unless the server formats a placeholder or substitutes a custom Arabic string.
 
-Codes with `{0}`: `SCORE_EXCEEDS_MAX` (maximum score), `MISSING_COLUMN` (column name), `UNRESOLVED_COLLEGE` (college text from the file).
+Codes with placeholders: `SCORE_EXCEEDS_MAX` (`{0}` = maximum score), `MISSING_COLUMN` (`{0}` = column name), `UNRESOLVED_COLLEGE` (`{0}` = college text), `FIELD_TOO_LONG` (`{0}` = field, `{1}` = max length).
 
 | Code | Arabic message |
 | --- | --- |
@@ -222,6 +230,9 @@ Codes with `{0}`: `SCORE_EXCEEDS_MAX` (maximum score), `MISSING_COLUMN` (column 
 | `R2_NOT_CONFIGURED` | رفع الملفات الكبيرة غير متاح. يرجى ضبط Cloudflare R2. |
 | `INVALID_OBJECT_KEY` | مفتاح الملف غير صالح. |
 | `IMPORT_JOB_MISSING_KEY` | مهمة الاستيراد لا تحتوي على مفتاح ملف. |
+| `IMPORT_JOB_SUPERSEDED` | تم إلغاء مهمة الاستيراد لأنها استُبدلت باستيراد أحدث. |
+| `IMPORT_JOB_CANCELLED` | تم إلغاء الاستيراد. |
+| `IMPORT_JOB_NOT_CANCELLABLE` | لا يمكن إلغاء مهمة الاستيراد في حالتها الحالية. |
 | `ALLOWED_TRACKS_REQUIRED` | يجب تحديد شعبة واحدة على الأقل. |
 | `FACULTY_TRACK_NOT_ALLOWED` | الكلية غير متاحة للشعبة المحددة. |
 | `REQUIRED` | هذا الحقل مطلوب. |
@@ -242,8 +253,12 @@ Codes with `{0}`: `SCORE_EXCEEDS_MAX` (maximum score), `MISSING_COLUMN` (column 
 | `WORKSHEET_EMPTY` | ورقة العمل لا تحتوي على بيانات. |
 | `FILE_NO_DATA_ROWS` | الملف لا يحتوي على صفوف بيانات. |
 | `UNRESOLVED_COLLEGE` | تعذر مطابقة "{0}" مع جامعة/كلية في النظام. |
+| `FIELD_TOO_LONG` | القيمة في {0} أطول من الحد المسموح ({1} حرف). |
+| `IMPORT_FILE_INVALID` | الملف تالف أو بصيغة غير مدعومة. تأكد أنه ملف Excel (.xlsx) صالح. |
+| `IMPORT_JOB_MEMORY_FAILED` | نفدت ذاكرة الخادم أثناء معالجة الملف. جرّب تقسيم الملف إلى أجزاء أصغر. |
+| `IMPORT_JOB_TIMEOUT` | انتهت مهلة معالجة الاستيراد. حاول مرة أخرى أو قسّم الملف. |
 
-Unknown codes fall back to the `INTERNAL_ERROR` Arabic message.
+Unknown codes fall back to the `INTERNAL_ERROR` Arabic message. `IMPORT_JOB_NOT_CANCELLABLE` is in the catalog; cancel is currently idempotent and does not throw it.
 
 ## OpenAPI
 

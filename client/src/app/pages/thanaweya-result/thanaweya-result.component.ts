@@ -55,11 +55,6 @@ export class ThanaweyaResultComponent {
     return getTrackLabel(track);
   }
 
-  studentInitial(name: string): string {
-    const trimmed = name.trim();
-    return trimmed ? trimmed.charAt(0) : '؟';
-  }
-
   onSeatingInput(event: Event): void {
     applyDigitsOnlyInput(event, this.form.get('seatingNo'));
     this.error = '';

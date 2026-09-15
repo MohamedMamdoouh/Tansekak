@@ -10,10 +10,10 @@ Results are **indicative only**. Egypt’s official coordination portal decides 
 
 **Current-stage docs**
 
-| Document                         | Role                         |
-| -------------------------------- | ---------------------------- |
-| [docs/PRD.md](docs/PRD.md)       | As-built product spec        |
-| [docs/API.md](docs/API.md)       | HTTP contract, error codes   |
+| Document                   | Role                       |
+| -------------------------- | -------------------------- |
+| [docs/PRD.md](docs/PRD.md) | As-built product spec      |
+| [docs/API.md](docs/API.md) | HTTP contract, error codes |
 | [docs/DEPLOY.md](docs/DEPLOY.md) | Render + Neon + R2 checklist |
 
 ---
@@ -21,6 +21,8 @@ Results are **indicative only**. Egypt’s official coordination portal decides 
 ## Features
 
 ### Public (RTL Arabic)
+
+Public chrome brand is **Tansekak**. API `appName` is `tansekak`. Admin chrome is **Admin**. A signed-in administrator also sees a dashboard link in the public header.
 
 | Feature            | Route               | Description                                       |
 | ------------------ | ------------------- | ------------------------------------------------- |
@@ -35,38 +37,26 @@ Results are **indicative only**. Egypt’s official coordination portal decides 
 **Prediction**
 
 - Eligible only: `student score >= cutoff`.
-- Current published year, matching track bucket, and faculty `AllowedTracks`.
+- Current published year, matching track, and faculty `AllowedTracks`.
 - Sorted closest cutoff first (`abs(score − cutoff)`).
 - Frontend `pageSize: 20` with unlimited load-more. API default is 10, max 100.
 - Search filters **already loaded** university/faculty names (client-side).
 
-**Tracks**
-
-| API value     | Arabic       |
-| ------------- | ------------ |
-| `Science`     | علمي علوم    |
-| `Mathematics` | علمي رياضة   |
-| `Literature`  | أدبي         |
-
-Each track is distinct for prediction, cutoffs, faculty eligibility, and track rank.
-
-Public brand is **Tansekak**. API `appName` is `tansekak`. Admin chrome is **لوحة الإدارة**.
+**Tracks:** `Science`, `Mathematics`, `Literature`. Each is distinct for prediction, cutoffs, faculty eligibility, and track rank.
 
 ### Admin
 
-Not linked from the public site. Sign in at `/admin/login`.
+Sign in at `/admin/login` (not linked from the public site until an administrator is already signed in).
 
-| Page                   | Route                   | Description                                                                                               |
-| ---------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------- |
-| Dashboard              | `/admin`                | Current year plus catalog and student-result counts (`cutoffsCount` is returned by the API but not shown) |
-| Admission years        | `/admin/years`          | Create, edit, delete the single admission year                                                            |
-| Cutoffs                | `/admin/cutoffs`        | CRUD for the **current** year                                                                             |
-| Import cutoffs         | `/admin/import`         | One Markdown file per track (علمي علوم، علمي رياضة، أدبي); each import replaces that track for the current year |
-| Import student results | `/admin/import-results` | Excel for the **current** year (replaces all results for that year)                                       |
+| Page                   | Route                   | Description                                                                                          |
+| ---------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------- |
+| Dashboard              | `/admin`                | Current year plus governorate, faculty-type, and student-result counts                               |
+| Admission years        | `/admin/years`          | Create, edit, delete the single admission year                                                       |
+| Cutoffs                | `/admin/cutoffs`        | CRUD for the **current** year                                                                        |
+| Import cutoffs         | `/admin/import`         | One Markdown file per track (`Science`, `Mathematics`, `Literature`); each import replaces that track for the current year |
+| Import student results | `/admin/import-results` | Excel for the **current** year (replaces all results for that year)                                  |
 
 Import pages block navigation with a progress overlay until the upload finishes or you confirm leaving.
-
-After deploying the 3-track model to production that previously ran the Mathematics→Science migration, follow [docs/PRODUCTION_REIMPORT.md](docs/PRODUCTION_REIMPORT.md).
 
 **Development admin** (rejected in Production): `admin@tansekak.local` / `Admin@12345`. Production uses `AdminSeed__Email` and `AdminSeed__Password`.
 
@@ -76,16 +66,16 @@ After deploying the 3-track model to production that previously ran the Mathemat
 
 ## Tech stack
 
-| Layer         | Technology                                                      |
-| ------------- | --------------------------------------------------------------- |
-| Backend       | ASP.NET Core 10, EF Core, PostgreSQL (Npgsql), Identity cookies |
-| Frontend      | Angular 19 standalone, RTL                                      |
-| Validation    | FluentValidation                                                |
-| Excel         | ClosedXML                                                       |
-| Large uploads | Cloudflare R2 (API streams files >20 MB, max 100 MB)            |
-| Tests         | xUnit                                                           |
-| CI            | GitHub Actions (build + test)                                   |
-| Deploy        | Docker monolith on Render, Neon Postgres                        |
+| Layer         | Technology                                                       |
+| ------------- | ---------------------------------------------------------------- |
+| Backend       | ASP.NET Core 10, EF Core, PostgreSQL (Npgsql), Identity cookies  |
+| Frontend      | Angular 19 standalone, RTL                                       |
+| Validation    | FluentValidation                                                 |
+| Excel         | DocumentFormat.OpenXml (streaming parser)                        |
+| Large uploads | Cloudflare R2 (API streams files >20 MB, max 100 MB)             |
+| Tests         | xUnit                                                            |
+| CI            | GitHub Actions (Angular production build + `dotnet test` solution) |
+| Deploy        | Docker monolith on Render, Neon Postgres                         |
 
 Clean Architecture: `Domain` → `Application` (services + DTOs, no MediatR, no repositories) → `Infrastructure` → `Api`. Integer business IDs use `EntityIdAllocator`; Identity tables use PostgreSQL identity columns.
 
@@ -97,12 +87,12 @@ Clean Architecture: `Domain` → `Application` (services + DTOs, no MediatR, no 
 Tansekak/
 ├── client/                      # Angular 19 SPA
 ├── SeededData/                  # Catalog JSON (copied to API output as SeedData/)
-│   └── cutoffs/                 # Sample Markdown — upload via admin, not auto-seeded
+│   └── cutoffs/                 # Markdown used by startup bootstrap and admin import
 ├── docs/
 ├── tests/
 │   ├── Tansekak.Application.Tests/
 │   ├── Tansekak.Infrastructure.Tests/
-│   └── Tansekak.Api.Tests/      # On disk; not in Tansekak.sln / CI
+│   └── Tansekak.Api.Tests/
 ├── src/Tansekak.{Api,Application,Domain,Infrastructure}/
 ├── Dockerfile
 └── Tansekak.sln
@@ -138,7 +128,7 @@ dotnet run
 - `http://localhost:5080`
 - Health: `/health` → `{ "status": "healthy" }`
 - OpenAPI (Development only): `/openapi/v1.json` (no Swagger UI)
-- Startup: migrations, catalog seed if empty, bootstrap year **2027** (max 320, current), dev admin user
+- Startup: production guards (non-Development), migrations, catalog seed if empty, faculty `AllowedTracks` repair, cutoff bootstrap for empty tracks, bootstrap year **2027** (max 320, current), admin user
 
 ### 3. Frontend
 
@@ -150,14 +140,21 @@ npm start
 
 - `http://localhost:4200` (proxies `/api` to `:5080`)
 
-### 4. First-run cutoffs (required for predictions)
+### 4. Cutoffs
 
-Cutoffs are **not** seeded. From a **local clone**, open `/admin/login`, confirm the year on `/admin/years`, then upload:
+On every startup, tracks with **zero** cutoffs in the current year are imported from `SeededData/cutoffs/` (build output `SeedData/cutoffs/`). Existing cutoffs are never overwritten.
 
-- `SeededData/cutoffs/science-2026.md` → Science
-- `SeededData/cutoffs/literature-2026.md` → Literature
+Local `dotnet run` copies those files, so a fresh database typically has Science, Mathematics, and Literature cutoffs after first boot.
 
-`2026` is the official source cycle. Files attach to the **current published year** (bootstrap **2027**). They are **not** inside the Docker image.
+| File | Track |
+| --- | --- |
+| `SeededData/cutoffs/science-2026.md` | Science |
+| `SeededData/cutoffs/mathematics-2026.md` | Mathematics |
+| `SeededData/cutoffs/literature-2026.md` | Literature |
+
+`2026` is the official source cycle. Rows attach to the **current published year** (bootstrap **2027**). Re-import or replace a track from `/admin/import`.
+
+Docker images may omit these Markdown files (`.dockerignore` excludes `*.md`). See [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ---
 
@@ -193,7 +190,12 @@ Env vars use `__` (`R2__AccountId`). Production rejects localhost connection str
 
 ## Database
 
-Seeded once when `Governorates` is empty: `Governorates.json`, `Universities.json`, `Faculties.json`, `UniversityFaculties.json`. After that the database is the source of truth.
+Seeded once when `Governorates` is empty: `Governorates.json`, `Universities.json`, `Faculties.json`, `UniversityFaculties.json`, plus admission year **2027**. After that the database is the source of truth for catalog rows.
+
+Every startup still:
+
+- Repairs `Faculties.AllowedTracks` from seed JSON when they diverge.
+- Imports seed Markdown for any current-year track that has zero cutoffs.
 
 Entities: Governorate, University (`Public` / `Institute`), Faculty (`AllowedTracks`), UniversityFaculty, AdmissionYear, AdmissionCutoff, StudentResult, ImportJob, EntityIdSequence.
 
@@ -217,7 +219,7 @@ Full contract: [docs/API.md](docs/API.md).
 dotnet test Tansekak.sln --configuration Release
 ```
 
-That runs **Application** and **Infrastructure** tests (track rules, prediction, admission year rules, seeded Markdown parse, import jobs, connection resolution). `tests/Tansekak.Api.Tests` exists (global exception handler) but is **not** in the solution, so CI does not run it. There are no integration or E2E projects.
+CI runs an Angular production build, then that command. The solution includes **Application**, **Infrastructure**, and **Api** tests (track rules, prediction, admission year rules, seeded Markdown parse, import jobs, connection resolution, HTTP integration). There are no E2E or Angular unit-test projects.
 
 ---
 

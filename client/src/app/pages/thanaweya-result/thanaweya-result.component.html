@@ -64,20 +64,11 @@
       @if (result) {
         <section class="thanaweya-sheet" aria-label="نتيجة الطالب">
           <header class="sheet-id">
-            <div class="sheet-avatar" aria-hidden="true">
-              {{ studentInitial(result.arabicName) }}
-            </div>
-            <div class="sheet-id-body">
-              <p class="sheet-eyebrow">
-                الثانوية العامة
-                <span class="sheet-year num">{{ result.year }}</span>
-              </p>
-              <h2 class="sheet-name">{{ result.arabicName }}</h2>
-              <p class="sheet-seating">
-                <span class="sheet-seating-label">رقم الجلوس</span>
-                <span class="sheet-seating-no num">{{ result.seatingNo }}</span>
-              </p>
-            </div>
+            <h2 class="sheet-name">{{ result.arabicName }}</h2>
+            <p class="sheet-seating">
+              <span class="sheet-seating-label">رقم الجلوس</span>
+              <span class="sheet-seating-no num">{{ result.seatingNo }}</span>
+            </p>
           </header>
 
           <div
@@ -96,9 +87,11 @@
               [style.--score-pct]="scoreProgress(result.totalDegree)"
             >
               <div class="sheet-seal-face">
-                <span class="sheet-pct num">
-                  {{ resultPercentage(result.totalDegree)
-                  }}<span class="sheet-pct-mark">%</span>
+                <span class="sheet-pct num" dir="ltr">
+                  <span class="sheet-pct-value">{{
+                    resultPercentage(result.totalDegree)
+                  }}</span>
+                  <span class="sheet-pct-mark">%</span>
                 </span>
                 <span class="sheet-pct-caption">النسبة المئوية</span>
               </div>
@@ -161,11 +154,6 @@
             <div class="sheet-rank">
               <div class="sheet-rank-head">
                 <span class="sheet-rank-label">الترتيب على الشعبة</span>
-                @if (result.track) {
-                  <span class="sheet-rank-track">{{
-                    trackLabel(result.track)
-                  }}</span>
-                }
               </div>
               <div class="sheet-rank-stats">
                 <div class="sheet-rank-stat sheet-rank-stat--primary">
