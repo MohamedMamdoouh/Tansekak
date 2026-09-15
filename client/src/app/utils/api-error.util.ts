@@ -3,7 +3,9 @@ import { SESSION_EXPIRED_MESSAGE } from '../constants/auth-messages';
 import { ApiResponse } from '../models';
 
 export function resolveApiError(
-  err: HttpErrorResponse | { status?: number; error?: ApiResponse<unknown> | null },
+  err:
+    | HttpErrorResponse
+    | { status?: number; error?: ApiResponse<unknown> | null },
   fallback: string,
 ): string {
   const status = err.status ?? 0;
@@ -22,7 +24,7 @@ export function resolveApiError(
   }
 
   if (status >= 500) {
-    return 'حدث خطأ في الخادم. حاول مرة أخرى لاحقاً.';
+    return 'حدث خطأ في الخادم. حاول مرة أخرى لاحقًا.';
   }
 
   return fallback;

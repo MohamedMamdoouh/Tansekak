@@ -16,6 +16,12 @@
           }
         </div>
 
+        @if (!lookupEnabled) {
+          <div class="lookup-notice" role="status">
+            {{ lookupUnavailableMessage }}
+          </div>
+        }
+
         <form class="lookup-form" [formGroup]="form" (ngSubmit)="submit()">
           <label for="seatingNo" class="lookup-label">رقم الجلوس</label>
           <div class="lookup-input-wrap">
@@ -49,7 +55,7 @@
           <button
             class="btn btn-primary btn-lg lookup-submit"
             type="submit"
-            [disabled]="loading"
+            [disabled]="!lookupEnabled || loading"
           >
             @if (loading) {
               <span class="lookup-spinner" aria-hidden="true"></span>
@@ -124,103 +130,6 @@
               </p>
             </div>
           }
-
-          <div
-            class="sheet-grade"
-            [attr.aria-label]="
-              'النسبة المئوية ' +
-              scorePercentage(result.totalDegree) +
-              '%، المجموع الكلي ' +
-              result.totalDegree +
-              ' من ' +
-              thanaweyaMaxScore
-            "
-          >
-            <div
-              class="sheet-seal"
-              [style.--score-pct]="scoreProgress(result.totalDegree)"
-            >
-              <div class="sheet-seal-face">
-                <span class="sheet-pct num" dir="ltr">
-                  <span class="sheet-pct-value">{{
-                    scorePercentage(result.totalDegree)
-                  }}</span>
-                  <span class="sheet-pct-mark">%</span>
-                </span>
-                <span class="sheet-pct-caption">النسبة المئوية</span>
-              </div>
-            </div>
-            <p class="sheet-total">
-              <span class="sheet-total-label">المجموع الكلي</span>
-              <span class="sheet-total-value num">{{
-                result.totalDegree
-              }}</span>
-              <span class="sheet-total-max">/ {{ thanaweyaMaxScore }}</span>
-            </p>
-          </div>
-
-          <div class="sheet-facts">
-            @if (result.track) {
-              <div class="sheet-fact">
-                <span class="sheet-fact-icon" aria-hidden="true">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path
-                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                    />
-                  </svg>
-                </span>
-                <div class="sheet-fact-text">
-                  <span class="sheet-fact-label">الشعبة</span>
-                  <span class="sheet-fact-value">{{
-                    trackLabel(result.track)
-                  }}</span>
-                </div>
-              </div>
-            }
-            <div class="sheet-fact">
-              <span class="sheet-fact-icon" aria-hidden="true">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-              </span>
-              <div class="sheet-fact-text">
-                <span class="sheet-fact-label">سنة النتيجة</span>
-                <span class="sheet-fact-value num">{{ result.year }}</span>
-              </div>
-            </div>
-            <div class="sheet-fact">
-              <span class="sheet-fact-icon" aria-hidden="true">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </span>
-              <div class="sheet-fact-text">
-                <span class="sheet-fact-label">حالة الطالب</span>
-                <span class="sheet-fact-value">{{
-                  result.studentCaseDesc
-                }}</span>
-              </div>
-            </div>
-          </div>
 
           <footer class="sheet-footer">
             <a

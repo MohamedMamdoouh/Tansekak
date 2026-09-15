@@ -26,7 +26,10 @@ export function submitStudentLookup(
     error: (err: HttpErrorResponse) =>
       setState({
         loading: false,
-        error: resolveApiError(err, 'حدث خطأ أثناء البحث. حاول مرة أخرى لاحقاً.'),
+        error: resolveApiError(
+          err,
+          'حدث خطأ أثناء البحث. حاول مرة أخرى لاحقًا.',
+        ),
       }),
   });
 }

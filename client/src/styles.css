@@ -1023,6 +1023,12 @@ td {
   pointer-events: none;
 }
 
+.lookup-input-wrap input:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  background: #f8fafc;
+}
+
 .lookup-input-wrap input {
   width: 100%;
   text-align: center;

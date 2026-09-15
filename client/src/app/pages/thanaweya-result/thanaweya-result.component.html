@@ -16,6 +16,12 @@
           }
         </div>
 
+        @if (!lookupEnabled) {
+          <div class="lookup-notice" role="status">
+            {{ lookupUnavailableMessage }}
+          </div>
+        }
+
         <form class="lookup-form" [formGroup]="form" (ngSubmit)="submit()">
           <label for="seatingNo" class="lookup-label">رقم الجلوس</label>
           <div class="lookup-input-wrap">
@@ -49,7 +55,7 @@
           <button
             class="btn btn-primary btn-lg lookup-submit"
             type="submit"
-            [disabled]="loading"
+            [disabled]="!lookupEnabled || loading"
           >
             @if (loading) {
               <span class="lookup-spinner" aria-hidden="true"></span>

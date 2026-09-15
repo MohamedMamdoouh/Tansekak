@@ -4,13 +4,13 @@ public static class ArabicErrorCatalog
 {
     private static readonly Dictionary<string, string> Messages = new(StringComparer.Ordinal)
     {
-        [ApiErrorCodes.InternalError] = "حدث خطأ غير متوقع. حاول مرة أخرى لاحقاً.",
+        [ApiErrorCodes.InternalError] = "حدث خطأ غير متوقع. حاول مرة أخرى لاحقًا.",
         [ApiErrorCodes.NotFound] = "العنصر المطلوب غير موجود.",
         [ApiErrorCodes.ValidationFailed] = "يرجى التحقق من البيانات المدخلة.",
         [ApiErrorCodes.InvalidCredentials] = "بيانات الدخول غير صحيحة.",
         [ApiErrorCodes.NotAuthenticated] = "يجب تسجيل الدخول للمتابعة.",
         [ApiErrorCodes.Forbidden] = "ليس لديك صلاحية لتنفيذ هذا الإجراء.",
-        [ApiErrorCodes.ServiceUnavailable] = "الخدمة غير متاحة حالياً. حاول مرة أخرى لاحقاً.",
+        [ApiErrorCodes.ServiceUnavailable] = "الخدمة غير متاحة حاليًا. حاول مرة أخرى لاحقًا.",
         [ApiErrorCodes.NoCurrentYear] = "لم يتم تعيين سنة قبول حالية.",
         [ApiErrorCodes.InvalidTrack] = "الشعبة غير صحيحة.",
         [ApiErrorCodes.InvalidUniversityType] = "نوع الجامعة غير صحيح.",

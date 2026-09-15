@@ -16,6 +16,10 @@ import {
 import { scorePercentage, scoreProgress } from '../../utils/thanaweya-score.util';
 import { getTrackLabel } from '../../utils/track-label.util';
 import { submitStudentLookup } from '../../utils/student-lookup.util';
+import {
+  STUDENT_LOOKUP_ENABLED,
+  STUDENT_LOOKUP_UNAVAILABLE_MESSAGE,
+} from '../../constants/student-lookup.constants';
 
 @Component({
   selector: 'app-thanaweya-result',
@@ -29,6 +33,8 @@ export class ThanaweyaResultComponent {
   private api = inject(ApiService);
 
   readonly fmt = formatNumber;
+  readonly lookupEnabled = STUDENT_LOOKUP_ENABLED;
+  readonly lookupUnavailableMessage = STUDENT_LOOKUP_UNAVAILABLE_MESSAGE;
 
   loading = false;
   error = '';
@@ -37,6 +43,12 @@ export class ThanaweyaResultComponent {
   form = this.fb.group({
     seatingNo: ['', [Validators.required, digitsOnlyValidator()]],
   });
+
+  constructor() {
+    if (!this.lookupEnabled) {
+      this.form.disable();
+    }
+  }
 
   get thanaweyaMaxScore(): number {
     if (!this.result?.maximumScore) return DEFAULT_MAXIMUM_SCORE;
@@ -62,6 +74,8 @@ export class ThanaweyaResultComponent {
   }
 
   submit(): void {
+    if (!this.lookupEnabled) return;
+
     submitStudentLookup(
       this.form,
       (seatingNo) => this.api.getThanaweyaResult(seatingNo),

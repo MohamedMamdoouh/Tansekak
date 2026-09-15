@@ -3,7 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../services/api.service';
-import { DEFAULT_MAXIMUM_SCORE, StudentResult } from '../../models';
+import { StudentResult } from '../../models';
 import {
   applyDigitsOnlyInput,
   digitsOnlyValidator,
@@ -13,12 +13,12 @@ import {
   hasTrackRank,
   predictQueryParams,
 } from '../../utils/student-result.util';
-import {
-  scorePercentage,
-  scoreProgress,
-} from '../../utils/thanaweya-score.util';
 import { getTrackLabel } from '../../utils/track-label.util';
 import { submitStudentLookup } from '../../utils/student-lookup.util';
+import {
+  STUDENT_LOOKUP_ENABLED,
+  STUDENT_LOOKUP_UNAVAILABLE_MESSAGE,
+} from '../../constants/student-lookup.constants';
 
 @Component({
   selector: 'app-track-rank',
@@ -32,6 +32,8 @@ export class TrackRankComponent {
   private api = inject(ApiService);
 
   readonly fmt = formatNumber;
+  readonly lookupEnabled = STUDENT_LOOKUP_ENABLED;
+  readonly lookupUnavailableMessage = STUDENT_LOOKUP_UNAVAILABLE_MESSAGE;
 
   loading = false;
   error = '';
@@ -41,9 +43,10 @@ export class TrackRankComponent {
     seatingNo: ['', [Validators.required, digitsOnlyValidator()]],
   });
 
-  get thanaweyaMaxScore(): number {
-    if (!this.result?.maximumScore) return DEFAULT_MAXIMUM_SCORE;
-    return this.result.maximumScore;
+  constructor() {
+    if (!this.lookupEnabled) {
+      this.form.disable();
+    }
   }
 
   onSeatingInput(event: Event): void {
@@ -53,6 +56,8 @@ export class TrackRankComponent {
   }
 
   submit(): void {
+    if (!this.lookupEnabled) return;
+
     submitStudentLookup(
       this.form,
       (seatingNo) => this.api.getThanaweyaResult(seatingNo),
@@ -90,14 +95,6 @@ export class TrackRankComponent {
     const total = result.trackTotalStudents!;
     const pct = ((total - rank + 1) / total) * 100;
     return pct.toFixed(1);
-  }
-
-  scorePercentage(totalDegree: number): string {
-    return scorePercentage(totalDegree, this.thanaweyaMaxScore);
-  }
-
-  scoreProgress(totalDegree: number): number {
-    return scoreProgress(totalDegree, this.thanaweyaMaxScore);
   }
 
   predictQueryParams(): { score: number; track?: string } {
