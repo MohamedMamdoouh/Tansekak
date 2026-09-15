@@ -1,0 +1,126 @@
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Tansekak.Domain.Entities;
+using Tansekak.Domain.Enums;
+using Tansekak.Infrastructure.Import;
+using Tansekak.Infrastructure.Persistence;
+
+namespace Tansekak.Api.Tests;
+
+public sealed class TansekakWebApplicationFactory : WebApplicationFactory<Program>
+{
+    private SqliteConnection? _connection;
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseEnvironment("Development");
+        builder.UseSetting("Testing:SkipStartupSeed", "true");
+        builder.UseSetting("Testing:UseSqlite", "true");
+
+        _connection = new SqliteConnection("Data Source=:memory:");
+        _connection.Open();
+
+        builder.ConfigureServices(services =>
+        {
+            services.AddDbContext<AppDbContext>(options => options.UseSqlite(_connection));
+
+            var hosted = services
+                .Where(d => d.ServiceType == typeof(IHostedService)
+                    && d.ImplementationType == typeof(ImportJobBackgroundService))
+                .ToList();
+            foreach (var descriptor in hosted)
+                services.Remove(descriptor);
+        });
+    }
+
+    protected override IHost CreateHost(IHostBuilder builder)
+    {
+        var host = base.CreateHost(builder);
+
+        using var scope = host.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.Database.EnsureCreated();
+        SeedIntegrationData(db);
+
+        return host;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+            _connection?.Dispose();
+
+        base.Dispose(disposing);
+    }
+
+    private static void SeedIntegrationData(AppDbContext db)
+    {
+        if (db.AdmissionYears.Any())
+            return;
+
+        db.AdmissionYears.Add(new AdmissionYear
+        {
+            Id = 1,
+            Year = 2026,
+            MaximumScore = 410,
+            IsCurrent = true,
+        });
+        db.Governorates.Add(new Governorate { Id = 1, NameAr = "القاهرة" });
+        db.Universities.Add(new University
+        {
+            Id = 1,
+            NameAr = "جامعة القاهرة",
+            GovernorateId = 1,
+            Type = UniversityType.Public,
+        });
+        db.Faculties.AddRange(
+            new Faculty { Id = 1, NameAr = "طب", AllowedTracks = [AcademicTrack.Science] },
+            new Faculty { Id = 2, NameAr = "هندسة", AllowedTracks = [AcademicTrack.Mathematics] });
+        db.UniversityFaculties.AddRange(
+            new UniversityFaculty { Id = 1, UniversityId = 1, FacultyId = 1 },
+            new UniversityFaculty { Id = 2, UniversityId = 1, FacultyId = 2 });
+        db.AdmissionCutoffs.AddRange(
+            new AdmissionCutoff
+            {
+                Id = 1,
+                AdmissionYearId = 1,
+                UniversityFacultyId = 1,
+                Track = AcademicTrack.Science,
+                CutoffScore = 350,
+            },
+            new AdmissionCutoff
+            {
+                Id = 2,
+                AdmissionYearId = 1,
+                UniversityFacultyId = 2,
+                Track = AcademicTrack.Mathematics,
+                CutoffScore = 280,
+            });
+        db.StudentResults.AddRange(
+            new StudentResult
+            {
+                Id = 1,
+                AdmissionYearId = 1,
+                SeatingNo = "2410001",
+                ArabicName = "طالب أ",
+                TotalDegree = 390,
+                StudentCaseDesc = "علمي علوم",
+                Track = AcademicTrack.Science,
+            },
+            new StudentResult
+            {
+                Id = 2,
+                AdmissionYearId = 1,
+                SeatingNo = "2410002",
+                ArabicName = "طالب ب",
+                TotalDegree = 380,
+                StudentCaseDesc = "علمي علوم",
+                Track = AcademicTrack.Science,
+            });
+        db.SaveChanges();
+    }
+}

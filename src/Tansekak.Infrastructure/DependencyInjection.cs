@@ -27,11 +27,12 @@ public static class DependencyInjection
         IConfiguration configuration,
         IHostEnvironment environment)
     {
-        var connectionString = DatabaseConnectionResolver.Resolve(configuration);
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(connectionString));
-
-        services.AddScoped<EntityIdAllocator>();
+        if (!configuration.GetValue<bool>("Testing:UseSqlite"))
+        {
+            var connectionString = DatabaseConnectionResolver.Resolve(configuration);
+            services.AddDbContext<AppDbContext>(options =>
+                options.UseNpgsql(connectionString));
+        }
 
         services.AddDataProtection()
             .PersistKeysToDbContext<AppDbContext>();

@@ -41,18 +41,14 @@ public class StudentResultService(AppDbContext db, CurrentAdmissionYearProvider 
 
             if (trackTotalStudents > 0)
             {
-                var higherByScore = await peers.CountAsync(
-                    x => x.TotalDegree > entity.TotalDegree,
-                    cancellationToken);
-
-                // CompareTo translates to SQL; string.Compare(..., StringComparison) does not.
                 var entitySeatingNo = entity.SeatingNo;
-                var higherByTieBreak = await peers.CountAsync(
-                    x => x.TotalDegree == entity.TotalDegree
-                        && x.SeatingNo.CompareTo(entitySeatingNo) < 0,
+                var higherRankCount = await peers.CountAsync(
+                    x => x.TotalDegree > entity.TotalDegree
+                        || (x.TotalDegree == entity.TotalDegree
+                            && x.SeatingNo.CompareTo(entitySeatingNo) < 0),
                     cancellationToken);
 
-                trackRank = higherByScore + higherByTieBreak + 1;
+                trackRank = higherRankCount + 1;
             }
         }
 
@@ -62,6 +58,7 @@ public class StudentResultService(AppDbContext db, CurrentAdmissionYearProvider 
             entity.TotalDegree,
             entity.StudentCaseDesc,
             currentYear.Year,
+            currentYear.MaximumScore,
             track,
             trackRank,
             trackTotalStudents);

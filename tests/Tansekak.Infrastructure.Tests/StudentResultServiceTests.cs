@@ -58,6 +58,7 @@ public class StudentResultServiceTests
             var result = await service.GetBySeatingNoAsync("2410002");
 
             Assert.NotNull(result);
+            Assert.Equal(410, result.MaximumScore);
             Assert.Equal("Science", result.Track);
             Assert.Equal(2, result.TrackRank);
             Assert.Equal(2, result.TrackTotalStudents);
@@ -65,7 +66,7 @@ public class StudentResultServiceTests
     }
 
     [Fact]
-    public async Task GetBySeatingNoAsync_ranks_null_track_peers_via_case_desc_and_seating()
+    public async Task GetBySeatingNoAsync_ranks_peers_with_persisted_track()
     {
         var (db, connection) = TestDbFactory.Create();
         await using (connection)
@@ -87,7 +88,7 @@ public class StudentResultServiceTests
                     ArabicName = "طالب أ",
                     TotalDegree = 390,
                     StudentCaseDesc = "علمي علوم",
-                    Track = null
+                    Track = AcademicTrack.Science
                 },
                 new StudentResult
                 {
@@ -97,7 +98,7 @@ public class StudentResultServiceTests
                     ArabicName = "طالب ب",
                     TotalDegree = 370,
                     StudentCaseDesc = "",
-                    Track = null
+                    Track = AcademicTrack.Science
                 });
             await db.SaveChangesAsync();
 

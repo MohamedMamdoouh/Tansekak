@@ -26,11 +26,12 @@ public class AdmissionPredictionService(AppDbContext db, CurrentAdmissionYearPro
 
         var (page, pageSize) = Pagination.Normalize(request.Page, request.PageSize);
         var skip = (page - 1) * pageSize;
+        var score = request.Score;
 
         var matches = await db.AdmissionCutoffs.AsNoTracking()
             .Where(c => c.AdmissionYearId == currentYear.Id
                 && bucketTracks.Contains(c.Track)
-                && request.Score >= c.CutoffScore)
+                && score >= c.CutoffScore)
             .Select(c => new
             {
                 c.Id,
@@ -39,7 +40,7 @@ public class AdmissionPredictionService(AppDbContext db, CurrentAdmissionYearPro
                 c.CutoffScore,
                 UniversityName = c.UniversityFaculty.University.NameAr,
                 FacultyName = c.UniversityFaculty.Faculty.NameAr,
-                AllowedTracks = c.UniversityFaculty.Faculty.AllowedTracks
+                AllowedTracks = c.UniversityFaculty.Faculty.AllowedTracks,
             })
             .ToListAsync(cancellationToken);
 
@@ -52,9 +53,9 @@ public class AdmissionPredictionService(AppDbContext db, CurrentAdmissionYearPro
                 .First())
             .Select(x => new
             {
-                SortKey = Math.Abs(request.Score - x.CutoffScore),
+                SortKey = Math.Abs(score - x.CutoffScore),
                 x.UniversityName,
-                x.FacultyName
+                x.FacultyName,
             })
             .OrderBy(x => x.SortKey)
             .ToList();

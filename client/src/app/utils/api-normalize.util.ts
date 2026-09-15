@@ -18,6 +18,7 @@ export function normalizeStudentResult(
       totalDegree: 0,
       studentCaseDesc: '',
       year: 0,
+      maximumScore: 0,
     };
   }
 
@@ -27,6 +28,7 @@ export function normalizeStudentResult(
     TotalDegree?: number;
     StudentCaseDesc?: string;
     Year?: number;
+    MaximumScore?: number;
     Track?: string | null;
     TrackRank?: number | null;
     TrackTotalStudents?: number | null;
@@ -38,6 +40,7 @@ export function normalizeStudentResult(
     totalDegree: raw.totalDegree ?? raw.TotalDegree ?? 0,
     studentCaseDesc: raw.studentCaseDesc ?? raw.StudentCaseDesc ?? '',
     year: raw.year ?? raw.Year ?? 0,
+    maximumScore: raw.maximumScore ?? raw.MaximumScore ?? 0,
     track: raw.track ?? raw.Track ?? null,
     trackRank: raw.trackRank ?? raw.TrackRank ?? null,
     trackTotalStudents:

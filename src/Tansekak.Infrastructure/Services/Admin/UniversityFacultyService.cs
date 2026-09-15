@@ -25,13 +25,19 @@ public class UniversityFacultyService(AppDbContext db, EntityIdAllocator idAlloc
     }
 
     public async Task<UniversityFacultyDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
-        await db.UniversityFaculties.AsNoTracking().Include(x => x.University).Include(x => x.Faculty)
-            .Where(x => x.Id == id)
-            .Select(x => new UniversityFacultyDto(x.Id, x.UniversityId, x.FacultyId, x.University.NameAr, x.Faculty.NameAr))
-            .FirstOrDefaultAsync(cancellationToken);
+        ServiceGuards.NotFoundIfNull(
+            await db.UniversityFaculties.AsNoTracking().Include(x => x.University).Include(x => x.Faculty)
+                .Where(x => x.Id == id)
+                .Select(x => new UniversityFacultyDto(x.Id, x.UniversityId, x.FacultyId, x.University.NameAr, x.Faculty.NameAr))
+                .FirstOrDefaultAsync(cancellationToken));
 
     public async Task<UniversityFacultyDto> CreateAsync(CreateUniversityFacultyDto dto, CancellationToken cancellationToken = default)
     {
+        await CatalogReferenceValidator.EnsureUniversityExistsAsync(db, dto.UniversityId, cancellationToken);
+        await CatalogReferenceValidator.EnsureFacultyExistsAsync(db, dto.FacultyId, cancellationToken);
+        await CatalogReferenceValidator.EnsureUniversityFacultyPairUniqueAsync(
+            db, dto.UniversityId, dto.FacultyId, cancellationToken: cancellationToken);
+
         var entity = new UniversityFaculty
         {
             Id = await idAllocator.NextAsync(EntityIdAllocator.UniversityFaculties, cancellationToken),
@@ -46,8 +52,14 @@ public class UniversityFacultyService(AppDbContext db, EntityIdAllocator idAlloc
     public async Task<UniversityFacultyDto?> UpdateAsync(int id, UpdateUniversityFacultyDto dto, CancellationToken cancellationToken = default)
     {
         var entity = await db.UniversityFaculties.FindAsync([id], cancellationToken);
-        if (entity is null) return null;
-        entity.UniversityId = dto.UniversityId;
+        ServiceGuards.NotFoundIfNull(entity);
+
+        await CatalogReferenceValidator.EnsureUniversityExistsAsync(db, dto.UniversityId, cancellationToken);
+        await CatalogReferenceValidator.EnsureFacultyExistsAsync(db, dto.FacultyId, cancellationToken);
+        await CatalogReferenceValidator.EnsureUniversityFacultyPairUniqueAsync(
+            db, dto.UniversityId, dto.FacultyId, id, cancellationToken);
+
+        entity!.UniversityId = dto.UniversityId;
         entity.FacultyId = dto.FacultyId;
         await db.SaveChangesAsync(cancellationToken);
         return await GetByIdAsync(id, cancellationToken);

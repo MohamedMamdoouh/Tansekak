@@ -26,14 +26,17 @@ public class UniversityService(AppDbContext db, EntityIdAllocator idAllocator) :
     }
 
     public async Task<UniversityDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
-        await db.Universities.AsNoTracking().Include(x => x.Governorate).Where(x => x.Id == id)
-            .Select(x => new UniversityDto(x.Id, x.NameAr, x.GovernorateId, x.Type.ToString(), x.Governorate.NameAr))
-            .FirstOrDefaultAsync(cancellationToken);
+        ServiceGuards.NotFoundIfNull(
+            await db.Universities.AsNoTracking().Include(x => x.Governorate).Where(x => x.Id == id)
+                .Select(x => new UniversityDto(x.Id, x.NameAr, x.GovernorateId, x.Type.ToString(), x.Governorate.NameAr))
+                .FirstOrDefaultAsync(cancellationToken));
 
     public async Task<UniversityDto> CreateAsync(CreateUniversityDto dto, CancellationToken cancellationToken = default)
     {
         if (!UniversityTypeHelper.TryParse(dto.Type, out var type))
             throw new ValidationException(ApiErrorCodes.InvalidUniversityType);
+
+        await CatalogReferenceValidator.EnsureGovernorateExistsAsync(db, dto.GovernorateId, cancellationToken);
 
         var entity = new University
         {
@@ -53,8 +56,11 @@ public class UniversityService(AppDbContext db, EntityIdAllocator idAllocator) :
             throw new ValidationException(ApiErrorCodes.InvalidUniversityType);
 
         var entity = await db.Universities.FindAsync([id], cancellationToken);
-        if (entity is null) return null;
-        entity.NameAr = dto.NameAr.Trim();
+        ServiceGuards.NotFoundIfNull(entity);
+
+        await CatalogReferenceValidator.EnsureGovernorateExistsAsync(db, dto.GovernorateId, cancellationToken);
+
+        entity!.NameAr = dto.NameAr.Trim();
         entity.GovernorateId = dto.GovernorateId;
         entity.Type = type;
         await db.SaveChangesAsync(cancellationToken);

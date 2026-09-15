@@ -1,6 +1,8 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Tansekak.Application.Common;
+using Tansekak.Infrastructure.Persistence;
 
 namespace Tansekak.Api.Middleware;
 
@@ -22,10 +24,11 @@ public class GlobalExceptionHandler(RequestDelegate next, ILogger<GlobalExceptio
             logger.LogWarning(ex, "Validation error");
             await WriteError(context, HttpStatusCode.BadRequest, ApiErrorCodes.ValidationFailed);
         }
-        catch (InvalidOperationException ex)
+        catch (DbUpdateException ex)
         {
-            logger.LogWarning(ex, "Business rule violation");
-            await WriteError(context, HttpStatusCode.BadRequest, ApiErrorCodes.ValidationFailed);
+            logger.LogWarning(ex, "Database update failed");
+            var (statusCode, errorCode) = DbUpdateExceptionMapper.Map(ex);
+            await WriteError(context, statusCode, errorCode);
         }
         catch (Exception ex)
         {

@@ -86,7 +86,11 @@ public class StudentResultImportService(
                         ArabicName = row.ArabicName,
                         TotalDegree = row.TotalDegree,
                         StudentCaseDesc = row.StudentCaseDesc,
-                        Track = StudentTrackInferrer.TryInferFromCaseDesc(row.StudentCaseDesc)
+                        Track = StudentTrackRankCalculator.ResolveTrack(new StudentResult
+                        {
+                            SeatingNo = row.SeatingNo,
+                            StudentCaseDesc = row.StudentCaseDesc,
+                        })
                     });
                 }
 

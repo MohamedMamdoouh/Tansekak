@@ -22,7 +22,7 @@ public class FacultyService(AppDbContext db, EntityIdAllocator idAllocator) : IF
     public async Task<FacultyDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         var entity = await db.Faculties.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-        return entity is null ? null : ToDto(entity);
+        return ServiceGuards.NotFoundIfNull(entity is null ? null : ToDto(entity));
     }
 
     public async Task<FacultyDto> CreateAsync(CreateFacultyDto dto, CancellationToken cancellationToken = default)
@@ -41,8 +41,8 @@ public class FacultyService(AppDbContext db, EntityIdAllocator idAllocator) : IF
     public async Task<FacultyDto?> UpdateAsync(int id, UpdateFacultyDto dto, CancellationToken cancellationToken = default)
     {
         var entity = await db.Faculties.FindAsync([id], cancellationToken);
-        if (entity is null) return null;
-        entity.NameAr = dto.NameAr.Trim();
+        ServiceGuards.NotFoundIfNull(entity);
+        entity!.NameAr = dto.NameAr.Trim();
         entity.AllowedTracks = ParseAllowedTracks(dto.AllowedTracks);
         await db.SaveChangesAsync(cancellationToken);
         return ToDto(entity);

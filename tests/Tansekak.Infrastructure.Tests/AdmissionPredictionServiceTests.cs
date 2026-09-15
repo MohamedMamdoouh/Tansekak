@@ -1,3 +1,4 @@
+using Tansekak.Application.Common;
 using Tansekak.Application.DTOs;
 using Tansekak.Domain.Entities;
 using Tansekak.Domain.Enums;
@@ -70,6 +71,54 @@ public class AdmissionPredictionServiceTests
             Assert.Equal(
                 science.Results.Select(r => r.Faculty.NameAr).OrderBy(x => x),
                 aliased.Results.Select(r => r.Faculty.NameAr).OrderBy(x => x));
+        }
+    }
+
+    [Fact]
+    public async Task Results_are_sorted_by_closest_cutoff_first()
+    {
+        var (db, connection) = await SeedAsync();
+        await using (connection)
+        await using (db)
+        {
+            var service = new AdmissionPredictionService(db, new CurrentAdmissionYearProvider(db));
+            var result = await service.PredictAsync(new PredictRequestDto("Science", 380));
+
+            Assert.Equal(2, result.TotalCount);
+            Assert.Equal("طب", result.Results[0].Faculty.NameAr);
+            Assert.Equal("هندسة", result.Results[1].Faculty.NameAr);
+        }
+    }
+
+    [Fact]
+    public async Task Pagination_returns_has_more_and_requested_page_size()
+    {
+        var (db, connection) = await SeedAsync();
+        await using (connection)
+        await using (db)
+        {
+            var service = new AdmissionPredictionService(db, new CurrentAdmissionYearProvider(db));
+            var result = await service.PredictAsync(new PredictRequestDto("Science", 380, Page: 1, PageSize: 1));
+
+            Assert.Equal(2, result.TotalCount);
+            Assert.Single(result.Results);
+            Assert.True(result.HasMore);
+        }
+    }
+
+    [Fact]
+    public async Task Score_above_maximum_throws_score_exceeds_max()
+    {
+        var (db, connection) = await SeedAsync();
+        await using (connection)
+        await using (db)
+        {
+            var service = new AdmissionPredictionService(db, new CurrentAdmissionYearProvider(db));
+
+            var ex = await Assert.ThrowsAsync<ValidationException>(
+                () => service.PredictAsync(new PredictRequestDto("Science", 500)));
+
+            Assert.Equal(ApiErrorCodes.ScoreExceedsMax, ex.ErrorCode);
         }
     }
 

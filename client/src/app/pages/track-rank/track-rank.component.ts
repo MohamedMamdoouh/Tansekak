@@ -1,10 +1,8 @@
-import { Component, DestroyRef, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../services/api.service';
-import { AdmissionYearStore } from '../../services/admission-year.store';
 import { DEFAULT_MAXIMUM_SCORE, StudentResult } from '../../models';
 import {
   applyDigitsOnlyInput,
@@ -29,8 +27,6 @@ import { submitStudentLookup } from '../../utils/student-lookup.util';
 export class TrackRankComponent {
   private fb = inject(FormBuilder);
   private api = inject(ApiService);
-  private admissionYears = inject(AdmissionYearStore);
-  private destroyRef = inject(DestroyRef);
 
   readonly fmt = formatNumber;
 
@@ -42,19 +38,9 @@ export class TrackRankComponent {
     seatingNo: ['', [Validators.required, digitsOnlyValidator()]],
   });
 
-  constructor() {
-    this.admissionYears
-      .loadYears()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe();
-  }
-
   get thanaweyaMaxScore(): number {
-    if (!this.result) return DEFAULT_MAXIMUM_SCORE;
-    return this.admissionYears.getMaximumScoreForYear(
-      this.result.year,
-      DEFAULT_MAXIMUM_SCORE,
-    );
+    if (!this.result?.maximumScore) return DEFAULT_MAXIMUM_SCORE;
+    return this.result.maximumScore;
   }
 
   onSeatingInput(event: Event): void {

@@ -31,13 +31,14 @@ public class AdmissionCutoffService(AppDbContext db, EntityIdAllocator idAllocat
     }
 
     public async Task<AdmissionCutoffDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
-        await db.AdmissionCutoffs.AsNoTracking()
-            .Where(x => x.Id == id)
-            .Select(x => new AdmissionCutoffDto(
-                x.Id, x.AdmissionYearId, x.UniversityFacultyId,
-                TrackHelper.ToDisplayName(x.Track), x.CutoffScore,
-                x.UniversityFaculty.University.NameAr, x.UniversityFaculty.Faculty.NameAr))
-            .FirstOrDefaultAsync(cancellationToken);
+        ServiceGuards.NotFoundIfNull(
+            await db.AdmissionCutoffs.AsNoTracking()
+                .Where(x => x.Id == id)
+                .Select(x => new AdmissionCutoffDto(
+                    x.Id, x.AdmissionYearId, x.UniversityFacultyId,
+                    TrackHelper.ToDisplayName(x.Track), x.CutoffScore,
+                    x.UniversityFaculty.University.NameAr, x.UniversityFaculty.Faculty.NameAr))
+                .FirstOrDefaultAsync(cancellationToken));
 
     public async Task<AdmissionCutoffDto> CreateAsync(CreateAdmissionCutoffDto dto, CancellationToken cancellationToken = default)
     {
@@ -69,11 +70,11 @@ public class AdmissionCutoffService(AppDbContext db, EntityIdAllocator idAllocat
         track = TrackHelper.Canonical(track);
 
         var entity = await db.AdmissionCutoffs.FindAsync([id], cancellationToken);
-        if (entity is null) return null;
+        ServiceGuards.NotFoundIfNull(entity);
 
         await ValidateCutoffAsync(dto.AdmissionYearId, dto.UniversityFacultyId, track, dto.CutoffScore, id, cancellationToken);
 
-        entity.AdmissionYearId = dto.AdmissionYearId;
+        entity!.AdmissionYearId = dto.AdmissionYearId;
         entity.UniversityFacultyId = dto.UniversityFacultyId;
         entity.Track = track;
         entity.CutoffScore = dto.CutoffScore;

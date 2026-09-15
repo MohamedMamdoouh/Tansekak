@@ -25,18 +25,31 @@ export class AuthService {
 
   loadSession(): Observable<void> {
     if (!this.sessionRequest$) {
-      this.sessionRequest$ = this.api.me().pipe(
-        tap((user) => this.userSignal.set(user)),
-        catchError(() => {
-          this.userSignal.set(null);
-          return of(null);
-        }),
-        map(() => undefined),
-        shareReplay(1),
-      );
+      this.sessionRequest$ = this.fetchSession().pipe(shareReplay(1));
     }
 
     return this.sessionRequest$;
+  }
+
+  ensureAdminSession(): Observable<boolean> {
+    this.sessionRequest$ = undefined;
+    return this.fetchSession().pipe(map(() => this.isAdmin()));
+  }
+
+  clearSession(): void {
+    this.userSignal.set(null);
+    this.sessionRequest$ = undefined;
+  }
+
+  private fetchSession(): Observable<void> {
+    return this.api.me().pipe(
+      tap((user) => this.userSignal.set(user)),
+      catchError(() => {
+        this.userSignal.set(null);
+        return of(null);
+      }),
+      map(() => undefined),
+    );
   }
 
   login(email: string, password: string): Observable<void> {
@@ -52,10 +65,7 @@ export class AuthService {
   logout(): Observable<void> {
     return this.api.logout().pipe(
       catchError(() => of(null)),
-      tap(() => {
-        this.userSignal.set(null);
-        this.sessionRequest$ = undefined;
-      }),
+      tap(() => this.clearSession()),
       map(() => undefined),
     );
   }
@@ -64,8 +74,7 @@ export class AuthService {
     this.logout().subscribe({
       next: () => this.router.navigate([home ? '/' : '/admin/login']),
       error: () => {
-        this.userSignal.set(null);
-        this.sessionRequest$ = undefined;
+        this.clearSession();
         this.router.navigate([home ? '/' : '/admin/login']);
       },
     });

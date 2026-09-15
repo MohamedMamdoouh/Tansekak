@@ -19,6 +19,8 @@ public static class DependencyInjection
     public static async Task UseApiPipelineAsync(this WebApplication app)
     {
         app.ConfigureApiMiddleware();
-        await app.Services.SeedDatabaseAsync();
+
+        if (!app.Configuration.GetValue<bool>("Testing:SkipStartupSeed"))
+            await app.Services.SeedDatabaseAsync();
     }
 }

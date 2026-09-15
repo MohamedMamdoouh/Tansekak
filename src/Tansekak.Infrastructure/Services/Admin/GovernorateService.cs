@@ -15,8 +15,9 @@ public class GovernorateService(AppDbContext db, EntityIdAllocator idAllocator) 
             .Select(x => new GovernorateDto(x.Id, x.NameAr)).ToListAsync(cancellationToken);
 
     public async Task<GovernorateDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
-        await db.Governorates.AsNoTracking().Where(x => x.Id == id)
-            .Select(x => new GovernorateDto(x.Id, x.NameAr)).FirstOrDefaultAsync(cancellationToken);
+        ServiceGuards.NotFoundIfNull(
+            await db.Governorates.AsNoTracking().Where(x => x.Id == id)
+                .Select(x => new GovernorateDto(x.Id, x.NameAr)).FirstOrDefaultAsync(cancellationToken));
 
     public async Task<GovernorateDto> CreateAsync(CreateGovernorateDto dto, CancellationToken cancellationToken = default)
     {
@@ -33,8 +34,8 @@ public class GovernorateService(AppDbContext db, EntityIdAllocator idAllocator) 
     public async Task<GovernorateDto?> UpdateAsync(int id, UpdateGovernorateDto dto, CancellationToken cancellationToken = default)
     {
         var entity = await db.Governorates.FindAsync([id], cancellationToken);
-        if (entity is null) return null;
-        entity.NameAr = dto.NameAr.Trim();
+        ServiceGuards.NotFoundIfNull(entity);
+        entity!.NameAr = dto.NameAr.Trim();
         await db.SaveChangesAsync(cancellationToken);
         return new GovernorateDto(entity.Id, entity.NameAr);
     }

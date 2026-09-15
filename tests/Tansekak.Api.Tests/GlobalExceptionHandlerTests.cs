@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Tansekak.Api.Middleware;
 using Tansekak.Application.Common;
@@ -44,6 +45,23 @@ public class GlobalExceptionHandlerTests
         Assert.Equal(
             ArabicErrorCatalog.GetMessage(ApiErrorCodes.StudentResultNotFound),
             json.RootElement.GetProperty("message").GetString());
+    }
+
+    [Fact]
+    public async Task InvalidOperationExceptionReturnsInternalError()
+    {
+        var context = CreateContext();
+        var handler = new GlobalExceptionHandler(
+            _ => throw new InvalidOperationException("Entity ID allocation failed."),
+            NullLogger<GlobalExceptionHandler>.Instance);
+
+        await handler.InvokeAsync(context);
+
+        var body = await ReadBody(context);
+        using var json = JsonDocument.Parse(body);
+
+        Assert.Equal((int)HttpStatusCode.InternalServerError, context.Response.StatusCode);
+        Assert.Equal(ApiErrorCodes.InternalError, json.RootElement.GetProperty("errorCode").GetString());
     }
 
     [Fact]

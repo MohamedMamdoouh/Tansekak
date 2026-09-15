@@ -122,6 +122,7 @@ export interface StudentResult {
   totalDegree: number;
   studentCaseDesc: string;
   year: number;
+  maximumScore: number;
   track?: string | null;
   trackRank?: number | null;
   trackTotalStudents?: number | null;

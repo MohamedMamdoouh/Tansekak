@@ -1,83 +1,78 @@
+<div class="container">
+  <h1>استيراد نتائج الثانوية</h1>
+  <div class="card">
+    @if (apiAvailable === false) {
+      <p class="error">
+        الخادم غير متاح. شغّل الـ API على localhost:5080 (dotnet run) مع npm
+        start على :4200، أو تحقق من نشر Render عبر /health.
+      </p>
+    }
 
-    <div class="container">
-      <h1>استيراد نتائج الثانوية</h1>
-      <div class="card">
-        @if (apiAvailable === false) {
-          <p class="error">
-            الخادم غير متاح. شغّل الـ API على localhost:5080 (dotnet run) مع npm start
-            على :4200، أو تحقق من نشر Render عبر /health.
-          </p>
-        }
+    @if (yearLoadError) {
+      <p class="error">{{ yearLoadError }}</p>
+    }
 
-        @if (yearLoadError) {
-          <p class="error">{{ yearLoadError }}</p>
-        }
+    <form [formGroup]="form" (ngSubmit)="upload()">
+      @if (currentYear) {
+        <p class="note">
+          سنة القبول الحالية:
+          <strong>{{ currentYear.year }}</strong>
+          (الدرجة العظمى {{ currentYear.maximumScore }}). هذا الاستيراد
+          <strong>يستبدل</strong> كل نتائج الطلاب لهذه السنة.
+        </p>
+      }
 
-        <form [formGroup]="form" (ngSubmit)="upload()">
-          @if (currentYear) {
-            <p class="note">
-              سنة القبول الحالية:
-              <strong>{{ currentYear.year }}</strong>
-              (الدرجة العظمى {{ currentYear.maximumScore }}).
-              هذا الاستيراد <strong>يستبدل</strong> كل نتائج الطلاب لهذه السنة.
-            </p>
-          }
+      <p class="hint">
+        صيغة الملف: Excel (.xlsx). الأعمدة المطلوبة:
+        <code>seating_no | arabic_name | total_degree | student_case_desc</code>
+      </p>
 
-          <p class="hint">
-            صيغة الملف: Excel (.xlsx). الأعمدة المطلوبة:
-            <code
-              >seating_no | arabic_name | total_degree | student_case_desc</code
-            >
-          </p>
+      <p class="hint">
+        الملفات حتى 20 ميجابايت تُرفع مباشرة. الملفات الأكبر (حتى 100 ميجابايت)
+        تُرفع إلى الخادم ثم يتم معالجتهافي الخلفية وقد تستغرق عدة دقائق.
+      </p>
 
-          <p class="hint">
-            الملفات حتى 20 ميجابايت تُرفع مباشرة. الملفات الأكبر (حتى 100
-            ميجابايت) تُرفع إلى الخادم ثم تُعالَج في الخلفية وقد تستغرق عدة
-            دقائق.
-          </p>
-
-          <div class="form-group">
-            <label>ملف Excel (.xlsx)</label>
-            <input type="file" (change)="onFile($event)" accept=".xlsx" />
-            @if (fileTouched && !file) {
-              <small class="field-error">يرجى اختيار ملف Excel</small>
-            }
-          </div>
-
-          <button
-            class="btn btn-primary"
-            type="submit"
-            [disabled]="uploading || !currentYear || apiAvailable === false"
-          >
-            {{ uploading ? 'جاري الاستيراد...' : 'استيراد' }}
-          </button>
-        </form>
-
-        @if (message) {
-          <p [class]="result?.success ? 'success' : 'error'">{{ message }}</p>
-        }
-        @if (result?.errors?.length) {
-          <div class="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>الصف</th>
-                  <th>العمود</th>
-                  <th>الرسالة</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (e of result!.errors!; track $index) {
-                  <tr>
-                    <td>{{ e.rowNumber }}</td>
-                    <td>{{ e.column }}</td>
-                    <td>{{ e.message }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
+      <div class="form-group">
+        <label>ملف Excel (.xlsx)</label>
+        <input type="file" (change)="onFile($event)" accept=".xlsx" />
+        @if (fileTouched && !file) {
+          <small class="field-error">يرجى اختيار ملف Excel</small>
         }
       </div>
-    </div>
-  
+
+      <button
+        class="btn btn-primary"
+        type="submit"
+        [disabled]="uploading || !currentYear || apiAvailable === false"
+      >
+        {{ uploading ? "جاري الاستيراد..." : "استيراد" }}
+      </button>
+    </form>
+
+    @if (message) {
+      <p [class]="result?.success ? 'success' : 'error'">{{ message }}</p>
+    }
+    @if (result?.errors?.length) {
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>الصف</th>
+              <th>العمود</th>
+              <th>الرسالة</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (e of result!.errors!; track $index) {
+              <tr>
+                <td>{{ e.rowNumber }}</td>
+                <td>{{ e.column }}</td>
+                <td>{{ e.message }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

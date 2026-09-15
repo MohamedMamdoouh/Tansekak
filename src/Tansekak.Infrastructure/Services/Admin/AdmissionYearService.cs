@@ -25,8 +25,11 @@ public class AdmissionYearService(
             .FirstOrDefaultAsync(cancellationToken);
 
     public async Task<AdmissionYearDto?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
-        await db.AdmissionYears.AsNoTracking().Where(x => x.Id == id)
-            .Select(x => new AdmissionYearDto(x.Id, x.Year, x.MaximumScore, x.IsCurrent)).FirstOrDefaultAsync(cancellationToken);
+        ServiceGuards.NotFoundIfNull(
+            await db.AdmissionYears.AsNoTracking().Where(x => x.Id == id)
+                .Select(x => new AdmissionYearDto(x.Id, x.Year, x.MaximumScore, x.IsCurrent))
+                .FirstOrDefaultAsync(cancellationToken),
+            ApiErrorCodes.AdmissionYearNotFound);
 
     public async Task<AdmissionYearDto> CreateAsync(CreateAdmissionYearDto dto, CancellationToken cancellationToken = default)
     {
@@ -48,11 +51,11 @@ public class AdmissionYearService(
     public async Task<AdmissionYearDto?> UpdateAsync(int id, UpdateAdmissionYearDto dto, CancellationToken cancellationToken = default)
     {
         var entity = await db.AdmissionYears.FindAsync([id], cancellationToken);
-        if (entity is null) return null;
+        ServiceGuards.NotFoundIfNull(entity, ApiErrorCodes.AdmissionYearNotFound);
 
         await EnsureYearUniqueAsync(dto.Year, id, cancellationToken);
 
-        entity.Year = dto.Year;
+        entity!.Year = dto.Year;
         entity.MaximumScore = dto.MaximumScore;
         // Recover legacy / stuck rows where Publish was removed and no year is current.
         if (!entity.IsCurrent &&

@@ -25,6 +25,7 @@ public record StudentResultDto(
     decimal TotalDegree,
     string StudentCaseDesc,
     int Year,
+    decimal MaximumScore,
     string? Track = null,
     int? TrackRank = null,
     int? TrackTotalStudents = null);
