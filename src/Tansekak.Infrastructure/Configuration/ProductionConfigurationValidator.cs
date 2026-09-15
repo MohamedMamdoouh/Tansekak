@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Tansekak.Infrastructure.Options;
 
 namespace Tansekak.Infrastructure.Configuration;
 
@@ -10,14 +9,13 @@ public static class ProductionConfigurationValidator
     private const string DevAdminEmail = "admin@tansekak.local";
     private const string DevAdminPassword = "Admin@12345";
 
-    public static void Validate(IConfiguration configuration, IHostEnvironment environment, ILogger logger)
+    public static void Validate(IConfiguration configuration, IHostEnvironment environment)
     {
         if (environment.IsDevelopment())
             return;
 
         ValidateConnectionString(configuration);
         ValidateAdminSeed(configuration);
-        WarnIfR2NotConfigured(configuration, logger);
     }
 
     private static void ValidateConnectionString(IConfiguration configuration)
@@ -63,19 +61,6 @@ public static class ProductionConfigurationValidator
             throw new InvalidOperationException(
                 "AdminSeed:Password must not use the development default in Production. " +
                 "Set a strong AdminSeed__Password in Render environment variables.");
-        }
-    }
-
-    private static void WarnIfR2NotConfigured(IConfiguration configuration, ILogger logger)
-    {
-        var r2Options = configuration.GetSection(R2Options.SectionName).Get<R2Options>() ?? new R2Options();
-
-        if (!r2Options.IsConfigured)
-        {
-            logger.LogWarning(
-                "R2 storage is not configured. Excel imports over 20 MB will return HTTP 503. " +
-                "Set R2__AccountId, R2__AccessKeyId, R2__SecretAccessKey, and R2__BucketName " +
-                "in Render environment variables to enable large file imports.");
         }
     }
 

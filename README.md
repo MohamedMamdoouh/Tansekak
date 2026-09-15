@@ -14,7 +14,7 @@ Results are **indicative only**. Egypt’s official coordination portal decides 
 | -------------------------- | -------------------------- |
 | [docs/PRD.md](docs/PRD.md) | As-built product spec      |
 | [docs/API.md](docs/API.md) | HTTP contract, error codes |
-| [docs/DEPLOY.md](docs/DEPLOY.md) | Render + Neon + R2 checklist |
+| [docs/DEPLOY.md](docs/DEPLOY.md) | Render + Neon checklist |
 
 ---
 
@@ -54,7 +54,7 @@ Sign in at `/admin/login` (not linked from the public site until an administrato
 | Admission years        | `/admin/years`          | Create, edit, delete the single admission year                                                       |
 | Cutoffs                | `/admin/cutoffs`        | CRUD for the **current** year                                                                        |
 | Import cutoffs         | `/admin/import`         | One Markdown file per track (`Science`, `Mathematics`, `Literature`); each import replaces that track for the current year |
-| Import student results | `/admin/import-results` | Excel for the **current** year (replaces all results for that year)                                  |
+| Import student results | *(disabled on dashboard)* | Placeholder only — Excel import will be implemented later |
 
 Import pages block navigation with a progress overlay until the upload finishes or you confirm leaving.
 
@@ -71,8 +71,6 @@ Import pages block navigation with a progress overlay until the upload finishes 
 | Backend       | ASP.NET Core 10, EF Core, PostgreSQL (Npgsql), Identity cookies  |
 | Frontend      | Angular 19 standalone, RTL                                       |
 | Validation    | FluentValidation                                                 |
-| Excel         | DocumentFormat.OpenXml (streaming parser)                        |
-| Large uploads | Cloudflare R2 (API streams files >20 MB, max 100 MB)             |
 | Tests         | xUnit                                                            |
 | CI            | GitHub Actions (Angular production build + `dotnet test` solution) |
 | Deploy        | Docker monolith on Render, Neon Postgres                         |
@@ -104,7 +102,7 @@ Tansekak/
 
 **Local:** .NET 10 SDK, Node.js 20+, PostgreSQL 16+ (or Neon).
 
-**Production:** Neon Postgres, Render web service, Cloudflare R2 for Excel files **>20 MB**.
+**Production:** Neon Postgres, Render web service.
 
 ---
 
@@ -166,11 +164,8 @@ See [docs/DEPLOY.md](docs/DEPLOY.md).
 | --------- | --------------------------------------------------------------- |
 | App + SPA | Render Docker web service (`0.0.0.0:$PORT`)                     |
 | Database  | Neon (`ConnectionStrings__DefaultConnection` or `DATABASE_URL`) |
-| Storage   | Cloudflare R2 for Excel **>20 MB**                              |
 
 Do **not** set `Frontend__Origin` in production — SPA and API share one origin.
-
-Prefer Render **Starter** if large imports must not be interrupted by free-tier spin-down.
 
 ---
 
@@ -182,9 +177,8 @@ Prefer Render **Starter** if large imports must not be interrupted by free-tier 
 | `Tansekak:AppName`                    | Returned by `/api/config`                             |
 | `AdminSeed:Email` / `Password`        | First-run admin                                       |
 | `Frontend:Origin`                     | CORS for local Angular (`http://localhost:4200`) only |
-| `R2:*`                                | Large Excel uploads                                   |
 
-Env vars use `__` (`R2__AccountId`). Production rejects localhost connection strings and the dev admin credentials. Missing R2 logs a warning; uploads over 20 MB then return HTTP 503.
+Production rejects localhost connection strings and the dev admin credentials.
 
 ---
 
@@ -197,7 +191,7 @@ Every startup still:
 - Repairs `Faculties.AllowedTracks` from seed JSON when they diverge.
 - Imports seed Markdown for any current-year track that has zero cutoffs.
 
-Entities: Governorate, University (`Public` / `Institute`), Faculty (`AllowedTracks`), UniversityFaculty, AdmissionYear, AdmissionCutoff, StudentResult, ImportJob, EntityIdSequence.
+Entities: Governorate, University (`Public` / `Institute`), Faculty (`AllowedTracks`), UniversityFaculty, AdmissionYear, AdmissionCutoff, StudentResult, EntityIdSequence.
 
 EF migrations apply automatically on startup.
 
@@ -219,7 +213,7 @@ Full contract: [docs/API.md](docs/API.md).
 dotnet test Tansekak.sln --configuration Release
 ```
 
-CI runs an Angular production build, then that command. The solution includes **Application**, **Infrastructure**, and **Api** tests (track rules, prediction, admission year rules, seeded Markdown parse, import jobs, connection resolution, HTTP integration). There are no E2E or Angular unit-test projects.
+CI runs an Angular production build, then that command. The solution includes **Application**, **Infrastructure**, and **Api** tests (track rules, prediction, admission year rules, seeded Markdown parse, connection resolution, HTTP integration). There are no E2E or Angular unit-test projects.
 
 ---
 

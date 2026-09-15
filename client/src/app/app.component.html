@@ -30,10 +30,8 @@
     </main>
     <footer class="footer">
       <div class="container footer-inner">
-        <p class="footer-tagline">تنسيقك — بوابتك لتوقع كليتك المثالية</p>
-        <p class="footer-credit">
-          تم تصميم الموقع بواسطة {{ profile.name }}
-        </p>
+        <a routerLink="/" class="footer-brand">تنسيقك</a>
+        <p class="footer-tagline">اعرف كليتك قبل ما تسجل رغباتك</p>
         <app-social-links [links]="profile.socialLinks" size="sm" />
       </div>
     </footer>

@@ -17,7 +17,7 @@ Results are **indicative only**. Egypt’s official electronic coordination port
 | User                     | Goal                                                                                                                     |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
 | Student / parent         | Check which faculties a score is eligible for; look up a Thanaweya result and track rank; read a short coordination FAQ. |
-| Operator / administrator | Publish the current admission year; maintain cutoffs (CRUD and Markdown import); import student results from Excel.      |
+| Operator / administrator | Publish the current admission year; maintain cutoffs (CRUD and Markdown import). Student-result Excel import is deferred. |
 | Catalog maintainer       | Manage governorates, universities, faculties, and university–faculty links via API only (no admin UI).                   |
 
 There is a single Identity role: **Administrator**. Public visitors are unauthenticated. Admin login is at `/admin/login` and is not linked from public pages until an administrator is already signed in (then the public header shows a dashboard link).
@@ -30,8 +30,8 @@ There is a single Identity role: **Administrator**. Public visitors are unauthen
 - Eligible-college prediction against the current published year.
 - Admin cookie-authenticated UI for years, cutoffs, and imports.
 - Catalog JSON bootstrap, admission-year bootstrap, faculty `AllowedTracks` repair, missing-track cutoff bootstrap, and admin seed.
-- Markdown cutoff import and Excel student-result import for a chosen admission year (UI always uses the current year).
-- Direct Excel upload ≤20 MB; Cloudflare R2 + async job for larger files.
+- Markdown cutoff import for a chosen admission year (UI always uses the current year).
+- Student-result Excel import is **deferred** (admin dashboard shows a disabled placeholder).
 - Envelope API with stable `errorCode` values and Arabic failure messages.
 
 ---
@@ -137,7 +137,7 @@ Authentication is **cookie-based ASP.NET Core Identity** with the **Administrato
 | `/admin/years`          | Create, edit, and delete the single admission year                   |
 | `/admin/cutoffs`        | CRUD for the **current year only** (API may filter by `yearId`)      |
 | `/admin/import`         | One `.md` per track (Science, Mathematics, Literature) for the **current year** |
-| `/admin/import-results` | `.xlsx` for the **current year**; replaces all results for that year |
+| *(dashboard placeholder)* | Student-result Excel import — disabled; will be implemented later |
 
 Import pages show a progress overlay. Navigation away is **blocked** until the import finishes or the operator confirms leaving.
 
@@ -159,7 +159,7 @@ Only **one** admission year may exist at a time.
 - Create when no year exists; new rows are marked `IsCurrent = true`.
 - A second create while any year exists returns `ADMISSION_YEAR_LIMIT_REACHED`.
 - Edit year number and maximum score (`IsCurrent` is unchanged, unless no current year exists and the update promotes it).
-- Delete cascades cutoffs, student results, and import jobs for that year (best-effort R2 cleanup) and may promote the newest remaining year.
+- Delete cascades cutoffs and student results for that year and may promote the newest remaining year.
 - To switch cycles: delete the current year, then create the new one.
 - Year range: **2000–2100**. Maximum score: **> 0 and ≤ 1000**, default **320**. Duplicate calendar year is rejected.
 - Prediction, public lookup, and the admin import UI all use the current year (`IsCurrent`).
@@ -181,7 +181,7 @@ These have admin API endpoints (GET/POST/PUT, no delete) and no SPA pages:
 
 ## 9. Data model (summary)
 
-Business entities use **integer IDs** allocated by `EntityIdAllocator` / `EntityIdSequence`. ASP.NET Identity tables use **PostgreSQL identity columns**. `ImportJob` uses a **Guid** primary key.
+Business entities use **integer IDs** allocated by `EntityIdAllocator` / `EntityIdSequence`. ASP.NET Identity tables use **PostgreSQL identity columns**.
 
 | Entity                | Role                                                                                  |
 | --------------------- | ------------------------------------------------------------------------------------- |
@@ -192,7 +192,6 @@ Business entities use **integer IDs** allocated by `EntityIdAllocator` / `Entity
 | **AdmissionYear**     | Calendar year, `MaximumScore`, `IsCurrent`                                            |
 | **AdmissionCutoff**   | Year + university–faculty + track + `CutoffScore`                                     |
 | **StudentResult**     | Year + seating no, Arabic name, total degree, case description, optional stored track |
-| **ImportJob**         | Async Excel import status (`queued` / `running` / `completed` / `failed` / `cancelled`) |
 | **EntityIdSequence**  | Next integer ID per entity name                                                       |
 
 **Relationships (high level):**
@@ -201,10 +200,9 @@ Business entities use **integer IDs** allocated by `EntityIdAllocator` / `Entity
 Governorate 1──* University 1──* UniversityFaculty *──1 Faculty
 AdmissionYear 1──* AdmissionCutoff *──1 UniversityFaculty
 AdmissionYear 1──* StudentResult
-AdmissionYear 1──* ImportJob
 ```
 
-Uniqueness that matters in operations: one calendar year value; cutoffs are replaced per year+track on Markdown import; student results are replaced per year on Excel import.
+Uniqueness that matters in operations: one calendar year value; cutoffs are replaced per year+track on Markdown import.
 
 ---
 
@@ -234,7 +232,7 @@ Student workbooks are not stored in the repo.
 Admin imports target the **current** admission year only. There is no preview step: a file is validated, then applied in full or rejected in full.
 
 - **Cutoffs:** One Markdown (`.md`, max 10 MB) per track (`Science`, `Mathematics`, `Literature`). Pipe table with college name and minimum cutoff columns. Each import replaces that track for the current year only.
-- **Student results:** Excel (`.xlsx`) with columns `seating_no`, `arabic_name`, `total_degree`, `student_case_desc`. Replaces all results for the current year. Direct upload ≤ 20 MB; larger files use Cloudflare R2 and an async job (max 100 MB).
+- **Student results:** Excel import is **deferred**. Lookup and track rank still read existing `StudentResult` rows when present.
 
 Any validation error rejects the entire file. Import endpoints and error codes: **[docs/API.md](API.md)**.
 
@@ -244,7 +242,7 @@ Any validation error rejects the entire file. Import endpoints and error codes: 
 
 JSON responses use a standard envelope (`success`, `message`, `errorCode`, `data`, `errors`). Failures return Arabic messages and stable error codes. `GET /health` is unwrapped. Admin auth is cookie-based Identity (role `Administrator`).
 
-Public surface: `GET /api/config`, `POST /api/admission/predict`, `GET /api/thanaweya-results/{seatingNo}`. Admin covers dashboard, catalog CRUD (no delete except cutoffs and years), admission year CRUD (single year), cutoffs, imports, and import jobs.
+Public surface: `GET /api/config`, `POST /api/admission/predict`, `GET /api/thanaweya-results/{seatingNo}`. Admin covers dashboard, catalog CRUD (no delete except cutoffs and years), admission year CRUD (single year), cutoffs, and cutoff import.
 
 Full HTTP contract, status codes, and error catalog: **[docs/API.md](API.md)**.
 
@@ -260,8 +258,6 @@ In production the API serves the Angular build from `wwwroot/` and falls back to
 | Data           | EF Core, PostgreSQL, Npgsql           |
 | Frontend       | Angular 19 standalone, RTL            |
 | Validation     | FluentValidation                      |
-| Excel          | DocumentFormat.OpenXml                |
-| Object storage | Cloudflare R2 (optional; large Excel) |
 | Tests          | xUnit                                 |
 
 **Clean Architecture** projects: `Tansekak.Domain`, `Tansekak.Application`, `Tansekak.Infrastructure`, `Tansekak.Api`.
@@ -272,7 +268,7 @@ Application layer is **service interfaces + DTOs**. There is **no MediatR** and 
 
 ## 14. Deployment
 
-One Docker monolith on Render (API + SPA), Neon PostgreSQL, optional Cloudflare R2 for large Excel imports. GitHub Actions runs an Angular production build plus `dotnet test Tansekak.sln`; Render auto-deploys on push to `main`.
+One Docker monolith on Render (API + SPA), Neon PostgreSQL. GitHub Actions runs an Angular production build plus `dotnet test Tansekak.sln`; Render auto-deploys on push to `main`.
 
 Checklist, env vars, and first-boot sequence: **[docs/DEPLOY.md](DEPLOY.md)**.
 
@@ -296,7 +292,7 @@ The product is successful for this stage when:
 
 - A student can get an **eligible-only** faculty list for the published year, filtered by track and `AllowedTracks`, sorted by closest cutoff.
 - A student can look up an imported result by seating number and see track rank when data exists.
-- An operator can manage the admission year, import Science/Mathematics/Literature Markdown, import Excel results, and CRUD current-year cutoffs.
+- An operator can manage the admission year, import Science/Mathematics/Literature Markdown, and CRUD current-year cutoffs.
 - Failures return Arabic catalog messages and stable error codes; health is a raw probe; auth is cookies.
 - Fresh local databases bootstrap catalog + 2027 current year + admin + missing-track cutoffs from seed Markdown, so prediction works without a manual first import when those files are on disk.
 
@@ -308,4 +304,4 @@ The product is successful for this stage when:
 | ----------------------------------------- | ------------------------------ |
 | [README.md](../README.md)                 | Developer and operator guide   |
 | [docs/API.md](API.md)                     | Public and admin HTTP contract |
-| [docs/DEPLOY.md](DEPLOY.md)               | Production deploy, Render, Neon, R2 |
+| [docs/DEPLOY.md](DEPLOY.md)               | Production deploy, Render, Neon |

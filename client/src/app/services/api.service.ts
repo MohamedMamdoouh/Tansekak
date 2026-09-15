@@ -8,12 +8,9 @@ import {
   normalizeStudentResult,
   unwrapApiData,
 } from '../utils/api-normalize.util';
-import { firstValueFrom } from 'rxjs';
 import {
-  ImportUploadError,
   ImportUploadProgress,
   uploadImportFile,
-  uploadStagedImportFile,
 } from './import-file-upload';
 import {
   AdmissionCutoff,
@@ -22,13 +19,10 @@ import {
   AuthUser,
   Config,
   Dashboard,
-  DIRECT_STUDENT_IMPORT_LIMIT_BYTES,
-  ImportJob,
   ImportResult,
   PagedCutoffs,
   PredictRequest,
   PredictResponse,
-  STAGED_STUDENT_IMPORT_LIMIT_BYTES,
   StudentResult,
   UniversityFaculty,
 } from '../models';
@@ -216,124 +210,6 @@ export class ApiService {
     );
   }
 
-  importStudentResultsWithProgress(
-    yearId: number,
-    file: File,
-    onProgress: (progress: ImportUploadProgress) => void,
-    signal?: AbortSignal,
-  ): Promise<ImportResult> {
-    if (file.size <= DIRECT_STUDENT_IMPORT_LIMIT_BYTES) {
-      const form = new FormData();
-      form.append('file', file);
-      return uploadImportFile(
-        this.http,
-        `/api/admin/admission-years/${yearId}/import-results`,
-        form,
-        onProgress,
-        signal,
-      );
-    }
-
-    if (file.size > STAGED_STUDENT_IMPORT_LIMIT_BYTES) {
-      return Promise.reject({
-        status: 413,
-        kind: 'http',
-        error: {
-          success: false,
-          message: 'حجم الملف يتجاوز 100 ميجابايت.',
-          data: null,
-        },
-      } satisfies ImportUploadError);
-    }
-
-    return this.importLargeStudentResults(yearId, file, onProgress, signal);
-  }
-
-  getImportJob(jobId: string): Observable<ImportJob> {
-    return this.http
-      .get<ApiResponse<ImportJob>>(`/api/admin/import-jobs/${jobId}`)
-      .pipe(map((r) => r.data));
-  }
-
-  cancelImportJob(jobId: string): Observable<ImportJob> {
-    return this.http
-      .post<ApiResponse<ImportJob>>(`/api/admin/import-jobs/${jobId}/cancel`, {})
-      .pipe(map((r) => r.data));
-  }
-
-  private async importLargeStudentResults(
-    yearId: number,
-    file: File,
-    onProgress: (progress: ImportUploadProgress) => void,
-    signal?: AbortSignal,
-  ): Promise<ImportResult> {
-    const form = new FormData();
-    form.append('file', file);
-
-    let jobId: string | null = null;
-    try {
-      jobId = await uploadStagedImportFile(
-        this.http,
-        `/api/admin/admission-years/${yearId}/import-results/from-upload`,
-        form,
-        onProgress,
-        signal,
-      );
-
-      return await this.pollImportJob(jobId, onProgress, signal);
-    } catch (err) {
-      if (jobId && isAbortedImportError(err)) {
-        try {
-          await firstValueFrom(this.cancelImportJob(jobId));
-        } catch {
-          // Best-effort: UI already treats the op as cancelled.
-        }
-      }
-      throw err;
-    }
-  }
-
-  private async pollImportJob(
-    jobId: string,
-    onProgress: (progress: ImportUploadProgress) => void,
-    signal?: AbortSignal,
-  ): Promise<ImportResult> {
-    let processingPercent = 90;
-
-    while (true) {
-      if (signal?.aborted) {
-        throw { status: 0, aborted: true } satisfies ImportUploadError;
-      }
-
-      const job = await firstValueFrom(this.getImportJob(jobId));
-
-      if (job.status === 'completed') {
-        onProgress({ phase: 'processing', percent: 100 });
-        return {
-          success: true,
-          message: job.message ?? 'Import completed.',
-          importedCount: job.importedCount ?? undefined,
-        };
-      }
-
-      if (job.status === 'failed') {
-        onProgress({ phase: 'processing', percent: 100 });
-        return {
-          success: false,
-          message: job.message ?? 'Import failed.',
-        };
-      }
-
-      if (job.status === 'cancelled') {
-        throw { status: 0, aborted: true } satisfies ImportUploadError;
-      }
-
-      processingPercent = Math.min(98, processingPercent + 1);
-      onProgress({ phase: 'processing', percent: processingPercent });
-      await new Promise((resolve) => setTimeout(resolve, 2500));
-    }
-  }
-
   private buildCutoffImportFormData(file: File, track: string): FormData {
     const form = new FormData();
     form.append('file', file);
@@ -342,13 +218,4 @@ export class ApiService {
   }
 }
 
-function isAbortedImportError(err: unknown): err is ImportUploadError {
-  return (
-    typeof err === 'object' &&
-    err !== null &&
-    'aborted' in err &&
-    (err as ImportUploadError).aborted === true
-  );
-}
-
-export type { ImportUploadError, ImportUploadProgress };
+export type { ImportUploadError, ImportUploadProgress } from './import-file-upload';

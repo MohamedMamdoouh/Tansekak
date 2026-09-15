@@ -1,8 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
 using Tansekak.Application.Common;
 using Tansekak.Application.DTOs;
-using Tansekak.Application.Interfaces;
 using Tansekak.Domain.Entities;
 using Tansekak.Domain.Enums;
 using Tansekak.Infrastructure.Persistence;
@@ -83,7 +81,7 @@ public class AdmissionYearServiceTests
     }
 
     [Fact]
-    public async Task DeleteAsync_cascades_cutoffs_results_and_jobs()
+    public async Task DeleteAsync_cascades_cutoffs_and_results()
     {
         var (db, connection) = TestDbFactory.Create();
         await using (connection)
@@ -127,14 +125,6 @@ public class AdmissionYearServiceTests
                 TotalDegree = 380,
                 StudentCaseDesc = "ناجح"
             });
-            db.ImportJobs.Add(new ImportJob
-            {
-                Id = Guid.NewGuid(),
-                AdmissionYearId = 1,
-                Status = ImportJobStatus.Completed,
-                ObjectKey = "imports/1/test.xlsx",
-                CreatedAtUtc = DateTime.UtcNow
-            });
             await db.SaveChangesAsync();
 
             var service = CreateService(db);
@@ -144,7 +134,6 @@ public class AdmissionYearServiceTests
             Assert.Empty(await db.AdmissionYears.ToListAsync());
             Assert.Empty(await db.AdmissionCutoffs.ToListAsync());
             Assert.Empty(await db.StudentResults.ToListAsync());
-            Assert.Empty(await db.ImportJobs.ToListAsync());
         }
     }
 
@@ -205,29 +194,5 @@ public class AdmissionYearServiceTests
     }
 
     private static AdmissionYearService CreateService(AppDbContext db) =>
-        new(db, new EntityIdAllocator(db), new FakeR2Storage(), NullLogger<AdmissionYearService>.Instance);
-
-    private sealed class FakeR2Storage : IR2Storage
-    {
-        public bool IsConfigured => true;
-
-        public Task<(string UploadUrl, string ObjectKey)> CreatePresignedUploadAsync(
-            int yearId,
-            string fileName,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(("https://example.com", "imports/1/test.xlsx"));
-
-        public Task UploadAsync(
-            string objectKey,
-            Stream stream,
-            string contentType,
-            CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
-
-        public Task<Stream> OpenReadAsync(string objectKey, CancellationToken cancellationToken = default) =>
-            Task.FromResult<Stream>(new MemoryStream());
-
-        public Task DeleteAsync(string objectKey, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
-    }
+        new(db, new EntityIdAllocator(db));
 }

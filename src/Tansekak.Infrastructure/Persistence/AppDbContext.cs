@@ -20,7 +20,6 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IDataProtectionK
     public DbSet<AdmissionYear> AdmissionYears => Set<AdmissionYear>();
     public DbSet<AdmissionCutoff> AdmissionCutoffs => Set<AdmissionCutoff>();
     public DbSet<StudentResult> StudentResults => Set<StudentResult>();
-    public DbSet<ImportJob> ImportJobs => Set<ImportJob>();
     public DbSet<EntityIdSequence> EntityIdSequences => Set<EntityIdSequence>();
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 

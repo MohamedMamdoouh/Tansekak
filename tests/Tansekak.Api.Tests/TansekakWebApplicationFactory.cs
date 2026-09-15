@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Tansekak.Domain.Entities;
 using Tansekak.Domain.Enums;
-using Tansekak.Infrastructure.Import;
 using Tansekak.Infrastructure.Persistence;
 
 namespace Tansekak.Api.Tests;
@@ -27,13 +26,6 @@ public sealed class TansekakWebApplicationFactory : WebApplicationFactory<Progra
         builder.ConfigureServices(services =>
         {
             services.AddDbContext<AppDbContext>(options => options.UseSqlite(_connection));
-
-            var hosted = services
-                .Where(d => d.ServiceType == typeof(IHostedService)
-                    && d.ImplementationType == typeof(ImportJobBackgroundService))
-                .ToList();
-            foreach (var descriptor in hosted)
-                services.Remove(descriptor);
         });
     }
 

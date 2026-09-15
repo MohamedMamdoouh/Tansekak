@@ -22,17 +22,7 @@ public static class ApiErrorCodes
     public const string StudentResultNotFound = "STUDENT_RESULT_NOT_FOUND";
     public const string FileRequired = "FILE_REQUIRED";
     public const string TrackRequired = "TRACK_REQUIRED";
-    public const string FileNameRequired = "FILE_NAME_REQUIRED";
-    public const string ObjectKeyRequired = "OBJECT_KEY_REQUIRED";
     public const string OnlyMdFiles = "ONLY_MD_FILES";
-    public const string OnlyXlsxFiles = "ONLY_XLSX_FILES";
-    public const string FileTooLarge = "FILE_TOO_LARGE";
-    public const string R2NotConfigured = "R2_NOT_CONFIGURED";
-    public const string InvalidObjectKey = "INVALID_OBJECT_KEY";
-    public const string ImportJobMissingKey = "IMPORT_JOB_MISSING_KEY";
-    public const string ImportJobSuperseded = "IMPORT_JOB_SUPERSEDED";
-    public const string ImportJobCancelled = "IMPORT_JOB_CANCELLED";
-    public const string ImportJobNotCancellable = "IMPORT_JOB_NOT_CANCELLABLE";
     public const string AllowedTracksRequired = "ALLOWED_TRACKS_REQUIRED";
     public const string FacultyTrackNotAllowed = "FACULTY_TRACK_NOT_ALLOWED";
 
@@ -40,7 +30,6 @@ public static class ApiErrorCodes
     public const string Invalid = "INVALID";
     public const string Empty = "EMPTY";
     public const string Duplicate = "DUPLICATE";
-    public const string MissingColumn = "MISSING_COLUMN";
     public const string InvalidRow = "INVALID_ROW";
     public const string Malformed = "MALFORMED";
     public const string TrackNotAllowed = "TRACK_NOT_ALLOWED";
@@ -48,16 +37,8 @@ public static class ApiErrorCodes
     public const string DuplicateRow = "DUPLICATE_ROW";
     public const string CollegeContainsScore = "COLLEGE_CONTAINS_SCORE";
     public const string CutoffMustBeNumber = "CUTOFF_MUST_BE_NUMBER";
-    public const string TotalDegreeInvalid = "TOTAL_DEGREE_INVALID";
-    public const string TotalDegreeNegative = "TOTAL_DEGREE_NEGATIVE";
-    public const string WorkbookEmpty = "WORKBOOK_EMPTY";
-    public const string WorksheetEmpty = "WORKSHEET_EMPTY";
     public const string FileNoDataRows = "FILE_NO_DATA_ROWS";
     public const string UnresolvedCollege = "UNRESOLVED_COLLEGE";
-    public const string FieldTooLong = "FIELD_TOO_LONG";
-    public const string ImportFileInvalid = "IMPORT_FILE_INVALID";
-    public const string ImportJobMemoryFailed = "IMPORT_JOB_MEMORY_FAILED";
-    public const string ImportJobTimeout = "IMPORT_JOB_TIMEOUT";
 
     public static readonly IReadOnlyCollection<string> All =
     [
@@ -81,24 +62,13 @@ public static class ApiErrorCodes
         StudentResultNotFound,
         FileRequired,
         TrackRequired,
-        FileNameRequired,
-        ObjectKeyRequired,
         OnlyMdFiles,
-        OnlyXlsxFiles,
-        FileTooLarge,
-        R2NotConfigured,
-        InvalidObjectKey,
-        ImportJobMissingKey,
-        ImportJobSuperseded,
-        ImportJobCancelled,
-        ImportJobNotCancellable,
         AllowedTracksRequired,
         FacultyTrackNotAllowed,
         Required,
         Invalid,
         Empty,
         Duplicate,
-        MissingColumn,
         InvalidRow,
         Malformed,
         TrackNotAllowed,
@@ -106,15 +76,7 @@ public static class ApiErrorCodes
         DuplicateRow,
         CollegeContainsScore,
         CutoffMustBeNumber,
-        TotalDegreeInvalid,
-        TotalDegreeNegative,
-        WorkbookEmpty,
-        WorksheetEmpty,
         FileNoDataRows,
         UnresolvedCollege,
-        FieldTooLong,
-        ImportFileInvalid,
-        ImportJobMemoryFailed,
-        ImportJobTimeout,
     ];
 }

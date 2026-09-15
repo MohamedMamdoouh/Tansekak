@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Tansekak.Application.Common;
 using Tansekak.Application.DTOs;
 using Tansekak.Application.Interfaces;
@@ -10,9 +9,7 @@ namespace Tansekak.Infrastructure.Services;
 
 public class AdmissionYearService(
     AppDbContext db,
-    EntityIdAllocator idAllocator,
-    IR2Storage r2Storage,
-    ILogger<AdmissionYearService> logger) : IAdmissionYearService
+    EntityIdAllocator idAllocator) : IAdmissionYearService
 {
     public async Task<IReadOnlyList<AdmissionYearDto>> GetAllAsync(CancellationToken cancellationToken = default) =>
         await db.AdmissionYears.AsNoTracking().OrderByDescending(x => x.Year)
@@ -77,37 +74,12 @@ public class AdmissionYearService(
             ? await db.Database.BeginTransactionAsync(cancellationToken)
             : null;
 
-        var objectKeys = await db.ImportJobs
-            .AsNoTracking()
-            .Where(x => x.AdmissionYearId == id)
-            .Select(x => x.ObjectKey)
-            .ToListAsync(cancellationToken);
-
-        foreach (var objectKey in objectKeys.Where(k => !string.IsNullOrWhiteSpace(k)))
-        {
-            try
-            {
-                await r2Storage.DeleteAsync(objectKey!, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(
-                    ex,
-                    "Failed to delete R2 object {ObjectKey} for admission year {YearId}.",
-                    objectKey,
-                    id);
-            }
-        }
-
         if (db.Database.IsRelational())
         {
             await db.AdmissionCutoffs
                 .Where(x => x.AdmissionYearId == id)
                 .ExecuteDeleteAsync(cancellationToken);
             await db.StudentResults
-                .Where(x => x.AdmissionYearId == id)
-                .ExecuteDeleteAsync(cancellationToken);
-            await db.ImportJobs
                 .Where(x => x.AdmissionYearId == id)
                 .ExecuteDeleteAsync(cancellationToken);
             await db.AdmissionYears
@@ -125,11 +97,6 @@ public class AdmissionYearService(
                 .Where(x => x.AdmissionYearId == id)
                 .ToListAsync(cancellationToken);
             db.StudentResults.RemoveRange(results);
-
-            var jobs = await db.ImportJobs
-                .Where(x => x.AdmissionYearId == id)
-                .ToListAsync(cancellationToken);
-            db.ImportJobs.RemoveRange(jobs);
 
             var entity = await db.AdmissionYears.FindAsync([id], cancellationToken);
             if (entity is not null)

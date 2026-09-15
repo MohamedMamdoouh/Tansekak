@@ -11,7 +11,6 @@ import { AdminLayoutComponent } from './pages/admin/admin-layout.component';
 import { AdminDashboardComponent } from './pages/admin/dashboard/dashboard.component';
 import { AdminCutoffsComponent } from './pages/admin/cutoffs/cutoffs.component';
 import { AdminImportComponent } from './pages/admin/import/import.component';
-import { AdminImportResultsComponent } from './pages/admin/import-results/import-results.component';
 import { AdminYearsComponent } from './pages/admin/years/years.component';
 import { adminGuard } from './guards/admin.guard';
 import { importUploadGuard } from './guards/import-upload.guard';
@@ -34,11 +33,6 @@ export const routes: Routes = [
       { path: 'years', component: AdminYearsComponent },
       { path: 'cutoffs', component: AdminCutoffsComponent },
       { path: 'import', component: AdminImportComponent, canDeactivate: [importUploadGuard] },
-      {
-        path: 'import-results',
-        component: AdminImportResultsComponent,
-        canDeactivate: [importUploadGuard],
-      },
     ],
   },
   { path: '**', redirectTo: '' }

@@ -18,7 +18,7 @@
 html,
 body {
   margin: 0;
-  min-height: 100%;
+  min-block-size: 100dvh;
   font-family: var(--font-body);
   background: var(--color-surface);
   color: var(--color-text);
@@ -790,9 +790,13 @@ td {
   height: 1.25rem;
 }
 
+.social-links--sm {
+  gap: 0.45rem;
+}
+
 .social-links--sm .social-link {
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2rem;
+  height: 2rem;
   background: rgba(255, 255, 255, 0.08);
   color: #d1d5db;
 }
@@ -803,8 +807,19 @@ td {
 }
 
 .social-links--sm .social-link svg {
-  width: 1.05rem;
-  height: 1.05rem;
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.footer .social-links--sm .social-link {
+  color: #d7e2f5;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.footer .social-links--sm .social-link:hover {
+  background: var(--color-accent);
+  color: #fff;
+  transform: none;
 }
 
 .grid-3 {

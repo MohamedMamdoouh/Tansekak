@@ -115,7 +115,7 @@ Missing id → `404` `NOT_FOUND`. Names in `nameAr` are Arabic.
 | `GET` | `/api/admin/admission-years/{id}` | |
 | `POST` | `/api/admin/admission-years` | `{ year, maximumScore }`, `isCurrent: true`. Existing year → `ADMISSION_YEAR_LIMIT_REACHED` |
 | `PUT` | `/api/admin/admission-years/{id}` | Year number and max score. Does not change `isCurrent` unless none is current |
-| `DELETE` | `/api/admin/admission-years/{id}` | Cascades cutoffs, student results, import jobs |
+| `DELETE` | `/api/admin/admission-years/{id}` | Cascades cutoffs and student results |
 
 ### Cutoffs
 
@@ -131,19 +131,13 @@ Item: `{ id, admissionYearId, universityFacultyId, track, cutoffScore, universit
 
 ### Imports
 
-Markdown cutoff import replaces that **year+track**. Excel student-result import replaces that **year**. Failed import → `400` `VALIDATION_FAILED` with row `errors`. Success `data`: `{ success, message, importedCount?, errors? }`.
+Markdown cutoff import replaces that **year+track**. Failed import → `400` `VALIDATION_FAILED` with row `errors`. Success `data`: `{ success, message, importedCount?, errors? }`.
 
-Excel headers: `seating_no`, `arabic_name`, `total_degree`, `student_case_desc`.
+Student-result Excel import is **not implemented** (admin UI shows a disabled placeholder).
 
 | Method | Path | Notes |
 | --- | --- | --- |
 | `POST` | `/api/admin/admission-years/{yearId}/import` | multipart `file` (`.md`, max 10 MB) + `track`. College / cutoff pipe table |
-| `POST` | `/api/admin/admission-years/{yearId}/import-results` | multipart `file` (`.xlsx`, max 20 MB). Over → `413` `FILE_TOO_LARGE` |
-| `POST` | `…/import-results/from-upload` | `.xlsx` 20–100 MB via R2, then async job. `data`: `{ jobId }`. R2 missing → `503`. Client abort → `499` `IMPORT_JOB_CANCELLED` |
-| `POST` | `…/import-results/upload-url` | `{ fileName }` → `{ uploadUrl, objectKey }` (15 min PUT; UI uses `from-upload`) |
-| `POST` | `…/import-results/from-storage` | `{ objectKey }` must start with `imports/{yearId}/`. Starts a job |
-| `GET` | `/api/admin/import-jobs/{id}` | `{ id, status, importedCount, message, createdAtUtc, completedAtUtc }`. Status: `queued` \| `running` \| `completed` \| `failed` \| `cancelled` |
-| `POST` | `/api/admin/import-jobs/{id}/cancel` | Cancels queued immediately; stops running before a full replace. Idempotent if already terminal |
 
 ## Status codes
 
@@ -153,14 +147,12 @@ Excel headers: `seating_no`, `arabic_name`, `total_degree`, `student_case_desc`.
 | `401` | Not signed in or bad login |
 | `403` | Not Administrator |
 | `404` | Missing entity |
-| `413` | Excel over 20 MB (direct) or 100 MB (staged) |
-| `499` | Client aborted staged import after R2 upload |
 | `500` | `INTERNAL_ERROR` |
-| `503` | `NO_CURRENT_YEAR` or `R2_NOT_CONFIGURED` |
+| `503` | `NO_CURRENT_YEAR` |
 
 ## Error codes
 
-Failure `message` is Arabic. Placeholders: `SCORE_EXCEEDS_MAX` (`{0}` max score), `MISSING_COLUMN` (`{0}` column), `UNRESOLVED_COLLEGE` (`{0}` college text), `FIELD_TOO_LONG` (`{0}` field, `{1}` max length). Unknown codes use `INTERNAL_ERROR`. `IMPORT_JOB_NOT_CANCELLABLE` is unused (cancel is idempotent).
+Failure `message` is Arabic. Placeholders: `SCORE_EXCEEDS_MAX` (`{0}` max score), `UNRESOLVED_COLLEGE` (`{0}` college text). Unknown codes use `INTERNAL_ERROR`.
 
 | Code | `message` |
 | --- | --- |
@@ -184,24 +176,13 @@ Failure `message` is Arabic. Placeholders: `SCORE_EXCEEDS_MAX` (`{0}` max score)
 | `STUDENT_RESULT_NOT_FOUND` | لم يتم العثور على نتيجة لهذا الرقم. |
 | `FILE_REQUIRED` | الملف مطلوب. |
 | `TRACK_REQUIRED` | الشعبة مطلوبة. |
-| `FILE_NAME_REQUIRED` | اسم الملف مطلوب. |
-| `OBJECT_KEY_REQUIRED` | مفتاح الملف مطلوب. |
 | `ONLY_MD_FILES` | يُسمح فقط بملفات .md. |
-| `ONLY_XLSX_FILES` | يُسمح فقط بملفات .xlsx. |
-| `FILE_TOO_LARGE` | حجم الملف يتجاوز حد الرفع المباشر (20 ميجابايت). استخدم رفع R2. |
-| `R2_NOT_CONFIGURED` | رفع الملفات الكبيرة غير متاح. يرجى ضبط Cloudflare R2. |
-| `INVALID_OBJECT_KEY` | مفتاح الملف غير صالح. |
-| `IMPORT_JOB_MISSING_KEY` | مهمة الاستيراد لا تحتوي على مفتاح ملف. |
-| `IMPORT_JOB_SUPERSEDED` | تم إلغاء مهمة الاستيراد لأنها استُبدلت باستيراد أحدث. |
-| `IMPORT_JOB_CANCELLED` | تم إلغاء الاستيراد. |
-| `IMPORT_JOB_NOT_CANCELLABLE` | لا يمكن إلغاء مهمة الاستيراد في حالتها الحالية. |
 | `ALLOWED_TRACKS_REQUIRED` | يجب تحديد شعبة واحدة على الأقل. |
 | `FACULTY_TRACK_NOT_ALLOWED` | الكلية غير متاحة للشعبة المحددة. |
 | `REQUIRED` | هذا الحقل مطلوب. |
 | `INVALID` | قيمة غير صالحة. |
 | `EMPTY` | الملف فارغ أو لا يحتوي على بيانات. |
 | `DUPLICATE` | قيمة مكررة. |
-| `MISSING_COLUMN` | عمود مطلوب مفقود ({0}). |
 | `INVALID_ROW` | تنسيق الصف غير صحيح. |
 | `MALFORMED` | تنسيق البيانات غير صحيح. |
 | `TRACK_NOT_ALLOWED` | الكلية غير متاحة للشعبة المحددة. |
@@ -209,16 +190,8 @@ Failure `message` is Arabic. Placeholders: `SCORE_EXCEEDS_MAX` (`{0}` max score)
 | `DUPLICATE_ROW` | صف مكرر في الملف. |
 | `COLLEGE_CONTAINS_SCORE` | عمود الكلية يحتوي على قيمة درجة. |
 | `CUTOFF_MUST_BE_NUMBER` | يجب أن يكون الحد الأدنى رقماً. |
-| `TOTAL_DEGREE_INVALID` | يجب أن يكون المجموع رقماً صالحاً. |
-| `TOTAL_DEGREE_NEGATIVE` | يجب أن يكون المجموع صفراً أو أكثر. |
-| `WORKBOOK_EMPTY` | ملف Excel لا يحتوي على أوراق عمل. |
-| `WORKSHEET_EMPTY` | ورقة العمل لا تحتوي على بيانات. |
 | `FILE_NO_DATA_ROWS` | الملف لا يحتوي على صفوف بيانات. |
 | `UNRESOLVED_COLLEGE` | تعذر مطابقة "{0}" مع جامعة/كلية في النظام. |
-| `FIELD_TOO_LONG` | القيمة في {0} أطول من الحد المسموح ({1} حرف). |
-| `IMPORT_FILE_INVALID` | الملف تالف أو بصيغة غير مدعومة. تأكد أنه ملف Excel (.xlsx) صالح. |
-| `IMPORT_JOB_MEMORY_FAILED` | نفدت ذاكرة الخادم أثناء معالجة الملف. جرّب تقسيم الملف إلى أجزاء أصغر. |
-| `IMPORT_JOB_TIMEOUT` | انتهت مهلة معالجة الاستيراد. حاول مرة أخرى أو قسّم الملف. |
 
 ## OpenAPI
 

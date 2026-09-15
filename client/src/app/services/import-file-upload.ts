@@ -31,24 +31,6 @@ export function uploadImportFile(
   });
 }
 
-export function uploadStagedImportFile(
-  http: HttpClient,
-  url: string,
-  formData: FormData,
-  onProgress: (progress: ImportUploadProgress) => void,
-  signal?: AbortSignal,
-): Promise<string> {
-  return uploadMultipart(
-    http,
-    url,
-    formData,
-    onProgress,
-    signal,
-    extractJobId,
-    { completePercent: 90 },
-  );
-}
-
 function uploadMultipart<T>(
   http: HttpClient,
   url: string,
@@ -176,15 +158,4 @@ function extractImportPayload(
   };
 
   return envelope.data ?? envelope.Data ?? null;
-}
-
-function extractJobId(body: ApiResponse<unknown> | null | undefined): string | null {
-  if (!body) return null;
-
-  const envelope = body as ApiResponse<{ jobId?: string; JobId?: string }> & {
-    Data?: { jobId?: string; JobId?: string };
-  };
-  const data = envelope.data ?? envelope.Data;
-  const jobId = data?.jobId ?? data?.JobId;
-  return jobId ? String(jobId) : null;
 }

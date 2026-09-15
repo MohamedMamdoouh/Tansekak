@@ -1,6 +1,6 @@
 # Deploy
 
-Deploy Tansekak to **Render** (Docker monolith) with **Neon Postgres**. **Cloudflare R2** is optional — required only for Excel imports over 20 MB.
+Deploy Tansekak to **Render** (Docker monolith) with **Neon Postgres**.
 
 Related: [API.md](./API.md)
 
@@ -12,7 +12,6 @@ Related: [API.md](./API.md)
 | --- | --- | --- |
 | App + SPA | Render | One container serves `/api/*` and the Angular app from `wwwroot` |
 | Database | Neon | Pooled PostgreSQL connection string |
-| Storage | Cloudflare R2 | Large Excel uploads only (> 20 MB) |
 
 No CORS setup on Render — API and SPA share one origin. Do **not** set `Frontend__Origin`.
 
@@ -43,15 +42,10 @@ Npgsql keyword format or a `postgresql://…` URI both work. The app rejects `lo
    | `DATABASE_URL` | Alternative | Neon `postgresql://…` URI if the connection string above is unset |
    | `AdminSeed__Email` | Yes | Not `admin@tansekak.local` |
    | `AdminSeed__Password` | Yes | Not `Admin@12345` |
-   | `R2__AccountId` | For large imports | See section 4 |
-   | `R2__AccessKeyId` | For large imports | |
-   | `R2__SecretAccessKey` | For large imports | |
-   | `R2__BucketName` | Optional | Default: `tansekak-imports` |
 
-   \*Required unless `DATABASE_URL` is set. Missing R2 credentials only log a warning — startup still succeeds.
+   \*Required unless `DATABASE_URL` is set.
 
 5. Push to `main` (auto-deploy) or trigger a manual deploy.
-6. Use **Starter** plan if large imports must not be interrupted by free-tier spin-down.
 
 `PORT` is set by Render. The app binds to `0.0.0.0:$PORT`.
 
@@ -80,25 +74,11 @@ If prediction is empty after first boot, sign in at `/admin/login`, confirm the 
 
 The `2026` in filenames is the official source cycle; rows attach to the current year (**2027** on bootstrap). Each import replaces that track only.
 
-Student results are never seeded. Upload the Thanaweya Excel at `/admin/import-results` when you want lookup and track rank.
+Student results are never seeded. Excel import for Thanaweya results is **not implemented yet** (admin dashboard shows a disabled placeholder). Lookup and track rank work only when `StudentResults` rows already exist in the database.
 
 ---
 
-## 4. R2 (large Excel only)
-
-Skip this section if all imports are ≤ 20 MB.
-
-The admin UI uploads files over 20 MB to the API (same origin, max **100 MB**). The API streams the file to R2 and runs the existing async import job. **Browser CORS on the R2 bucket is not required** for `/admin/import-results`.
-
-1. Create bucket `tansekak-imports` in [Cloudflare R2](https://dash.cloudflare.com).
-2. Create an API token with **Object Read & Write** on that bucket.
-3. Set `R2__AccountId`, `R2__AccessKeyId`, `R2__SecretAccessKey` on Render (`R2__BucketName` defaults to `tansekak-imports`).
-
-Temp files during import live on Render’s ephemeral disk and are deleted when the job finishes. Durable data is Neon (including ASP.NET Data Protection keys) and R2 object storage.
-
----
-
-## 5. Smoke test
+## 4. Smoke test
 
 | Check | Expected |
 | --- | --- |

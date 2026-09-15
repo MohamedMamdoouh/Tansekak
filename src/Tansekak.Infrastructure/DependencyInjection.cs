@@ -11,12 +11,9 @@ using Tansekak.Infrastructure.Configuration;
 using Tansekak.Application.Common;
 using Tansekak.Application.Interfaces;
 using Tansekak.Infrastructure.Identity;
-using Tansekak.Infrastructure.Import;
-using Tansekak.Infrastructure.Options;
 using Tansekak.Infrastructure.Persistence;
 using Tansekak.Infrastructure.Seeding;
 using Tansekak.Infrastructure.Services;
-using Tansekak.Infrastructure.Storage;
 
 namespace Tansekak.Infrastructure;
 
@@ -36,8 +33,6 @@ public static class DependencyInjection
 
         services.AddDataProtection()
             .PersistKeysToDbContext<AppDbContext>();
-
-        services.Configure<R2Options>(configuration.GetSection(R2Options.SectionName));
 
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
@@ -77,12 +72,6 @@ public static class DependencyInjection
         services.AddScoped<IImportService, ImportService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IStudentResultService, StudentResultService>();
-        services.AddScoped<IStudentResultImportService, StudentResultImportService>();
-        services.AddScoped<IImportJobService, ImportJobService>();
-        services.AddSingleton<IR2Storage, R2StorageService>();
-        services.AddSingleton<ImportJobQueue>();
-        services.AddSingleton<ImportJobCancellationRegistry>();
-        services.AddHostedService<ImportJobBackgroundService>();
 
         return services;
     }
@@ -95,7 +84,7 @@ public static class DependencyInjection
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>()
             .CreateLogger("Tansekak.Startup");
 
-        ProductionConfigurationValidator.Validate(config, environment, logger);
+        ProductionConfigurationValidator.Validate(config, environment);
 
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         if (db.Database.IsRelational())

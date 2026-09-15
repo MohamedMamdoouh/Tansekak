@@ -1,4 +1,8 @@
-
+      :host {
+        display: flex;
+        flex-direction: column;
+        min-block-size: 100dvh;
+      }
       .header {
         background: #1e3a8a;
         color: #fff;
@@ -49,29 +53,47 @@
         font: inherit;
       }
       main {
+        flex: 1 0 auto;
         padding: 2rem 0 3rem;
-        min-height: calc(100vh - 180px);
       }
       .footer {
-        background: #111827;
-        color: #d1d5db;
-        padding: 1.5rem 0;
-        text-align: center;
+        container-type: inline-size;
+        background: #16306f;
+        color: #d7e2f5;
+        padding-block: 0.9rem;
       }
       .footer-inner {
         display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
+        flex-wrap: wrap;
+        justify-content: space-between;
         align-items: center;
+        gap: 0.65rem 1.25rem;
+      }
+      .footer-brand {
+        font-family: var(--font-display);
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #fff;
       }
       .footer-tagline {
         margin: 0;
-        font-size: 0.95rem;
+        flex: 1 1 12rem;
+        font-size: 0.86rem;
+        font-weight: 500;
+        color: #c5d2ea;
+        text-align: center;
+        min-inline-size: 0;
       }
-      .footer-credit {
-        margin: 0;
-        font-size: 0.82rem;
-        opacity: 0.65;
+
+      @container (max-width: 36rem) {
+        .footer-inner {
+          flex-direction: column;
+          justify-content: center;
+          text-align: center;
+        }
+        .footer-tagline {
+          flex: none;
+        }
       }
 
       @media (max-width: 640px) {
@@ -108,14 +130,21 @@
         }
         main {
           padding: 1.25rem 0 2rem;
-          min-height: calc(100vh - 160px);
         }
         .footer {
-          padding: 1.15rem 0;
+          padding-block: 0.8rem;
+        }
+        .footer-inner {
+          flex-direction: column;
+          justify-content: center;
+          text-align: center;
+        }
+        .footer-brand {
+          font-size: 1.25rem;
         }
         .footer-tagline {
-          font-size: 0.88rem;
-          padding: 0 0.5rem;
+          flex: none;
+          font-size: 0.8rem;
         }
       }
     

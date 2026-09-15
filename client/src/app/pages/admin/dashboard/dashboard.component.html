@@ -103,7 +103,11 @@
               <span class="action-arrow" aria-hidden="true">←</span>
             </a>
 
-            <a routerLink="/admin/import-results" class="action-card card">
+            <!-- Student results import — will be implemented later -->
+            <div
+              class="action-card card action-card--unavailable"
+              aria-disabled="true"
+            >
               <div class="action-icon action-icon--accent" aria-hidden="true">
                 <svg
                   width="24"
@@ -121,9 +125,11 @@
                 <p>
                   رفع ملف Excel بنتائج الطلاب واستبدال بيانات السنة المختارة.
                 </p>
+                <p class="action-unavailable">
+                  الخدمة غير متاحة حالياً — سيتم تفعيلها لاحقاً
+                </p>
               </div>
-              <span class="action-arrow" aria-hidden="true">←</span>
-            </a>
+            </div>
           </div>
         </section>
       }

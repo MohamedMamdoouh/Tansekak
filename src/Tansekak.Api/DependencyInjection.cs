@@ -8,7 +8,6 @@ public static class DependencyInjection
 {
     public static WebApplicationBuilder AddApi(this WebApplicationBuilder builder)
     {
-        builder.ConfigureRequestLimits();
         builder.Services.AddApiServices(builder.Configuration);
         builder.Services.AddApplication();
         builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
